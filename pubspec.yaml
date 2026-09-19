@@ -1,0 +1,56 @@
+name: farmsys
+description: "FarmSys - Sistema de Punto de Venta, Inventario y Facturación Electrónica para Farmacias en Ecuador"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.19.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Gestión de Estado e Inyección de Dependencias (SOLID: DIP)
+  flutter_riverpod: ^2.5.1
+
+  # Base de Datos Local SQLite de Alto Rendimiento (Drift)
+  drift: ^2.16.0
+  drift_flutter: ^0.1.0
+  sqlite3_flutter_libs: ^0.5.21
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+  # Navegación Declarativa
+  go_router: ^14.0.0
+
+  # Interfaz de Escritorio Nativa y Ventanas
+  fluent_ui: ^4.9.0
+  window_manager: ^0.3.8
+
+  # Impresión Térmica y Facturación (RIDE PDF)
+  pdf: ^3.10.8
+  printing: ^5.12.0
+
+  # Formatos y Utilidades
+  intl: ^0.20.3
+  equatable: ^2.0.5
+
+  # Criptografía y Facturación SRI (Firma PKCS#12, XML)
+  crypto: ^3.0.3
+  xml: ^6.5.0
+  pointycastle: ^3.7.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  build_runner: ^2.4.9
+  drift_dev: ^2.16.0
+  sqlite3: ^2.5.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icons/
+    - assets/images/
