@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_constants.dart';
+import '../../core/constants/constants.dart';
 import '../../features/caja/presentation/controllers/cash_session_notifier.dart';
-import 'xela_badge.dart';
-import 'xela_card.dart';
+import 'components.dart';
 
 /// Barra lateral de navegación estilo Xela UI Kit para escritorio
 class XelaSidebar extends ConsumerStatefulWidget {
@@ -89,6 +87,13 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                   route: '/purchases',
                   icon: Icons.receipt_long_outlined,
                   shortcut: 'F9',
+                ),
+                const SizedBox(height: 6),
+                _buildNavItem(
+                  label: 'Configuraciones',
+                  route: '/settings',
+                  icon: Icons.settings_rounded,
+                  shortcut: 'F12',
                 ),
               ],
             ),

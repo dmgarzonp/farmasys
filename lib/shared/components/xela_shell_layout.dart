@@ -4,32 +4,73 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
 
-import '../../core/constants/app_colors.dart';
+import '../../core/constants/constants.dart';
 import '../../core/utils/formatters.dart';
 import '../../features/caja/presentation/controllers/cash_session_notifier.dart';
 import '../../features/caja/presentation/views/close_cash_dialog.dart';
 import '../../features/caja/presentation/views/open_cash_dialog.dart';
-import 'xela_badge.dart';
-import 'xela_sidebar.dart';
+import '../../features/compras_recepcion/presentation/controllers/purchase_reception_notifier.dart';
+import '../../features/configuraciones/presentation/controllers/settings_notifier.dart';
+import '../../shared/components/app_dialogs.dart';
+import 'components.dart';
 
 /// Layout base de escritorio estilo Xela UI Kit.
 /// Integra la barra lateral fija colapsable, la barra superior contextual
 /// y los atajos de teclado globales.
 class XelaShellLayout extends ConsumerStatefulWidget {
   final String currentLocation;
-  final Widget child;
+  final StatefulNavigationShell navigationShell;
 
   const XelaShellLayout({
     super.key,
     required this.currentLocation,
-    required this.child,
+    required this.navigationShell,
   });
 
   @override
   ConsumerState<XelaShellLayout> createState() => _XelaShellLayoutState();
 }
 
-class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> {
+class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowListener {
+  @override
+  void initState() {
+    super.initState();
+    windowManager.addListener(this);
+    _overrideWindowClose();
+  }
+
+  void _overrideWindowClose() async {
+    await windowManager.setPreventClose(true);
+  }
+
+  @override
+  void dispose() {
+    windowManager.removeListener(this);
+    super.dispose();
+  }
+
+  @override
+  void onWindowClose() async {
+    final purchaseState = ref.read(purchaseReceptionProvider);
+    final hasDraft = purchaseState.items.isNotEmpty || purchaseState.selectedSupplier != null;
+
+    if (hasDraft) {
+      final shouldExit = await AppConfirmDialog.show(
+        context,
+        title: 'Borrador Guardado',
+        message: 'Tienes una recepción de compra en progreso. Se ha guardado un borrador automáticamente.\n\n¿Estás seguro de que deseas salir?',
+        confirmText: 'Salir de FarmSys',
+        cancelText: 'Continuar Trabajando',
+        isDestructive: true,
+      );
+      if (shouldExit) {
+        await windowManager.destroy();
+      }
+    } else {
+      await windowManager.destroy();
+    }
+  }
+
   Future<void> _handleOpenCash() async {
     final amount = await OpenCashDialog.show(context);
     if (amount != null && mounted) {
@@ -131,7 +172,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> {
                         _buildHeaderBar(),
                         const Divider(height: 1, color: AppColors.border),
                         Expanded(
-                          child: widget.child,
+                          child: widget.navigationShell,
                         ),
                       ],
                     ),
@@ -184,8 +225,8 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> {
           // Indicadores de Estado de Sistema
           Row(
             children: [
-              const XelaBadge(
-                text: 'SRI 12% Activo',
+              XelaBadge(
+                text: 'SRI ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}% Activo',
                 variant: XelaBadgeVariant.success,
                 icon: Icons.verified_user_rounded,
               ),

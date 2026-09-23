@@ -218,6 +218,69 @@ class DriftPurchaseRepository implements IPurchaseRepository {
       items: items,
     );
   }
+  @override
+  Future<void> saveDraft(PurchaseInvoice invoice) async {
+    await _db.transaction(() async {
+      await discardDraft(); // Limpiar borrador anterior si existe
+
+      final compraId = await _db.into(_db.comprasTable).insert(
+            ComprasTableCompanion.insert(
+              proveedorId: invoice.proveedorId,
+              numeroFactura: invoice.numeroFactura.trim(),
+              numeroAutorizacionSri: Value(invoice.numeroAutorizacionSri?.trim()),
+              fechaEmision: invoice.fechaEmision,
+              fechaRecepcion: Value(invoice.fechaRecepcion),
+              subtotalDoce: Value(invoice.subtotalDoce),
+              subtotalCero: Value(invoice.subtotalCero),
+              iva: Value(invoice.iva),
+              total: Value(invoice.total),
+              observaciones: Value(invoice.observaciones?.trim()),
+              estado: const Value('borrador'),
+            ),
+          );
+
+      for (final item in invoice.items) {
+        await _db.into(_db.detallesCompraTable).insert(
+              DetallesCompraTableCompanion.insert(
+                compraId: compraId,
+                presentacionId: item.presentacionId,
+                lote: item.lote.trim().toUpperCase(),
+                fechaVencimiento: item.fechaVencimiento,
+                cantidadCajas: Value(item.cantidadCajas),
+                cantidadUnidades: Value(item.cantidadUnidades),
+                costoCaja: Value(item.costoCaja),
+                costoUnitario: Value(item.costoUnitario),
+                subtotal: Value(item.subtotal),
+                cumpleRegistroSanitario: Value(item.cumpleRegistroSanitario),
+                cumpleEmpaque: Value(item.cumpleEmpaque),
+                temperaturaRecepcion: Value(item.temperaturaRecepcion),
+              ),
+            );
+      }
+    });
+  }
+
+  @override
+  Future<PurchaseInvoice?> getDraft() async {
+    final query = _db.select(_db.comprasTable)..where((tbl) => tbl.estado.equals('borrador'));
+    final row = await query.getSingleOrNull();
+    if (row != null) {
+      return getPurchaseById(row.id);
+    }
+    return null;
+  }
+
+  @override
+  Future<void> discardDraft() async {
+    await _db.transaction(() async {
+      final query = _db.select(_db.comprasTable)..where((tbl) => tbl.estado.equals('borrador'));
+      final drafts = await query.get();
+      for (final draft in drafts) {
+        await (_db.delete(_db.detallesCompraTable)..where((tbl) => tbl.compraId.equals(draft.id))).go();
+        await (_db.delete(_db.comprasTable)..where((tbl) => tbl.id.equals(draft.id))).go();
+      }
+    });
+  }
 }
 
 /// Proveedor Riverpod para inyección del repositorio de compras (SOLID: DIP)

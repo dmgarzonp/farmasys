@@ -21,6 +21,7 @@ import '../../data/repositories/drift_sale_repository.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../domain/entities/sale.dart';
 import '../controllers/pos_cart_notifier.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 import 'checkout_dialog.dart';
 
 /// Pantalla principal del Punto de Venta (POS Desktop) integrada con Caja, Clientes y Despacho FEFO
@@ -197,9 +198,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           sesionCajaId: cashState.activeSession!.id!,
           fechaVenta: DateTime.now(),
           subtotal0: cartState.totals.subtotal0,
-          subtotal12: cartState.totals.subtotal12,
+          subtotal12: cartState.totals.subtotalIva,
           descuentoTotal: cartState.totals.totalDiscount,
-          impuestoTotal: cartState.totals.iva12,
+          impuestoTotal: cartState.totals.ivaAmount,
           total: cartState.totals.grandTotal,
           metodoPago: checkoutResult['metodoPago'] as String,
         );
@@ -387,7 +388,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 return ActionChip(
                                   avatar: const Icon(Icons.add_shopping_cart, size: 14, color: AppColors.primary),
                                   label: Text(
-                                    '${pres.nombreDescriptivo} • ${AppFormatters.currency(pres.precioVentaCaja)} ${pres.tieneIva ? '(IVA 12%)' : '(0%)'}',
+                                    '${pres.nombreDescriptivo} • ${AppFormatters.currency(pres.precioVentaCaja)} ${pres.tieneIva ? '(IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%)' : '(0%)'}',
                                     style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                                   ),
                                   backgroundColor: AppColors.background,
@@ -617,9 +618,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               children: [
                 _buildTotalRow('Subtotal 0% (Medicamentos)', cartState.totals.subtotal0),
                 const SizedBox(height: 4),
-                _buildTotalRow('Subtotal 12%', cartState.totals.subtotal12),
+                _buildTotalRow('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.subtotalIva),
                 const SizedBox(height: 4),
-                _buildTotalRow('IVA 12%', cartState.totals.iva12),
+                _buildTotalRow('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.ivaAmount),
                 const SizedBox(height: 10),
                 const Divider(height: 1, color: AppColors.border),
                 const SizedBox(height: 10),

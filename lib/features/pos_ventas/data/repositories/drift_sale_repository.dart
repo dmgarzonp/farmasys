@@ -1,7 +1,8 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_constants.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+
 import '../../../../core/database/app_database.dart';
 import '../../../caja/data/repositories/drift_cash_session_repository.dart';
 import '../../../caja/domain/repositories/i_cash_session_repository.dart';
@@ -17,8 +18,9 @@ class DriftSaleRepository implements ISaleRepository {
   final AppDatabase _db;
   final IInventoryRepository _inventoryRepo;
   final ICashSessionRepository _cashRepo;
+  final double ivaVigente;
 
-  DriftSaleRepository(this._db, this._inventoryRepo, this._cashRepo);
+  DriftSaleRepository(this._db, this._inventoryRepo, this._cashRepo, this.ivaVigente);
 
   @override
   Future<Sale> processSale({
@@ -60,7 +62,7 @@ class DriftSaleRepository implements ISaleRepository {
 
         for (final alloc in allocations) {
           final allocSubtotal = (alloc.quantityDeducted * item.unitPrice) - item.discount;
-          final allocIva = item.hasIva ? (allocSubtotal * AppConstants.ivaVigente) : 0.0;
+          final allocIva = item.hasIva ? (allocSubtotal * ivaVigente) : 0.0;
 
           final detailId = await _db.into(_db.detallesVentaTable).insert(
                 DetallesVentaTableCompanion.insert(
@@ -228,5 +230,6 @@ final saleRepositoryProvider = Provider<ISaleRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   final inventoryRepo = ref.watch(inventoryRepositoryProvider);
   final cashRepo = ref.watch(cashSessionRepositoryProvider);
-  return DriftSaleRepository(db, inventoryRepo, cashRepo);
+  final iva = ref.watch(settingsProvider).ivaVigente;
+  return DriftSaleRepository(db, inventoryRepo, cashRepo, iva);
 });

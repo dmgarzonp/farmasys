@@ -13,6 +13,7 @@ import 'tables/proveedores_table.dart';
 import 'tables/cajas_sesiones_table.dart';
 import 'tables/compras_table.dart';
 import 'tables/detalles_compra_table.dart';
+import 'database_seeder.dart';
 
 part 'app_database.g.dart';
 
@@ -52,6 +53,9 @@ class AppDatabase extends _$AppDatabase {
               direccion: const Value('S/D'),
             ),
           );
+
+          // Ejecutar semilla de datos de prueba
+          await DatabaseSeeder.run(this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           if (from < 2) {
@@ -69,7 +73,7 @@ class AppDatabase extends _$AppDatabase {
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
-      name: 'farmsys_database',
+      name: 'farmsys_demo_db',
     );
   }
 }

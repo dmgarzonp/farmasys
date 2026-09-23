@@ -10,11 +10,11 @@ class Sale {
   final int sesionCajaId;
   final DateTime fechaVenta;
 
-  // Desglose financiero (IVA 12% y 0%)
+  // Desglose financiero (IVA 15% y 0%)
   final double subtotal0;
   final double subtotal12;
   final double descuentoTotal;
-  final double impuestoTotal; // IVA 12%
+  final double impuestoTotal; // IVA 15%
   final double total;
 
   final String metodoPago; // 'efectivo', 'tarjeta', 'transferencia'

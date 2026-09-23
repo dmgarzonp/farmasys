@@ -37,7 +37,7 @@ void main() {
     database = AppDatabase.forTesting(NativeDatabase.memory());
     inventoryRepo = DriftInventoryRepository(database);
     cashRepo = DriftCashSessionRepository(database);
-    saleRepo = DriftSaleRepository(database, inventoryRepo, cashRepo);
+    saleRepo = DriftSaleRepository(database, inventoryRepo, cashRepo, 0.15);
 
     // 1. Crear producto con presentación
     final productRepo = DriftProductRepository(database);

@@ -10,9 +10,9 @@ void main() {
 
       final result = TaxCalculator.calculate(items, vatRate: 0.15);
 
-      expect(result.subtotal15, equals(20.00));
+      expect(result.subtotalIva, equals(20.00));
       expect(result.subtotal0, equals(0.00));
-      expect(result.iva15, equals(3.00)); // 20 * 0.15 = 3.00
+      expect(result.ivaAmount, equals(3.00)); // 20 * 0.15 = 3.00
       expect(result.grandTotal, equals(23.00));
     });
 
@@ -24,8 +24,8 @@ void main() {
       final result = TaxCalculator.calculate(items, vatRate: 0.15);
 
       expect(result.subtotal0, equals(22.00));
-      expect(result.subtotal15, equals(0.00));
-      expect(result.iva15, equals(0.00));
+      expect(result.subtotalIva, equals(0.00));
+      expect(result.ivaAmount, equals(0.00));
       expect(result.grandTotal, equals(22.00));
     });
 
@@ -40,22 +40,22 @@ void main() {
       final result = TaxCalculator.calculate(items, vatRate: 0.15);
 
       expect(result.subtotal0, equals(9.00));
-      expect(result.subtotal15, equals(20.00));
+      expect(result.subtotalIva, equals(20.00));
       expect(result.totalDiscount, equals(1.00));
-      expect(result.iva15, equals(3.00)); // 20 * 0.15
+      expect(result.ivaAmount, equals(3.00)); // 20 * 0.15
       expect(result.grandTotal, equals(32.00)); // 9 + 20 + 3 = 32
     });
 
-    test('Calcula correctamente con la tasa predeterminada de IVA 12%', () {
+    test('Calcula correctamente con la tasa de IVA 12%', () {
       final items = [
         const TaxableItem(unitPrice: 50.00, quantity: 1.0, isIvaExempt: false),
       ];
 
-      // Utiliza la constante por defecto AppConstants.ivaVigente (0.12)
-      final result = TaxCalculator.calculate(items);
+      // Simulamos que el vatRate inyectado es 0.12
+      final result = TaxCalculator.calculate(items, vatRate: 0.12);
 
-      expect(result.subtotal12, equals(50.00));
-      expect(result.iva12, equals(6.00)); // 50 * 0.12 = 6.00
+      expect(result.subtotalIva, equals(50.00));
+      expect(result.ivaAmount, equals(6.00)); // 50 * 0.12 = 6.00
       expect(result.grandTotal, equals(56.00));
     });
   });

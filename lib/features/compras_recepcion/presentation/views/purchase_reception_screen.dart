@@ -1,11 +1,13 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../shared/components/app_buttons.dart';
-import '../../../../shared/components/app_dialogs.dart';
+import '../../../../shared/components/components.dart';
+import '../../../proveedores/domain/entities/supplier.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../../../../shared/components/xela_card.dart';
@@ -31,12 +33,37 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   final TextEditingController _authSriCtrl = TextEditingController();
   final TextEditingController _searchProductCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  
+  final ScrollController _verticalScrollController = ScrollController();
+  final ScrollController _horizontalScrollController = ScrollController();
 
   List<Product> _matchingProducts = [];
+  List<({Product product, ProductPresentation presentation})> _flatMatchingResults = [];
+  int _searchSelectedIndex = 0;
 
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.onKeyEvent = (node, event) {
+      if (event is KeyDownEvent && _flatMatchingResults.isNotEmpty) {
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+          setState(() {
+            _searchSelectedIndex = (_searchSelectedIndex + 1).clamp(0, _flatMatchingResults.length - 1);
+          });
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          setState(() {
+            _searchSelectedIndex = (_searchSelectedIndex - 1).clamp(0, _flatMatchingResults.length - 1);
+          });
+          return KeyEventResult.handled;
+        } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+          final selected = _flatMatchingResults[_searchSelectedIndex];
+          _onSelectProduct(selected.product, selected.presentation);
+          return KeyEventResult.handled;
+        }
+      }
+      return KeyEventResult.ignored;
+    };
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _searchFocusNode.requestFocus();
     });
@@ -48,6 +75,8 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
     _authSriCtrl.dispose();
     _searchProductCtrl.dispose();
     _searchFocusNode.dispose();
+    _verticalScrollController.dispose();
+    _horizontalScrollController.dispose();
     super.dispose();
   }
 
@@ -61,7 +90,10 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   Future<void> _onSearchProduct(String query) async {
     final clean = query.trim();
     if (clean.isEmpty) {
-      setState(() => _matchingProducts = []);
+      setState(() {
+        _matchingProducts = [];
+        _flatMatchingResults = [];
+      });
       return;
     }
 
@@ -70,6 +102,10 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
     if (mounted) {
       setState(() {
         _matchingProducts = results.where((p) => p.isActive && p.presentaciones.isNotEmpty).toList();
+        _flatMatchingResults = _matchingProducts.expand(
+          (prod) => prod.presentaciones.map((pres) => (product: prod, presentation: pres))
+        ).toList();
+        _searchSelectedIndex = 0;
       });
     }
   }
@@ -77,6 +113,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   void _onSelectProduct(Product product, ProductPresentation presentation) async {
     setState(() {
       _matchingProducts = [];
+      _flatMatchingResults = [];
       _searchProductCtrl.clear();
     });
 
@@ -348,36 +385,35 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
               ),
               child: ListView.separated(
                 shrinkWrap: true,
-                itemCount: _matchingProducts.length,
+                itemCount: _flatMatchingResults.length,
                 separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderLight),
                 itemBuilder: (context, index) {
-                  final prod = _matchingProducts[index];
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: prod.presentaciones.map((pres) {
-                      return InkWell(
-                        onTap: () => _onSelectProduct(prod, pres),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.medication_outlined, size: 18, color: AppColors.primary),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  '${prod.nombreComercial} - ${pres.nombreDescriptivo}',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                              Text(
-                                '${pres.unidadesPorCaja} un/caja • Costo: ${AppFormatters.currency(pres.precioCompraCaja)}',
-                                style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-                              ),
-                            ],
+                  final item = _flatMatchingResults[index];
+                  final prod = item.product;
+                  final pres = item.presentation;
+                  final isSelected = index == _searchSelectedIndex;
+                  return InkWell(
+                    onTap: () => _onSelectProduct(prod, pres),
+                    child: Container(
+                      color: isSelected ? AppColors.primarySurface : null,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.medication_outlined, size: 18, color: isSelected ? AppColors.primary : AppColors.textSecondary),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '${prod.nombreComercial} - ${pres.nombreDescriptivo}',
+                              style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold, color: isSelected ? AppColors.primaryDark : AppColors.textPrimary),
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
+                          Text(
+                            '${pres.unidadesPorCaja} un/caja • Costo: ${AppFormatters.currency(pres.precioCompraCaja)}',
+                            style: TextStyle(fontSize: 11, color: isSelected ? AppColors.primary : AppColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               ),
@@ -413,12 +449,34 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: XelaCard(
         padding: EdgeInsets.zero,
-        child: SingleChildScrollView(
-          child: DataTable(
-            headingRowHeight: 40,
-            dataRowMinHeight: 40,
-            dataRowMaxHeight: 44,
-            headingRowColor: WidgetStateProperty.all(AppColors.backgroundDark),
+        child: ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            scrollbars: false,
+            dragDevices: {
+              ...ScrollConfiguration.of(context).dragDevices,
+              // Permite arrastrar la tabla con el mouse como en móvil
+              PointerDeviceKind.mouse,
+            },
+          ),
+          child: Scrollbar(
+            controller: _horizontalScrollController,
+            thumbVisibility: true,
+            trackVisibility: true,
+            child: SingleChildScrollView(
+              controller: _horizontalScrollController,
+              scrollDirection: Axis.horizontal,
+              child: Scrollbar(
+                controller: _verticalScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _verticalScrollController,
+                  scrollDirection: Axis.vertical,
+                  child: DataTable(
+                    headingRowHeight: 40,
+                    dataRowMinHeight: 40,
+                    dataRowMaxHeight: 44,
+                    headingRowColor: WidgetStateProperty.all(AppColors.backgroundDark),
             columns: const [
               DataColumn(label: Text('No.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11))),
               DataColumn(label: Text('Medicamento y Presentación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11))),
@@ -443,6 +501,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(item.productoNombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                         Text(item.presentacionNombre, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
@@ -456,7 +515,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                   DataCell(Text(AppFormatters.currency(item.costoCaja), style: const TextStyle(fontSize: 11))),
                   DataCell(
                     XelaBadge(
-                      text: item.tieneIva ? '12%' : '0%',
+                      text: item.tieneIva ? '${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%' : '0%',
                       variant: item.tieneIva ? XelaBadgeVariant.primary : XelaBadgeVariant.neutral,
                     ),
                   ),
@@ -472,12 +531,46 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     IconButton(
                       icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
                       tooltip: 'Eliminar renglón',
-                      onPressed: () => ref.read(purchaseReceptionProvider.notifier).removeItem(entry.key),
+                      onPressed: () {
+                        final removedItem = item;
+                        final index = entry.key;
+                        ref.read(purchaseReceptionProvider.notifier).removeItem(index);
+                        
+                        final messenger = ScaffoldMessenger.of(context);
+                        messenger.clearSnackBars();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text('Renglón eliminado: ${removedItem.productoNombre}'),
+                            backgroundColor: AppColors.textPrimary,
+                            behavior: SnackBarBehavior.floating,
+                            width: 450,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            action: SnackBarAction(
+                              label: 'DESHACER',
+                              textColor: AppColors.primaryLight,
+                              onPressed: () {
+                                ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
+                                messenger.hideCurrentSnackBar();
+                              },
+                            ),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                        
+                        // Forzar el cierre absoluto en Desktop
+                        Future.delayed(const Duration(milliseconds: 4000), () {
+                          messenger.hideCurrentSnackBar();
+                        });
+                      },
                     ),
                   ),
                 ],
               );
             }).toList(),
+                  ),
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -531,9 +624,9 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
             children: [
               _buildTotalItem('Subtotal 0%:', AppFormatters.currency(state.subtotalCero)),
               const SizedBox(width: 16),
-              _buildTotalItem('Subtotal 12%:', AppFormatters.currency(state.subtotalDoce)),
+              _buildTotalItem('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.subtotalDoce)),
               const SizedBox(width: 16),
-              _buildTotalItem('IVA 12%:', AppFormatters.currency(state.iva)),
+              _buildTotalItem('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.iva)),
               const SizedBox(width: 24),
 
               // Total General

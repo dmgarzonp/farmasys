@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../domain/entities/product.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 
 /// Diálogo modal ergonómico de escritorio para crear o editar un medicamento (SOLID: SRP)
 class ProductFormDialog extends StatefulWidget {
@@ -394,15 +395,20 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
-                                  child: Text(
-                                    _tieneIva
-                                        ? 'Tarifa IVA 12% (Aplica a cosméticos, insumos y suplementos)'
-                                        : 'Tarifa IVA 0% (Medicamentos de uso humano según Ley Tributaria Ecuador)',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
-                                      color: _tieneIva ? AppColors.info : AppColors.success,
-                                    ),
+                                  child: Consumer(
+                                    builder: (context, ref, child) {
+                                      final ivaVigente = ref.watch(settingsProvider).ivaVigente;
+                                      return Text(
+                                        _tieneIva
+                                            ? 'Tarifa IVA ${(ivaVigente * 100).toInt()}% (Aplica a cosméticos, insumos y suplementos)'
+                                            : 'Tarifa IVA 0% (Medicamentos de uso humano según Ley Tributaria Ecuador)',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                          color: _tieneIva ? AppColors.info : AppColors.success,
+                                        ),
+                                      );
+                                    }
                                   ),
                                 ),
                                 Switch(

@@ -21,7 +21,7 @@ class TaxableItem {
 /// Resultado consolidado de la liquidación de impuestos para factura o POS
 class TaxCalculationResult {
   final double subtotal0; // Base imponible tarifa 0%
-  final double subtotalIva; // Base imponible gravada con IVA (12%)
+  final double subtotalIva; // Base imponible gravada con IVA (15%)
   final double totalDiscount; // Descuento global
   final double ivaAmount; // Monto de IVA liquidado
   final double grandTotal; // Total general a pagar
@@ -45,7 +45,7 @@ class TaxCalculationResult {
 class TaxCalculator {
   TaxCalculator._();
 
-  static TaxCalculationResult calculate(List<TaxableItem> items, {double vatRate = AppConstants.ivaVigente}) {
+  static TaxCalculationResult calculate(List<TaxableItem> items, {required double vatRate}) {
     double subtotal0 = 0.0;
     double subtotalIva = 0.0;
     double totalDiscount = 0.0;

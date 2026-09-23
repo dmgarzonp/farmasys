@@ -9,8 +9,9 @@ import '../../../../shared/components/app_data_table.dart';
 import '../../../../shared/components/app_dialogs.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
-import '../../domain/entities/product.dart';
 import '../controllers/product_catalog_notifier.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+import '../../domain/entities/product.dart';
 import 'product_form_dialog.dart';
 
 /// Pantalla principal del Catálogo Maestro de Medicamentos y Productos (Desktop Ergonomic)
@@ -280,7 +281,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                   builder: (p) {
                                     final tieneIva = p.presentaciones.isNotEmpty && p.presentaciones.first.tieneIva;
                                     return XelaBadge(
-                                      text: tieneIva ? '12%' : '0%',
+                                      text: tieneIva ? '${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%' : '0%',
                                       variant: tieneIva ? XelaBadgeVariant.primary : XelaBadgeVariant.neutral,
                                     );
                                   },

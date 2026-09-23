@@ -7,6 +7,8 @@ import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../catalogo_productos/domain/entities/product.dart';
 import '../../domain/entities/purchase_item.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 
 /// Modal ergonómico desktop para capturar un renglón de recepción con datos ARCSA (SOLID: SRP)
 class AddReceptionItemDialog extends StatefulWidget {
@@ -50,6 +52,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
   late TextEditingController _cajasCtrl;
   late TextEditingController _unidadesCtrl;
   late TextEditingController _costoCajaCtrl;
+  late TextEditingController _costoUnitarioCtrl;
   late TextEditingController _tempCtrl;
 
   final FocusNode _loteFocusNode = FocusNode();
@@ -57,6 +60,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
   late DateTime _selectedExpiry;
   bool _cumpleRegistro = true;
   bool _cumpleEmpaque = true;
+  bool _isUpdatingCosts = false;
 
   @override
   void initState() {
@@ -67,8 +71,17 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     _expiryCtrl = TextEditingController(text: AppFormatters.date(_selectedExpiry));
     _cajasCtrl = TextEditingController(text: item != null ? item.cantidadCajas.toStringAsFixed(0) : '1');
     _unidadesCtrl = TextEditingController(text: '0');
-    _costoCajaCtrl = TextEditingController(
-        text: item != null ? item.costoCaja.toStringAsFixed(2) : widget.presentation.precioCompraCaja.toStringAsFixed(2));
+
+    final costoCajaInicial = item != null ? item.costoCaja : widget.presentation.precioCompraCaja;
+    final unidadesPorCaja = widget.presentation.unidadesPorCaja > 0 ? widget.presentation.unidadesPorCaja : 1;
+    final costoUnitarioInicial = costoCajaInicial / unidadesPorCaja;
+
+    _costoCajaCtrl = TextEditingController(text: costoCajaInicial.toStringAsFixed(2));
+    _costoUnitarioCtrl = TextEditingController(text: costoUnitarioInicial.toStringAsFixed(4));
+
+    _costoCajaCtrl.addListener(_onCostoCajaChanged);
+    _costoUnitarioCtrl.addListener(_onCostoUnitarioChanged);
+
     _tempCtrl = TextEditingController(text: item?.temperaturaRecepcion?.toStringAsFixed(1) ?? '');
     _cumpleRegistro = item?.cumpleRegistroSanitario ?? true;
     _cumpleEmpaque = item?.cumpleEmpaque ?? true;
@@ -78,6 +91,28 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     });
   }
 
+  void _onCostoCajaChanged() {
+    if (_isUpdatingCosts) return;
+    final val = double.tryParse(_costoCajaCtrl.text.trim());
+    if (val != null) {
+      final unidadesPorCaja = widget.presentation.unidadesPorCaja > 0 ? widget.presentation.unidadesPorCaja : 1;
+      _isUpdatingCosts = true;
+      _costoUnitarioCtrl.text = (val / unidadesPorCaja).toStringAsFixed(4);
+      _isUpdatingCosts = false;
+    }
+  }
+
+  void _onCostoUnitarioChanged() {
+    if (_isUpdatingCosts) return;
+    final val = double.tryParse(_costoUnitarioCtrl.text.trim());
+    if (val != null) {
+      final unidadesPorCaja = widget.presentation.unidadesPorCaja > 0 ? widget.presentation.unidadesPorCaja : 1;
+      _isUpdatingCosts = true;
+      _costoCajaCtrl.text = (val * unidadesPorCaja).toStringAsFixed(2);
+      _isUpdatingCosts = false;
+    }
+  }
+
   @override
   void dispose() {
     _loteCtrl.dispose();
@@ -85,6 +120,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     _cajasCtrl.dispose();
     _unidadesCtrl.dispose();
     _costoCajaCtrl.dispose();
+    _costoUnitarioCtrl.dispose();
     _tempCtrl.dispose();
     _loteFocusNode.dispose();
     super.dispose();
@@ -114,7 +150,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     final totalUnidades = (cajas * unidadesPorCaja) + unidadesSueltas;
 
     final costoCaja = double.tryParse(_costoCajaCtrl.text.trim()) ?? 0.0;
-    final costoUnitario = unidadesPorCaja > 0 ? (costoCaja / unidadesPorCaja) : costoCaja;
+    final costoUnitario = double.tryParse(_costoUnitarioCtrl.text.trim()) ?? 0.0;
     final subtotal = (cajas * costoCaja) + (unidadesSueltas * costoUnitario);
     final temp = double.tryParse(_tempCtrl.text.trim());
 
@@ -185,9 +221,14 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                             widget.product.nombreComercial,
                             style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                           ),
-                          Text(
-                            '${widget.presentation.nombreDescriptivo} ($unidadesPorCaja unidades/caja) • IVA: ${widget.presentation.tieneIva ? '12%' : '0%'}',
-                            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final ivaVigente = ref.watch(settingsProvider).ivaVigente;
+                              return Text(
+                                '${widget.presentation.nombreDescriptivo} ($unidadesPorCaja unidades/caja) • IVA: ${widget.presentation.tieneIva ? '${(ivaVigente * 100).toInt()}%' : '0%'}',
+                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                              );
+                            }
                           ),
                           if (widget.product.principioActivo != null)
                             Text(
@@ -235,7 +276,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                 ),
                 const SizedBox(height: 12),
 
-                // Cantidad Cajas, Fracciones y Costo Caja
+                // Cantidad Cajas y Fracciones
                 Row(
                   children: [
                     Expanded(
@@ -258,6 +299,26 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         controller: _unidadesCtrl,
                         prefixIcon: Icons.grain_outlined,
                         keyboardType: TextInputType.number,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Costos Sincronizados
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTextField(
+                        label: 'Costo Unitario (\$) *',
+                        controller: _costoUnitarioCtrl,
+                        prefixIcon: Icons.payments_outlined,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        validator: (val) {
+                          final n = double.tryParse(val ?? '');
+                          if (n == null || n < 0) return 'Inválido';
+                          return null;
+                        },
                       ),
                     ),
                     const SizedBox(width: 12),

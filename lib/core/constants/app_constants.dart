@@ -10,13 +10,11 @@ class AppConstants {
   static const int thermalPrinterWidth80mm = 48; // caracteres por línea estándar
   static const int thermalPrinterWidth58mm = 32;
 
-  // Umbrales de Inventario y Alertas
+  // Umbrales de Inventario y Alertas (Fallback)
   static const int defaultExpirationAlertDays = 30;
-  static const int criticalExpirationAlertDays = 7;
   static const int defaultStockMinimo = 5;
 
-  // Impuestos Ecuador
-  static const double ivaVigente = 0.12; // IVA 12% (sugerido por el usuario)
+  // Impuestos Ecuador (Fallback o constantes fijas)
   static const double ivaTarifaCero = 0.00;
 
   // Consumidor Final

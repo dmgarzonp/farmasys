@@ -168,7 +168,10 @@ class TechnicalReceptionDialog extends StatelessWidget {
                     border: Border.all(color: AppColors.borderLight),
                   ),
                   child: SingleChildScrollView(
-                    child: DataTable(
+                    scrollDirection: Axis.vertical,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: DataTable(
                       headingRowHeight: 38,
                       dataRowMinHeight: 38,
                       dataRowMaxHeight: 44,
@@ -193,6 +196,7 @@ class TechnicalReceptionDialog extends StatelessWidget {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(item.productoNombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
                                   Text(item.presentacionNombre, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
@@ -232,6 +236,7 @@ class TechnicalReceptionDialog extends StatelessWidget {
                           ],
                         );
                       }).toList(),
+                    ),
                     ),
                   ),
                 ),

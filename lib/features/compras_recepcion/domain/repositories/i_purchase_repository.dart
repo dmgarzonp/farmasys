@@ -11,4 +11,13 @@ abstract class IPurchaseRepository {
 
   /// Obtiene una compra con todos sus renglones y datos de lote
   Future<PurchaseInvoice?> getPurchaseById(int id);
+
+  /// Guarda temporalmente una factura en estado de borrador sin afectar Kardex ni precios
+  Future<void> saveDraft(PurchaseInvoice invoice);
+
+  /// Obtiene el borrador actual (si existe) para continuar el trabajo
+  Future<PurchaseInvoice?> getDraft();
+
+  /// Elimina el borrador actual de la base de datos
+  Future<void> discardDraft();
 }

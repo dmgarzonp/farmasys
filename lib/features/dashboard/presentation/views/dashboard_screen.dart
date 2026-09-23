@@ -72,10 +72,10 @@ class DashboardScreen extends ConsumerWidget {
                                         Icons.warning_amber_rounded, 
                                         color: esCritico ? Colors.red : Colors.orange
                                       ),
-                                      title: Text('\${alerta.productoNombre} (\${alerta.presentacionNombre})'),
-                                      subtitle: Text('Lote: \${alerta.lote} - Stock: \${alerta.stockActual} unidades'),
+                                      title: Text('${alerta.productoNombre} (${alerta.presentacionNombre})'),
+                                      subtitle: Text('Lote: ${alerta.lote} - Stock: ${alerta.stockActual} unidades'),
                                       trailing: Text(
-                                        'Vence: \${dateFormat.format(alerta.fechaVencimiento)}\n(\${alerta.diasRestantes} días)',
+                                        'Vence: ${dateFormat.format(alerta.fechaVencimiento)}\n(${alerta.diasRestantes} días)',
                                         style: TextStyle(
                                           color: esCritico ? Colors.red : Colors.orange.shade900,
                                           fontWeight: FontWeight.bold,
@@ -111,14 +111,14 @@ class DashboardScreen extends ConsumerWidget {
                                     margin: const EdgeInsets.only(bottom: 8.0),
                                     child: ListTile(
                                       leading: const Icon(Icons.trending_down_rounded, color: Colors.orange),
-                                      title: Text('\${alerta.productoNombre}'),
-                                      subtitle: Text('\${alerta.presentacionNombre}'),
+                                      title: Text('${alerta.productoNombre}'),
+                                      subtitle: Text('${alerta.presentacionNombre}'),
                                       trailing: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         mainAxisAlignment: MainAxisAlignment.center,
                                         children: [
-                                          Text('Stock: \${alerta.stockTotal}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                          Text('Mínimo: \${alerta.stockMinimo}', style: const TextStyle(color: Colors.grey)),
+                                          Text('Stock: ${alerta.stockTotal}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                          Text('Mínimo: ${alerta.stockMinimo}', style: const TextStyle(color: Colors.grey)),
                                         ],
                                       ),
                                     ),
