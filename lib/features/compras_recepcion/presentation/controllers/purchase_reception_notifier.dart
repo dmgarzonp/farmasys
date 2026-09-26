@@ -20,6 +20,7 @@ class PurchaseReceptionState {
   final String? errorMessage;
   final PurchaseInvoice? lastConfirmedInvoice;
   final double ivaVigente;
+  final int? draftId;
 
   PurchaseReceptionState({
     this.selectedSupplier,
@@ -33,6 +34,7 @@ class PurchaseReceptionState {
     this.errorMessage,
     this.lastConfirmedInvoice,
     this.ivaVigente = 0.15,
+    this.draftId,
   })  : invoiceDate = invoiceDate ?? DateTime.now(),
         receptionDate = receptionDate ?? DateTime.now();
 
@@ -67,6 +69,7 @@ class PurchaseReceptionState {
     String? errorMessage,
     PurchaseInvoice? lastConfirmedInvoice,
     double? ivaVigente,
+    int? draftId,
   }) {
     return PurchaseReceptionState(
       selectedSupplier: selectedSupplier ?? this.selectedSupplier,
@@ -80,6 +83,7 @@ class PurchaseReceptionState {
       errorMessage: errorMessage,
       lastConfirmedInvoice: lastConfirmedInvoice ?? this.lastConfirmedInvoice,
       ivaVigente: ivaVigente ?? this.ivaVigente,
+      draftId: draftId ?? this.draftId,
     );
   }
 }
@@ -89,82 +93,83 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
   final IPurchaseRepository _purchaseRepo;
   final Ref _ref;
 
-  PurchaseReceptionNotifier(this._purchaseRepo, this._ref) : super(PurchaseReceptionState(ivaVigente: _ref.read(settingsProvider).ivaVigente)) {
-    _loadDraft();
-  }
+  PurchaseReceptionNotifier(this._purchaseRepo, this._ref) : super(PurchaseReceptionState(ivaVigente: _ref.read(settingsProvider).ivaVigente));
 
-  Future<void> _loadDraft() async {
-    final draft = await _purchaseRepo.getDraft();
-    if (draft != null) {
-      final supplier = Supplier(
-        id: draft.proveedorId,
-        nombreEmpresa: draft.proveedorNombre,
-        ruc: draft.proveedorRuc,
-        telefonoEmpresa: '', // Mock for UI
-        direccion: '',
-      );
-      state = state.copyWith(
-        selectedSupplier: supplier,
-        invoiceNumber: draft.numeroFactura == 'BORRADOR' ? '' : draft.numeroFactura,
-        authorizationNumber: draft.numeroAutorizacionSri,
-        invoiceDate: draft.fechaEmision,
-        receptionDate: draft.fechaRecepcion,
-        items: draft.items,
-        observations: draft.observaciones,
-      );
-    }
-  }
-
-  Future<void> _saveDraft() async {
-    if (state.selectedSupplier == null) return;
-    
-    final invoice = PurchaseInvoice(
-      proveedorId: state.selectedSupplier!.id ?? 0,
-      proveedorNombre: state.selectedSupplier!.nombreEmpresa,
-      proveedorRuc: state.selectedSupplier!.ruc,
-      numeroFactura: state.invoiceNumber.isNotEmpty ? state.invoiceNumber : 'BORRADOR',
-      numeroAutorizacionSri: state.authorizationNumber,
-      fechaEmision: state.invoiceDate,
-      fechaRecepcion: state.receptionDate,
-      subtotalDoce: state.subtotalDoce,
-      subtotalCero: state.subtotalCero,
-      iva: state.iva,
-      total: state.total,
-      observaciones: state.observations,
-      items: state.items,
+  void loadDraft(PurchaseInvoice draft) {
+    final supplier = Supplier(
+      id: draft.proveedorId,
+      nombreEmpresa: draft.proveedorNombre,
+      ruc: draft.proveedorRuc,
+      telefonoEmpresa: '', // Mock for UI
+      direccion: '',
     );
-    await _purchaseRepo.saveDraft(invoice);
+    state = state.copyWith(
+      selectedSupplier: supplier,
+      invoiceNumber: draft.numeroFactura == 'BORRADOR' ? '' : draft.numeroFactura,
+      authorizationNumber: draft.numeroAutorizacionSri,
+      invoiceDate: draft.fechaEmision,
+      receptionDate: draft.fechaRecepcion,
+      items: draft.items,
+      observations: draft.observaciones,
+      draftId: draft.id,
+      errorMessage: null,
+    );
+  }
+
+  Future<void> saveExplicitDraft() async {
+    if (state.selectedSupplier == null) {
+      state = state.copyWith(errorMessage: 'Seleccione un proveedor antes de guardar el borrador.');
+      return;
+    }
+    
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final invoice = PurchaseInvoice(
+        id: state.draftId,
+        proveedorId: state.selectedSupplier!.id ?? 0,
+        proveedorNombre: state.selectedSupplier!.nombreEmpresa,
+        proveedorRuc: state.selectedSupplier!.ruc,
+        numeroFactura: state.invoiceNumber.isNotEmpty ? state.invoiceNumber : 'BORRADOR',
+        numeroAutorizacionSri: state.authorizationNumber,
+        fechaEmision: state.invoiceDate,
+        fechaRecepcion: state.receptionDate,
+        subtotalDoce: state.subtotalDoce,
+        subtotalCero: state.subtotalCero,
+        iva: state.iva,
+        total: state.total,
+        observaciones: state.observations,
+        items: state.items,
+      );
+      final savedDraft = await _purchaseRepo.saveDraft(invoice);
+      state = state.copyWith(draftId: savedDraft.id, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(isLoading: false, errorMessage: 'Error al guardar borrador: $e');
+    }
   }
 
   void selectSupplier(Supplier supplier) {
     state = state.copyWith(selectedSupplier: supplier);
-    _saveDraft();
   }
 
   void setInvoiceNumber(String number) {
     state = state.copyWith(invoiceNumber: number.trim());
-    _saveDraft();
   }
 
   void setAuthorizationNumber(String? auth) {
     state = state.copyWith(authorizationNumber: auth?.trim());
-    _saveDraft();
   }
 
   void setInvoiceDate(DateTime date) {
     state = state.copyWith(invoiceDate: date);
-    _saveDraft();
   }
 
   void setObservations(String? obs) {
     state = state.copyWith(observations: obs?.trim());
-    _saveDraft();
   }
 
   void addItem(PurchaseItem item) {
     final updated = List<PurchaseItem>.from(state.items)..add(item);
     state = state.copyWith(items: updated);
-    _saveDraft();
   }
 
   void updateItem(int index, PurchaseItem item) {
@@ -172,7 +177,6 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
       final updated = List<PurchaseItem>.from(state.items);
       updated[index] = item;
       state = state.copyWith(items: updated);
-      _saveDraft();
     }
   }
 
@@ -180,7 +184,6 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
     if (index >= 0 && index < state.items.length) {
       final updated = List<PurchaseItem>.from(state.items)..removeAt(index);
       state = state.copyWith(items: updated);
-      _saveDraft();
     }
   }
 
@@ -188,13 +191,11 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
     if (index >= 0 && index <= state.items.length) {
       final updated = List<PurchaseItem>.from(state.items)..insert(index, item);
       state = state.copyWith(items: updated);
-      _saveDraft();
     }
   }
 
   void clear() {
     state = PurchaseReceptionState(ivaVigente: _ref.read(settingsProvider).ivaVigente);
-    _purchaseRepo.discardDraft();
   }
 
   /// Guarda atómicamente la recepción en la base de datos
@@ -224,7 +225,15 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
       );
 
       final registered = await _purchaseRepo.registerPurchase(invoice);
-      await _purchaseRepo.discardDraft();
+      
+      // Si fue un borrador que ahora se asienta, lo borramos de la tabla si es necesario
+      // pero nuestro IPurchaseRepository inserta uno nuevo. 
+      // Espera, registerPurchase de DriftPurchaseRepository hace un insert. 
+      // Si proviene de un borrador, el borrador se quedará colgado a menos que lo borremos.
+      if (state.draftId != null) {
+        await _purchaseRepo.deleteDraft(state.draftId!);
+      }
+      
       state = PurchaseReceptionState(lastConfirmedInvoice: registered);
       return registered;
     } catch (e) {
@@ -237,4 +246,9 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
 final purchaseReceptionProvider = StateNotifierProvider<PurchaseReceptionNotifier, PurchaseReceptionState>((ref) {
   final repo = ref.read(purchaseRepositoryProvider);
   return PurchaseReceptionNotifier(repo, ref);
+});
+
+final pendingPurchasesProvider = FutureProvider.autoDispose<List<PurchaseInvoice>>((ref) async {
+  final repo = ref.read(purchaseRepositoryProvider);
+  return await repo.getPendingPurchases();
 });

@@ -16,7 +16,7 @@ class DriftPurchaseRepository implements IPurchaseRepository {
   @override
   Future<PurchaseInvoice> registerPurchase(PurchaseInvoice invoice) async {
     return await _db.transaction(() async {
-      // 1. Insertar cabecera de la factura de compra
+      final finalState = invoice.todosConformesArcsa ? 'ingresada' : 'observada';
       final compraId = await _db.into(_db.comprasTable).insert(
             ComprasTableCompanion.insert(
               proveedorId: invoice.proveedorId,
@@ -29,7 +29,7 @@ class DriftPurchaseRepository implements IPurchaseRepository {
               iva: Value(invoice.iva),
               total: Value(invoice.total),
               observaciones: Value(invoice.observaciones?.trim()),
-              estado: const Value('ingresada'),
+              estado: Value(finalState),
             ),
           );
 
@@ -219,28 +219,50 @@ class DriftPurchaseRepository implements IPurchaseRepository {
     );
   }
   @override
-  Future<void> saveDraft(PurchaseInvoice invoice) async {
-    await _db.transaction(() async {
-      await discardDraft(); // Limpiar borrador anterior si existe
+  Future<PurchaseInvoice> saveDraft(PurchaseInvoice invoice) async {
+    return await _db.transaction(() async {
+      int compraId;
+      
+      if (invoice.id != null) {
+        compraId = invoice.id!;
+        await (_db.update(_db.comprasTable)..where((t) => t.id.equals(compraId))).write(
+          ComprasTableCompanion(
+            proveedorId: Value(invoice.proveedorId),
+            numeroFactura: Value(invoice.numeroFactura.trim()),
+            numeroAutorizacionSri: Value(invoice.numeroAutorizacionSri?.trim()),
+            fechaEmision: Value(invoice.fechaEmision),
+            fechaRecepcion: Value(invoice.fechaRecepcion),
+            subtotalDoce: Value(invoice.subtotalDoce),
+            subtotalCero: Value(invoice.subtotalCero),
+            iva: Value(invoice.iva),
+            total: Value(invoice.total),
+            observaciones: Value(invoice.observaciones?.trim()),
+            estado: const Value('borrador'),
+          ),
+        );
+        // Borrar items antiguos
+        await (_db.delete(_db.detallesCompraTable)..where((t) => t.compraId.equals(compraId))).go();
+      } else {
+        compraId = await _db.into(_db.comprasTable).insert(
+          ComprasTableCompanion.insert(
+            proveedorId: invoice.proveedorId,
+            numeroFactura: invoice.numeroFactura.trim(),
+            numeroAutorizacionSri: Value(invoice.numeroAutorizacionSri?.trim()),
+            fechaEmision: invoice.fechaEmision,
+            fechaRecepcion: Value(invoice.fechaRecepcion),
+            subtotalDoce: Value(invoice.subtotalDoce),
+            subtotalCero: Value(invoice.subtotalCero),
+            iva: Value(invoice.iva),
+            total: Value(invoice.total),
+            observaciones: Value(invoice.observaciones?.trim()),
+            estado: const Value('borrador'),
+          ),
+        );
+      }
 
-      final compraId = await _db.into(_db.comprasTable).insert(
-            ComprasTableCompanion.insert(
-              proveedorId: invoice.proveedorId,
-              numeroFactura: invoice.numeroFactura.trim(),
-              numeroAutorizacionSri: Value(invoice.numeroAutorizacionSri?.trim()),
-              fechaEmision: invoice.fechaEmision,
-              fechaRecepcion: Value(invoice.fechaRecepcion),
-              subtotalDoce: Value(invoice.subtotalDoce),
-              subtotalCero: Value(invoice.subtotalCero),
-              iva: Value(invoice.iva),
-              total: Value(invoice.total),
-              observaciones: Value(invoice.observaciones?.trim()),
-              estado: const Value('borrador'),
-            ),
-          );
-
+      final registeredItems = <PurchaseItem>[];
       for (final item in invoice.items) {
-        await _db.into(_db.detallesCompraTable).insert(
+        final detalleId = await _db.into(_db.detallesCompraTable).insert(
               DetallesCompraTableCompanion.insert(
                 compraId: compraId,
                 presentacionId: item.presentacionId,
@@ -256,29 +278,38 @@ class DriftPurchaseRepository implements IPurchaseRepository {
                 temperaturaRecepcion: Value(item.temperaturaRecepcion),
               ),
             );
+         registeredItems.add(item.copyWith(id: detalleId, compraId: compraId));
       }
+      return invoice.copyWith(id: compraId, items: registeredItems);
     });
   }
 
   @override
-  Future<PurchaseInvoice?> getDraft() async {
-    final query = _db.select(_db.comprasTable)..where((tbl) => tbl.estado.equals('borrador'));
-    final row = await query.getSingleOrNull();
-    if (row != null) {
-      return getPurchaseById(row.id);
+  Future<List<PurchaseInvoice>> getPendingPurchases() async {
+    final query = _db.select(_db.comprasTable).join([
+      innerJoin(_db.proveedoresTable, _db.proveedoresTable.id.equalsExp(_db.comprasTable.proveedorId)),
+    ])..where(_db.comprasTable.estado.isIn(['borrador', 'observada']));
+    
+    query.orderBy([OrderingTerm.desc(_db.comprasTable.id)]);
+    
+    final rows = await query.get();
+    
+    final List<PurchaseInvoice> results = [];
+    for (var row in rows) {
+       final compra = row.readTable(_db.comprasTable);
+       final fullInvoice = await getPurchaseById(compra.id);
+       if (fullInvoice != null) {
+          results.add(fullInvoice);
+       }
     }
-    return null;
+    return results;
   }
 
   @override
-  Future<void> discardDraft() async {
+  Future<void> deleteDraft(int id) async {
     await _db.transaction(() async {
-      final query = _db.select(_db.comprasTable)..where((tbl) => tbl.estado.equals('borrador'));
-      final drafts = await query.get();
-      for (final draft in drafts) {
-        await (_db.delete(_db.detallesCompraTable)..where((tbl) => tbl.compraId.equals(draft.id))).go();
-        await (_db.delete(_db.comprasTable)..where((tbl) => tbl.id.equals(draft.id))).go();
-      }
+      await (_db.delete(_db.detallesCompraTable)..where((tbl) => tbl.compraId.equals(id))).go();
+      await (_db.delete(_db.comprasTable)..where((tbl) => tbl.id.equals(id))).go();
     });
   }
 }

@@ -7,6 +7,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
 import '../../../../shared/components/app_dialogs.dart';
+import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../controllers/product_catalog_notifier.dart';
@@ -38,11 +39,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     if (newProduct != null && mounted) {
       final success = await ref.read(productCatalogProvider.notifier).saveProduct(newProduct);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Medicamento "${newProduct.nombreComercial}" registrado exitosamente.'),
-            backgroundColor: AppColors.success,
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          message: 'Medicamento "${newProduct.nombreComercial}" registrado exitosamente.',
         );
       }
     }
@@ -53,11 +52,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     if (updated != null && mounted) {
       final success = await ref.read(productCatalogProvider.notifier).saveProduct(updated);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Medicamento "${updated.nombreComercial}" actualizado.'),
-            backgroundColor: AppColors.info,
-          ),
+        AppSnackBars.showInfo(
+          context,
+          message: 'Medicamento "${updated.nombreComercial}" actualizado.',
         );
       }
     }

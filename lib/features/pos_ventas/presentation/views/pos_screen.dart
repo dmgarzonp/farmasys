@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_dialogs.dart';
+import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../../../../shared/components/xela_card.dart';
@@ -76,11 +77,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     if (amount != null && mounted) {
       final success = await ref.read(cashSessionProvider.notifier).openSession(montoInicial: amount);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Turno de caja abierto exitosamente con fondo de ${AppFormatters.currency(amount)}.'),
-            backgroundColor: AppColors.success,
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          message: 'Turno de caja abierto exitosamente con fondo de ${AppFormatters.currency(amount)}.',
         );
       }
     }
@@ -100,11 +99,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           );
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Turno de caja cerrado y arqueo registrado.'),
-            backgroundColor: AppColors.info,
-          ),
+        AppSnackBars.showInfo(
+          context,
+          message: 'Turno de caja cerrado y arqueo registrado.',
         );
       }
     }
@@ -160,9 +157,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   void _onCheckout() async {
     final cartState = ref.read(posCartProvider);
     if (cartState.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('El carrito de compras está vacío.'), backgroundColor: AppColors.warning),
-      );
+      AppSnackBars.showWarning(context, message: 'El carrito de compras está vacío.');
       return;
     }
 
@@ -215,22 +210,18 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         ref.read(posCartProvider.notifier).clear();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Venta #${completedSale.id} procesada exitosamente. Lotes FEFO descontados.'),
-              backgroundColor: AppColors.success,
-              duration: const Duration(seconds: 4),
-            ),
+          AppSnackBars.showSuccess(
+            context,
+            message: 'Venta #${completedSale.id} procesada exitosamente. Lotes FEFO descontados.',
+            duration: const Duration(seconds: 4),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Error al procesar la venta: $e'),
-              backgroundColor: AppColors.danger,
-              duration: const Duration(seconds: 5),
-            ),
+          AppSnackBars.showError(
+            context,
+            message: 'Error al procesar la venta: $e',
+            duration: const Duration(seconds: 5),
           );
         }
       }

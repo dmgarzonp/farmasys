@@ -16,6 +16,7 @@ import '../../../catalogo_productos/domain/entities/product.dart';
 import '../../../catalogo_productos/presentation/views/product_form_dialog.dart';
 import '../../../proveedores/presentation/views/supplier_select_dialog.dart';
 import '../../domain/entities/purchase_invoice.dart';
+import '../../data/repositories/drift_purchase_repository.dart';
 import '../controllers/purchase_reception_notifier.dart';
 import 'add_reception_item_dialog.dart';
 import 'technical_reception_dialog.dart';
@@ -29,6 +30,7 @@ class PurchaseReceptionScreen extends ConsumerStatefulWidget {
 }
 
 class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final TextEditingController _invoiceNumCtrl = TextEditingController();
   final TextEditingController _authSriCtrl = TextEditingController();
   final TextEditingController _searchProductCtrl = TextEditingController();
@@ -178,7 +180,9 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
         const SingleActivator(LogicalKeyboardKey.f10): _onConfirmReception,
       },
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: AppColors.backgroundLight,
+        endDrawer: _buildPendingPurchasesDrawer(context),
         body: Column(
           children: [
             // Barra de Acciones de Recepción
@@ -206,11 +210,13 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     variant: state.items.isNotEmpty ? XelaBadgeVariant.success : XelaBadgeVariant.neutral,
                   ),
                   const Spacer(),
-                  AppPrimaryButton(
-                    text: 'Confirmar Ingreso a Bodega',
-                    shortcutLabel: 'F10',
-                    icon: Icons.check_circle_outline,
-                    onPressed: state.isValid ? _onConfirmReception : null,
+                  AppSecondaryButton(
+                    text: 'Pendientes / Borradores',
+                    icon: Icons.history,
+                    onPressed: () {
+                      ref.invalidate(pendingPurchasesProvider);
+                      _scaffoldKey.currentState?.openEndDrawer();
+                    },
                   ),
                 ],
               ),
@@ -536,30 +542,24 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                         final index = entry.key;
                         ref.read(purchaseReceptionProvider.notifier).removeItem(index);
                         
-                        final messenger = ScaffoldMessenger.of(context);
-                        messenger.clearSnackBars();
-                        messenger.showSnackBar(
-                          SnackBar(
-                            content: Text('Renglón eliminado: ${removedItem.productoNombre}'),
-                            backgroundColor: AppColors.textPrimary,
-                            behavior: SnackBarBehavior.floating,
-                            width: 450,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            action: SnackBarAction(
-                              label: 'DESHACER',
-                              textColor: AppColors.primaryLight,
-                              onPressed: () {
-                                ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
-                                messenger.hideCurrentSnackBar();
-                              },
-                            ),
-                            duration: const Duration(seconds: 4),
+                        AppSnackBars.show(
+                          context,
+                          message: 'Renglón eliminado: ${removedItem.productoNombre}',
+                          action: SnackBarAction(
+                            label: 'DESHACER',
+                            textColor: AppColors.primaryLight,
+                            onPressed: () {
+                              ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
+                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                            },
                           ),
                         );
                         
                         // Forzar el cierre absoluto en Desktop
                         Future.delayed(const Duration(milliseconds: 4000), () {
-                          messenger.hideCurrentSnackBar();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                          }
                         });
                       },
                     ),
@@ -580,86 +580,111 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   Widget _buildBottomSummaryBar(BuildContext context, PurchaseReceptionState state) {
     return Container(
       color: AppColors.cardBackground,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          // Métricas de Renglones
-          Row(
-            children: [
-              _buildMetricChip('Renglones', '${state.items.length}'),
-              const SizedBox(width: 12),
-              _buildMetricChip('Total Unidades', state.totalUnidades.toStringAsFixed(0)),
-              const SizedBox(width: 16),
-              if (state.items.isNotEmpty)
-                AppSecondaryButton(
-                  text: 'Ver Acta Técnica ARCSA',
-                  icon: Icons.verified_outlined,
-                  onPressed: () {
-                    if (state.selectedSupplier == null) {
-                      AppDialogs.showInfo(context, title: 'Atención', message: 'Seleccione un proveedor primero para ver el acta.');
-                      return;
-                    }
-                    final tempInvoice = PurchaseInvoice(
-                      proveedorId: state.selectedSupplier!.id ?? 0,
-                      proveedorNombre: state.selectedSupplier!.nombreEmpresa,
-                      proveedorRuc: state.selectedSupplier!.ruc,
-                      numeroFactura: state.invoiceNumber.isNotEmpty ? state.invoiceNumber : 'BORRADOR',
-                      fechaEmision: state.invoiceDate,
-                      fechaRecepcion: state.receptionDate,
-                      subtotalDoce: state.subtotalDoce,
-                      subtotalCero: state.subtotalCero,
-                      iva: state.iva,
-                      total: state.total,
-                      items: state.items,
-                    );
-                    TechnicalReceptionDialog.show(context, tempInvoice);
-                  },
-                ),
-            ],
-          ),
-
-          // Cuadre de Factura: Subtotales e IVA
-          Row(
-            children: [
-              _buildTotalItem('Subtotal 0%:', AppFormatters.currency(state.subtotalCero)),
-              const SizedBox(width: 16),
-              _buildTotalItem('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.subtotalDoce)),
-              const SizedBox(width: 16),
-              _buildTotalItem('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.iva)),
-              const SizedBox(width: 24),
-
-              // Total General
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('TOTAL FACTURA PROVEEDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
-                    Text(
-                      AppFormatters.currency(state.total),
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                    // Métricas de Renglones
+                    Row(
+                      children: [
+                        _buildMetricChip('Renglones', '${state.items.length}'),
+                        const SizedBox(width: 12),
+                        _buildMetricChip('Total Unidades', state.totalUnidades.toStringAsFixed(0)),
+                        const SizedBox(width: 16),
+                        if (state.items.isNotEmpty)
+                          AppSecondaryButton(
+                            text: 'Ver Acta Técnica ARCSA',
+                            icon: Icons.verified_outlined,
+                            onPressed: () {
+                              if (state.selectedSupplier == null) {
+                                AppDialogs.showInfo(context, title: 'Atención', message: 'Seleccione un proveedor primero para ver el acta.');
+                                return;
+                              }
+                              final tempInvoice = PurchaseInvoice(
+                                proveedorId: state.selectedSupplier!.id ?? 0,
+                                proveedorNombre: state.selectedSupplier!.nombreEmpresa,
+                                proveedorRuc: state.selectedSupplier!.ruc,
+                                numeroFactura: state.invoiceNumber.isNotEmpty ? state.invoiceNumber : 'BORRADOR',
+                                fechaEmision: state.invoiceDate,
+                                fechaRecepcion: state.receptionDate,
+                                subtotalDoce: state.subtotalDoce,
+                                subtotalCero: state.subtotalCero,
+                                iva: state.iva,
+                                total: state.total,
+                                items: state.items,
+                              );
+                              TechnicalReceptionDialog.show(context, tempInvoice);
+                            },
+                          ),
+                      ],
+                    ),
+
+                    // Cuadre de Factura: Subtotales e IVA
+                    Row(
+                      children: [
+                        _buildTotalItem('Subtotal 0%:', AppFormatters.currency(state.subtotalCero)),
+                        const SizedBox(width: 16),
+                        _buildTotalItem('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.subtotalDoce)),
+                        const SizedBox(width: 16),
+                        _buildTotalItem('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.iva)),
+                        const SizedBox(width: 24),
+
+                        // Total General
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primarySurface,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('TOTAL FACTURA PROVEEDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
+                              Text(
+                                AppFormatters.currency(state.total),
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Botón Guardar Borrador
+                        AppSecondaryButton(
+                          text: 'Guardar Borrador',
+                          icon: Icons.save_outlined,
+                          onPressed: () async {
+                            await ref.read(purchaseReceptionProvider.notifier).saveExplicitDraft();
+                            if (context.mounted) {
+                              AppSnackBars.show(context, message: 'Borrador guardado exitosamente');
+                            }
+                          },
+                        ),
+                        const SizedBox(width: 12),
+
+                        // Botón Guardar Recepción
+                        AppPrimaryButton(
+                          text: 'Asentar Recepción',
+                          shortcutLabel: 'F10',
+                          icon: Icons.check_circle_outline,
+                          onPressed: state.isValid && !state.isLoading ? _onConfirmReception : null,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
-
-              // Botón Guardar Recepción
-              AppPrimaryButton(
-                text: 'Asentar Recepción',
-                shortcutLabel: 'F10',
-                icon: Icons.check_circle_outline,
-                onPressed: state.isValid && !state.isLoading ? _onConfirmReception : null,
-              ),
-            ],
-          ),
-        ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -687,6 +712,111 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
         Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
         Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
       ],
+    );
+  }
+
+  Widget _buildPendingPurchasesDrawer(BuildContext context) {
+    return Drawer(
+      width: 400,
+      backgroundColor: AppColors.backgroundLight,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            color: AppColors.cardBackground,
+            child: const Row(
+              children: [
+                Icon(Icons.history, color: AppColors.primary),
+                SizedBox(width: 12),
+                Text('Recepciones Pendientes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: Consumer(
+              builder: (context, ref, child) {
+                final pendingAsync = ref.watch(pendingPurchasesProvider);
+                
+                return pendingAsync.when(
+                  data: (invoices) {
+                    if (invoices.isEmpty) {
+                      return const Center(child: Text('No hay borradores ni recepciones observadas.', style: TextStyle(color: AppColors.textSecondary)));
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: invoices.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) {
+                        final inv = invoices[index];
+                        final isDraft = inv.estado == 'borrador';
+                        
+                        return XelaCard(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  XelaBadge(
+                                    text: isDraft ? 'Borrador' : 'Observada',
+                                    variant: isDraft ? XelaBadgeVariant.neutral : XelaBadgeVariant.warning,
+                                  ),
+                                  Text(AppFormatters.date(inv.fechaRecepcion), style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(inv.proveedorNombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                              Text('Factura: ${inv.numeroFactura}', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  if (isDraft) ...[
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: AppColors.error, size: 18),
+                                      onPressed: () async {
+                                        await ref.read(purchaseRepositoryProvider).deleteDraft(inv.id!);
+                                        ref.invalidate(pendingPurchasesProvider);
+                                        AppSnackBars.show(context, message: 'Borrador eliminado');
+                                      },
+                                    ),
+                                    const SizedBox(width: 8),
+                                    AppPrimaryButton(
+                                      text: 'Cargar',
+                                      icon: Icons.edit,
+                                      onPressed: () {
+                                        ref.read(purchaseReceptionProvider.notifier).loadDraft(inv);
+                                        Navigator.pop(context);
+                                        AppSnackBars.show(context, message: 'Borrador cargado');
+                                      },
+                                    ),
+                                  ] else
+                                    AppSecondaryButton(
+                                      text: 'Ver Acta',
+                                      icon: Icons.visibility,
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                        TechnicalReceptionDialog.show(context, inv);
+                                      },
+                                    ),
+                                ],
+                              )
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) => Center(child: Text('Error: $err')),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

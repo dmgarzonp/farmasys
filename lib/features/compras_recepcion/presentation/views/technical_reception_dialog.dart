@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
+import '../../../../shared/components/app_snackbars.dart';
 import '../../domain/entities/purchase_invoice.dart';
 
 /// Modal para previsualizar e imprimir el Acta de Recepción Técnica Sanitaria (ARCSA Ecuador)
@@ -307,8 +308,9 @@ class TechnicalReceptionDialog extends StatelessWidget {
                     text: 'Imprimir / Exportar Acta',
                     icon: Icons.print_outlined,
                     onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Acta de Recepción Técnica lista para archivo físico ARCSA.')),
+                      AppSnackBars.showInfo(
+                        context,
+                        message: 'Acta de Recepción Técnica lista para archivo físico ARCSA.',
                       );
                       Navigator.of(context).pop();
                     },

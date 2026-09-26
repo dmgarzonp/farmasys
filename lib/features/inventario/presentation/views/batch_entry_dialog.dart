@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
+import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../catalogo_productos/presentation/controllers/product_catalog_notifier.dart';
 import '../../domain/entities/batch_stock.dart';
@@ -76,11 +77,9 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
   void _onSave() {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedPresentacionId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Por favor seleccione un medicamento del catálogo'),
-          backgroundColor: AppColors.danger,
-        ),
+      AppSnackBars.showError(
+        context,
+        message: 'Por favor seleccione un medicamento del catálogo',
       );
       return;
     }

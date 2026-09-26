@@ -6,6 +6,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
+import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/expiration_badge.dart';
 import '../../../../shared/components/xela_badge.dart';
@@ -46,11 +47,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
           );
 
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lote "${batch.lote}" ingresado con ${batch.stockActual} unidades.'),
-            backgroundColor: AppColors.success,
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          message: 'Lote "${batch.lote}" ingresado con ${batch.stockActual} unidades.',
         );
       }
     }
@@ -112,11 +111,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               reasonCtrl.text.trim(),
             );
         if (success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Stock actualizado en Kardex.'),
-              backgroundColor: AppColors.info,
-            ),
+          AppSnackBars.showInfo(
+            context,
+            message: 'Stock actualizado en Kardex.',
           );
         }
       }

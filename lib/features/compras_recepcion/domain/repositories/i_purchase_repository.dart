@@ -13,11 +13,11 @@ abstract class IPurchaseRepository {
   Future<PurchaseInvoice?> getPurchaseById(int id);
 
   /// Guarda temporalmente una factura en estado de borrador sin afectar Kardex ni precios
-  Future<void> saveDraft(PurchaseInvoice invoice);
+  Future<PurchaseInvoice> saveDraft(PurchaseInvoice invoice);
 
-  /// Obtiene el borrador actual (si existe) para continuar el trabajo
-  Future<PurchaseInvoice?> getDraft();
+  /// Obtiene la lista de compras pendientes (borradores y observadas)
+  Future<List<PurchaseInvoice>> getPendingPurchases();
 
-  /// Elimina el borrador actual de la base de datos
-  Future<void> discardDraft();
+  /// Elimina un borrador de la base de datos
+  Future<void> deleteDraft(int id);
 }

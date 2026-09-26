@@ -76,11 +76,9 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
     if (amount != null && mounted) {
       final success = await ref.read(cashSessionProvider.notifier).openSession(montoInicial: amount);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Turno de caja abierto exitosamente con fondo de ${AppFormatters.currency(amount)}.'),
-            backgroundColor: AppColors.success,
-          ),
+        AppSnackBars.showSuccess(
+          context,
+          message: 'Turno de caja abierto exitosamente con fondo de ${AppFormatters.currency(amount)}.',
         );
       }
     }
@@ -99,11 +97,9 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
             observaciones: result['observaciones'] as String?,
           );
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Turno de caja cerrado y arqueo registrado.'),
-            backgroundColor: AppColors.info,
-          ),
+        AppSnackBars.showInfo(
+          context,
+          message: 'Turno de caja cerrado y arqueo registrado.',
         );
       }
     }
