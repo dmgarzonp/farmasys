@@ -43,3 +43,18 @@ class AlertaStock {
 
   bool get esCritico => stockTotal <= (stockMinimo / 2);
 }
+
+class ProductoTop {
+  final String productoNombre;
+  final String presentacionNombre;
+  final double cantidadVendida;
+  final double totalRecaudado;
+
+  ProductoTop({
+    required this.productoNombre,
+    required this.presentacionNombre,
+    required this.cantidadVendida,
+    required this.totalRecaudado,
+  });
+}
+
