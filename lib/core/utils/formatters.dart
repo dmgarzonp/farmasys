@@ -7,7 +7,7 @@ class AppFormatters {
   static final NumberFormat _currencyFormat = NumberFormat.currency(
     symbol: r'$ ',
     decimalDigits: 2,
-    locale: 'en_US',
+    locale: 'es_ES', // Forzar configuración europea/sudamericana (1.000,00)
   );
 
   static final DateFormat _dateFormat = DateFormat('dd/MM/yyyy');

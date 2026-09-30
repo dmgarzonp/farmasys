@@ -53,6 +53,8 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
   late TextEditingController _unidadesCtrl;
   late TextEditingController _costoCajaCtrl;
   late TextEditingController _costoUnitarioCtrl;
+  late TextEditingController _pvpCajaCtrl;
+  late TextEditingController _pvpUnitarioCtrl;
   late TextEditingController _tempCtrl;
 
   final FocusNode _loteFocusNode = FocusNode();
@@ -61,6 +63,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
   bool _cumpleRegistro = true;
   bool _cumpleEmpaque = true;
   bool _isUpdatingCosts = false;
+  bool _isUpdatingPvp = false;
 
   @override
   void initState() {
@@ -79,8 +82,16 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     _costoCajaCtrl = TextEditingController(text: costoCajaInicial.toStringAsFixed(2));
     _costoUnitarioCtrl = TextEditingController(text: costoUnitarioInicial.toStringAsFixed(4));
 
+    final pvpCajaInicial = item?.nuevoPvpCaja ?? widget.presentation.precioVentaCaja;
+    final pvpUnitarioInicial = item?.nuevoPvpUnitario ?? widget.presentation.precioVentaFraccion;
+
+    _pvpCajaCtrl = TextEditingController(text: pvpCajaInicial.toStringAsFixed(2));
+    _pvpUnitarioCtrl = TextEditingController(text: pvpUnitarioInicial.toStringAsFixed(4));
+
     _costoCajaCtrl.addListener(_onCostoCajaChanged);
     _costoUnitarioCtrl.addListener(_onCostoUnitarioChanged);
+    _pvpCajaCtrl.addListener(_onPvpCajaChanged);
+    _pvpUnitarioCtrl.addListener(_onPvpUnitarioChanged);
 
     _tempCtrl = TextEditingController(text: item?.temperaturaRecepcion?.toStringAsFixed(1) ?? '');
     _cumpleRegistro = item?.cumpleRegistroSanitario ?? true;
@@ -113,6 +124,39 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     }
   }
 
+  void _recalculatePvp(double costoCaja, double costoUnitario) {
+    if (_isUpdatingPvp) return;
+    _isUpdatingPvp = true;
+    // Añadir 30% de rentabilidad
+    final pvpCaja = costoCaja * 1.30;
+    final pvpUnitario = costoUnitario * 1.30;
+    _pvpCajaCtrl.text = pvpCaja.toStringAsFixed(2);
+    _pvpUnitarioCtrl.text = pvpUnitario.toStringAsFixed(4);
+    _isUpdatingPvp = false;
+  }
+
+  void _onPvpCajaChanged() {
+    if (_isUpdatingPvp) return;
+    final val = double.tryParse(_pvpCajaCtrl.text.trim());
+    if (val != null) {
+      final unidadesPorCaja = widget.presentation.unidadesPorCaja > 0 ? widget.presentation.unidadesPorCaja : 1;
+      _isUpdatingPvp = true;
+      _pvpUnitarioCtrl.text = (val / unidadesPorCaja).toStringAsFixed(4);
+      _isUpdatingPvp = false;
+    }
+  }
+
+  void _onPvpUnitarioChanged() {
+    if (_isUpdatingPvp) return;
+    final val = double.tryParse(_pvpUnitarioCtrl.text.trim());
+    if (val != null) {
+      final unidadesPorCaja = widget.presentation.unidadesPorCaja > 0 ? widget.presentation.unidadesPorCaja : 1;
+      _isUpdatingPvp = true;
+      _pvpCajaCtrl.text = (val * unidadesPorCaja).toStringAsFixed(2);
+      _isUpdatingPvp = false;
+    }
+  }
+
   @override
   void dispose() {
     _loteCtrl.dispose();
@@ -121,6 +165,8 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
     _unidadesCtrl.dispose();
     _costoCajaCtrl.dispose();
     _costoUnitarioCtrl.dispose();
+    _pvpCajaCtrl.dispose();
+    _pvpUnitarioCtrl.dispose();
     _tempCtrl.dispose();
     _loteFocusNode.dispose();
     super.dispose();
@@ -151,6 +197,9 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
 
     final costoCaja = double.tryParse(_costoCajaCtrl.text.trim()) ?? 0.0;
     final costoUnitario = double.tryParse(_costoUnitarioCtrl.text.trim()) ?? 0.0;
+    final nuevoPvpCaja = double.tryParse(_pvpCajaCtrl.text.trim()) ?? 0.0;
+    final nuevoPvpUnitario = double.tryParse(_pvpUnitarioCtrl.text.trim()) ?? 0.0;
+    
     final subtotal = (cajas * costoCaja) + (unidadesSueltas * costoUnitario);
     final temp = double.tryParse(_tempCtrl.text.trim());
 
@@ -170,6 +219,8 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
       costoUnitario: costoUnitario,
       tieneIva: widget.presentation.tieneIva,
       subtotal: subtotal,
+      nuevoPvpCaja: nuevoPvpCaja,
+      nuevoPvpUnitario: nuevoPvpUnitario,
       cumpleRegistroSanitario: _cumpleRegistro,
       cumpleEmpaque: _cumpleEmpaque,
       temperaturaRecepcion: temp,
@@ -314,6 +365,13 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         controller: _costoUnitarioCtrl,
                         prefixIcon: Icons.payments_outlined,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (val) {
+                          final n = double.tryParse(val ?? '');
+                          if (n != null) {
+                            final cCaja = double.tryParse(_costoCajaCtrl.text.trim()) ?? 0.0;
+                            _recalculatePvp(cCaja, n);
+                          }
+                        },
                         validator: (val) {
                           final n = double.tryParse(val ?? '');
                           if (n == null || n < 0) return 'Inválido';
@@ -328,6 +386,13 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         controller: _costoCajaCtrl,
                         prefixIcon: Icons.attach_money_outlined,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (val) {
+                          final n = double.tryParse(val ?? '');
+                          if (n != null) {
+                            final cUnit = double.tryParse(_costoUnitarioCtrl.text.trim()) ?? 0.0;
+                            _recalculatePvp(n, cUnit);
+                          }
+                        },
                         validator: (val) {
                           final n = double.tryParse(val ?? '');
                           if (n == null || n < 0) return 'Inválido';
@@ -336,6 +401,59 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+
+                // Precios de Venta Sugeridos (30%)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(Icons.percent_outlined, color: AppColors.primary, size: 16),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Precios de Venta (Rentabilidad Sugerida 30%)',
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                          ),
+                          const Spacer(),
+                          Text(
+                            'Se actualizará el catálogo',
+                            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: AppTextField(
+                              label: 'PVP Unitario (\$)',
+                              controller: _pvpUnitarioCtrl,
+                              prefixIcon: Icons.sell_outlined,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: AppTextField(
+                              label: 'PVP Caja (\$)',
+                              controller: _pvpCajaCtrl,
+                              prefixIcon: Icons.sell_outlined,
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 16),
 

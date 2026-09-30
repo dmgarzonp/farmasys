@@ -98,12 +98,17 @@ class DriftPurchaseRepository implements IPurchaseRepository {
               ),
             );
 
-        // d) Actualizar el último costo de compra en el catálogo maestro
-        await (_db.update(_db.presentacionesTable)..where((t) => t.id.equals(item.presentacionId))).write(
-          PresentacionesTableCompanion(
-            precioCompraCaja: Value(item.costoCaja),
-          ),
+        // d) Actualizar el último costo de compra y PVP (si fue modificado) en el catálogo maestro
+        final companion = PresentacionesTableCompanion(
+          precioCompraCaja: Value(item.costoCaja),
         );
+        
+        final updatedCompanion = companion.copyWith(
+          precioVentaCaja: item.nuevoPvpCaja != null && item.nuevoPvpCaja! > 0 ? Value(item.nuevoPvpCaja!) : const Value.absent(),
+          precioVentaFraccion: item.nuevoPvpUnitario != null && item.nuevoPvpUnitario! > 0 ? Value(item.nuevoPvpUnitario!) : const Value.absent(),
+        );
+
+        await (_db.update(_db.presentacionesTable)..where((t) => t.id.equals(item.presentacionId))).write(updatedCompanion);
 
         registeredItems.add(item.copyWith(id: detalleId, compraId: compraId));
       }

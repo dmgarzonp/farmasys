@@ -57,7 +57,8 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
 
   /// Agrega o actualiza un producto en el carrito recalculando impuestos automáticamente
   void addItem(CartItem item) {
-    final existingIndex = state.items.indexWhere((i) => i.presentacionId == item.presentacionId);
+    final existingIndex = state.items.indexWhere(
+        (i) => i.presentacionId == item.presentacionId && i.isFraccion == item.isFraccion);
     final List<CartItem> updatedItems = List.from(state.items);
 
     if (existingIndex >= 0) {
@@ -73,20 +74,20 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
   }
 
   /// Remueve un ítem del carrito
-  void removeItem(int presentacionId) {
-    final updatedItems = state.items.where((i) => i.presentacionId != presentacionId).toList();
+  void removeItem(int presentacionId, bool isFraccion) {
+    final updatedItems = state.items.where((i) => !(i.presentacionId == presentacionId && i.isFraccion == isFraccion)).toList();
     _recalculate(updatedItems);
   }
 
   /// Actualiza la cantidad solicitada
-  void updateQuantity(int presentacionId, double quantity) {
+  void updateQuantity(int presentacionId, bool isFraccion, double quantity) {
     if (quantity <= 0) {
-      removeItem(presentacionId);
+      removeItem(presentacionId, isFraccion);
       return;
     }
 
     final updatedItems = state.items.map((item) {
-      if (item.presentacionId == presentacionId) {
+      if (item.presentacionId == presentacionId && item.isFraccion == isFraccion) {
         return item.copyWith(quantity: quantity);
       }
       return item;

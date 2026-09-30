@@ -8,7 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 
 /// Diálogo modal ergonómico de escritorio para crear o editar un medicamento (SOLID: SRP)
-class ProductFormDialog extends StatefulWidget {
+class ProductFormDialog extends ConsumerStatefulWidget {
   final Product? initialProduct;
 
   const ProductFormDialog({super.key, this.initialProduct});
@@ -22,10 +22,10 @@ class ProductFormDialog extends StatefulWidget {
   }
 
   @override
-  State<ProductFormDialog> createState() => _ProductFormDialogState();
+  ConsumerState<ProductFormDialog> createState() => _ProductFormDialogState();
 }
 
-class _ProductFormDialogState extends State<ProductFormDialog> {
+class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late TextEditingController _barcodeCtrl;
@@ -44,6 +44,45 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
   bool _esPsicotropico = false;
   bool _esAntibiotico = false;
   bool _tieneIva = false;
+
+  double _targetMargin = 0.30;
+  double _netProfitBox = 0.0;
+  double _realMarginPercentage = 0.0;
+
+  void _recalculatePVP() {
+    final cost = double.tryParse(_costPriceCtrl.text.replaceAll(',', '.')) ?? 0.0;
+    if (cost <= 0) return;
+
+    // PVP = Costo / (1 - Margen)
+    final suggestedPvp = cost / (1 - _targetMargin);
+    _salePriceCtrl.text = suggestedPvp.toStringAsFixed(2);
+    
+    final units = int.tryParse(_unitsPerBoxCtrl.text) ?? 1;
+    if (units > 1) {
+      final fractionPvp = suggestedPvp / units;
+      _fractionPriceCtrl.text = fractionPvp.toStringAsFixed(2);
+    } else {
+      _fractionPriceCtrl.text = suggestedPvp.toStringAsFixed(2);
+    }
+    _recalculateProfit();
+  }
+
+  void _recalculateProfit() {
+    final cost = double.tryParse(_costPriceCtrl.text.replaceAll(',', '.')) ?? 0.0;
+    final pvp = double.tryParse(_salePriceCtrl.text.replaceAll(',', '.')) ?? 0.0;
+    
+    if (pvp > 0) {
+      final ivaVigente = ref.read(settingsProvider).ivaVigente;
+      final pvpNeto = _tieneIva ? (pvp / (1 + ivaVigente)) : pvp;
+      
+      _netProfitBox = pvpNeto - cost;
+      _realMarginPercentage = (_netProfitBox / pvpNeto) * 100;
+    } else {
+      _netProfitBox = 0.0;
+      _realMarginPercentage = 0.0;
+    }
+    setState(() {});
+  }
 
   @override
   void initState() {
@@ -66,6 +105,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     _esPsicotropico = p?.esPsicotropico ?? false;
     _esAntibiotico = p?.esAntibiotico ?? false;
     _tieneIva = pres?.tieneIva ?? false;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _recalculateProfit();
+    });
   }
 
   @override
@@ -113,6 +156,32 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
     );
 
     Navigator.of(context).pop(product);
+  }
+
+  Widget _buildMarginChip(double margin, String label) {
+    final isSelected = _targetMargin == margin;
+    return InkWell(
+      onTap: () {
+        setState(() => _targetMargin = margin);
+        _recalculatePVP();
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : AppColors.background,
+          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : AppColors.textSecondary,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -308,13 +377,29 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                           const SizedBox(height: 24),
 
                           // 2. Precios y Presentación Comercial
-                          const Text(
-                            '2. Presentación Comercial, Precios e Impuestos',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                '2. Presentación Comercial y Rentabilidad',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              Row(
+                                children: [
+                                  const Text('Margen sugerido:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                  const SizedBox(width: 8),
+                                  _buildMarginChip(0.20, '20%'),
+                                  const SizedBox(width: 4),
+                                  _buildMarginChip(0.30, '30%'),
+                                  const SizedBox(width: 4),
+                                  _buildMarginChip(0.40, '40%'),
+                                ],
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
                           Row(
@@ -336,6 +421,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                   label: 'Unidades por Caja',
                                   hintText: '1',
                                   keyboardType: TextInputType.number,
+                                  onChanged: (_) => _recalculatePVP(),
                                 ),
                               ),
                             ],
@@ -350,6 +436,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                   hintText: '0.00',
                                   prefixIcon: Icons.attach_money,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  onChanged: (_) => _recalculatePVP(),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -360,6 +447,7 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                   hintText: '0.00',
                                   prefixIcon: Icons.attach_money,
                                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  onChanged: (_) => _recalculateProfit(),
                                   validator: (v) =>
                                       v == null || v.trim().isEmpty ? 'Ingrese el precio' : null,
                                 ),
@@ -376,6 +464,43 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                               ),
                             ],
                           ),
+                          if (_costPriceCtrl.text.isNotEmpty && _salePriceCtrl.text.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: _realMarginPercentage >= 20 ? AppColors.success.withValues(alpha: 0.1) : AppColors.warning.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(
+                                      color: _realMarginPercentage >= 20 ? AppColors.success : AppColors.warning,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        _realMarginPercentage >= 20 ? Icons.trending_up : Icons.warning_amber_rounded,
+                                        size: 14,
+                                        color: _realMarginPercentage >= 20 ? AppColors.success : AppColors.warning,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Utilidad Neta: \$${_netProfitBox.toStringAsFixed(2)} | Margen Real: ${_realMarginPercentage.toStringAsFixed(1)}%',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: _realMarginPercentage >= 20 ? AppColors.success : AppColors.warning,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -414,7 +539,10 @@ class _ProductFormDialogState extends State<ProductFormDialog> {
                                 Switch(
                                   value: _tieneIva,
                                   activeThumbColor: AppColors.info,
-                                  onChanged: (v) => setState(() => _tieneIva = v),
+                                  onChanged: (v) {
+                                    setState(() => _tieneIva = v);
+                                    _recalculateProfit();
+                                  },
                                 ),
                               ],
                             ),

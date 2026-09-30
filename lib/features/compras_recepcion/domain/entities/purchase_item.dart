@@ -16,6 +16,10 @@ class PurchaseItem {
   final bool tieneIva;
   final double subtotal;
 
+  // Nuevos precios de venta sugeridos (30% rentabilidad) para actualizar catálogo
+  final double? nuevoPvpCaja;
+  final double? nuevoPvpUnitario;
+
   // Verificación técnica sanitaria ARCSA
   final bool cumpleRegistroSanitario;
   final bool cumpleEmpaque;
@@ -37,6 +41,8 @@ class PurchaseItem {
     required this.costoUnitario,
     required this.tieneIva,
     required this.subtotal,
+    this.nuevoPvpCaja,
+    this.nuevoPvpUnitario,
     this.cumpleRegistroSanitario = true,
     this.cumpleEmpaque = true,
     this.temperaturaRecepcion,
@@ -61,6 +67,8 @@ class PurchaseItem {
     double? costoUnitario,
     bool? tieneIva,
     double? subtotal,
+    double? nuevoPvpCaja,
+    double? nuevoPvpUnitario,
     bool? cumpleRegistroSanitario,
     bool? cumpleEmpaque,
     double? temperaturaRecepcion,
@@ -81,6 +89,8 @@ class PurchaseItem {
       costoUnitario: costoUnitario ?? this.costoUnitario,
       tieneIva: tieneIva ?? this.tieneIva,
       subtotal: subtotal ?? this.subtotal,
+      nuevoPvpCaja: nuevoPvpCaja ?? this.nuevoPvpCaja,
+      nuevoPvpUnitario: nuevoPvpUnitario ?? this.nuevoPvpUnitario,
       cumpleRegistroSanitario: cumpleRegistroSanitario ?? this.cumpleRegistroSanitario,
       cumpleEmpaque: cumpleEmpaque ?? this.cumpleEmpaque,
       temperaturaRecepcion: temperaturaRecepcion ?? this.temperaturaRecepcion,

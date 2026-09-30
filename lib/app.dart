@@ -4,6 +4,8 @@ import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 /// Configuración de la aplicación raíz de FarmSys
 class FarmSysApp extends ConsumerWidget {
   const FarmSysApp({super.key});
@@ -17,6 +19,15 @@ class FarmSysApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: router,
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('es', 'ES'), // Español nativo con formato europeo (,) para decimales
+        Locale('en', 'US'), // Fallback
+      ],
     );
   }
 }

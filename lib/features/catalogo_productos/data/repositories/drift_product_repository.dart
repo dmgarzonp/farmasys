@@ -190,6 +190,44 @@ class DriftProductRepository implements IProductRepository {
     await (_db.delete(_db.presentacionesTable)..where((tbl) => tbl.id.equals(presentationId))).go();
   }
 
+  @override
+  Future<bool> mergeProducts(int sourceProductId, int targetProductId) async {
+    return await _db.transaction(() async {
+      // 1. Obtener la presentación principal del producto destino (target)
+      final targetPresentations = await (_db.select(_db.presentacionesTable)
+            ..where((tbl) => tbl.productoId.equals(targetProductId))
+            ..orderBy([(t) => OrderingTerm.asc(t.id)])
+            ..limit(1))
+          .get();
+
+      if (targetPresentations.isEmpty) return false;
+      final targetPresentationId = targetPresentations.first.id;
+
+      // 2. Obtener todas las presentaciones del producto origen (source)
+      final sourcePresentations = await (_db.select(_db.presentacionesTable)
+            ..where((tbl) => tbl.productoId.equals(sourceProductId)))
+          .get();
+
+      final sourcePresentationIds = sourcePresentations.map((p) => p.id).toList();
+
+      if (sourcePresentationIds.isNotEmpty) {
+        // 3. Mover todos los lotes de las presentaciones origen hacia la presentación destino
+        await (_db.update(_db.lotesTable)
+              ..where((tbl) => tbl.presentacionId.isIn(sourcePresentationIds)))
+            .write(
+          LotesTableCompanion(
+            presentacionId: Value(targetPresentationId),
+          ),
+        );
+      }
+
+      // 4. Desactivar el producto origen
+      await toggleProductStatus(sourceProductId, false);
+
+      return true;
+    });
+  }
+
   // --- Mapeadores y Métodos Auxiliares Privados ---
 
   Future<List<Product>> _attachPresentations(List<ProductosTableData> productRows) async {

@@ -12,8 +12,10 @@ import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../controllers/product_catalog_notifier.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import '../../domain/entities/product.dart';
 import 'product_form_dialog.dart';
+import 'product_merge_dialog.dart';
 
 /// Pantalla principal del Catálogo Maestro de Medicamentos y Productos (Desktop Ergonomic)
 class CatalogScreen extends ConsumerStatefulWidget {
@@ -60,12 +62,23 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
   }
 
-  void _onToggleStatus(Product product) async {
+  void _onToggleStatus(Product product, Map<int, double> stockMap) async {
     final actionText = product.isActive ? 'inactivar' : 'activar';
+    
+    double totalStock = 0;
+    for (var pres in product.presentaciones) {
+      totalStock += stockMap[pres.id!] ?? 0;
+    }
+
+    String extraWarning = '';
+    if (product.isActive && totalStock > 0) {
+      extraWarning = '\n\n⚠️ ADVERTENCIA: Este producto tiene ${totalStock.toInt()} unidades en stock. Si lo inactiva, no podrá venderlo en el Punto de Venta.';
+    }
+
     final confirmed = await AppConfirmDialog.show(
       context,
       title: '${actionText.toUpperCase()} Producto',
-      message: '¿Está seguro de que desea $actionText el producto "${product.nombreComercial}"?',
+      message: '¿Está seguro de que desea $actionText el producto "${product.nombreComercial}"?$extraWarning',
       confirmText: actionText.toUpperCase(),
       isDestructive: product.isActive,
     );
@@ -75,10 +88,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
   }
 
+  void _onMergeProduct(Product product) async {
+    final merged = await ProductMergeDialog.show(context, product);
+    if (merged == true) {
+      // Opcionalmente hacer algo tras el merge, el notifier ya recargó la lista
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final catalogState = ref.watch(productCatalogProvider);
     final products = catalogState.filteredProducts;
+    final stockMap = ref.watch(availableStockMapProvider).valueOrNull ?? {};
 
     return CallbackShortcuts(
       bindings: {
@@ -203,6 +224,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         : Padding(
                             padding: const EdgeInsets.all(16),
                             child: AppDataTable<Product>(
+                              tableKey: 'catalog_products_table',
                               data: products,
                               columns: [
                                 AppTableColumn<Product>(
@@ -252,6 +274,26 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                     return Text(
                                       pres?.nombreDescriptivo ?? 'General',
                                       style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                                    );
+                                  },
+                                ),
+                                AppTableColumn<Product>(
+                                  label: 'Stock Disp.',
+                                  width: 90,
+                                  numeric: true,
+                                  builder: (p) {
+                                    double totalStock = 0;
+                                    for (var pres in p.presentaciones) {
+                                      totalStock += stockMap[pres.id!] ?? 0;
+                                    }
+                                    return Text(
+                                      totalStock.toInt().toString(),
+                                      textAlign: TextAlign.right,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: totalStock > 0 ? AppColors.success : AppColors.textMuted,
+                                      ),
                                     );
                                   },
                                 ),
@@ -315,7 +357,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                 ),
                                 AppTableColumn<Product>(
                                   label: 'Acciones',
-                                  width: 100,
+                                  width: 140,
                                   numeric: true,
                                   builder: (p) => Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -332,11 +374,18 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                           color: p.isActive ? AppColors.success : AppColors.textMuted,
                                         ),
                                         tooltip: p.isActive ? 'Inactivar' : 'Activar',
-                                        onPressed: () => _onToggleStatus(p),
+                                        onPressed: () => _onToggleStatus(p, stockMap),
                                       ),
+                                      if (p.isActive)
+                                        IconButton(
+                                          icon: const Icon(Icons.call_merge, size: 18, color: AppColors.danger),
+                                          tooltip: 'Absorber Duplicados',
+                                          onPressed: () => _onMergeProduct(p),
+                                        ),
                                     ],
                                   ),
                                 ),
+
                               ],
                             ),
                           ),

@@ -149,3 +149,18 @@ final inventoryProvider = StateNotifierProvider<InventoryNotifier, InventoryStat
   final repository = ref.watch(inventoryRepositoryProvider);
   return InventoryNotifier(repository);
 });
+
+/// Proveedor global reactivo para conocer el stock total disponible por presentación
+final availableStockMapProvider = StreamProvider<Map<int, double>>((ref) {
+  final repository = ref.watch(inventoryRepositoryProvider);
+  
+  return repository.watchAllBatches().map((batches) {
+    final stockMap = <int, double>{};
+    for (final batch in batches) {
+      if (!batch.isExpired && batch.stockActual > 0) {
+        stockMap[batch.presentacionId] = (stockMap[batch.presentacionId] ?? 0.0) + batch.stockActual;
+      }
+    }
+    return stockMap;
+  });
+});

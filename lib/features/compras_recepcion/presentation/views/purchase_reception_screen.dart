@@ -14,8 +14,10 @@ import '../../../../shared/components/xela_card.dart';
 import '../../../catalogo_productos/data/repositories/drift_product_repository.dart';
 import '../../../catalogo_productos/domain/entities/product.dart';
 import '../../../catalogo_productos/presentation/views/product_form_dialog.dart';
+import '../../../catalogo_productos/presentation/controllers/product_catalog_notifier.dart';
 import '../../../proveedores/presentation/views/supplier_select_dialog.dart';
 import '../../domain/entities/purchase_invoice.dart';
+import '../../domain/entities/purchase_item.dart';
 import '../../data/repositories/drift_purchase_repository.dart';
 import '../controllers/purchase_reception_notifier.dart';
 import 'add_reception_item_dialog.dart';
@@ -139,6 +141,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
       final savedProduct = await productRepo.getProductById(id);
 
       if (savedProduct != null && savedProduct.presentaciones.isNotEmpty && mounted) {
+        ref.invalidate(productCatalogProvider); // Refrescar catálogo global
         _onSelectProduct(savedProduct, savedProduct.presentaciones.first);
       }
     }
@@ -149,6 +152,8 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
     final invoice = await notifier.confirmReception();
 
     if (invoice != null && mounted) {
+      ref.invalidate(productCatalogProvider); // Refrescar catálogo global para el POS
+      
       await AppDialogs.showSuccess(
         context,
         title: 'Recepción Asentada con Éxito',
@@ -165,6 +170,38 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
       if (err != null && mounted) {
         await AppDialogs.showError(context, title: 'No se pudo guardar la recepción', message: err);
       }
+    }
+  }
+
+  void _editItem(BuildContext context, WidgetRef ref, PurchaseItem item, int index) async {
+    final catalog = await ref.read(productRepositoryProvider).getAllProducts(onlyActive: false);
+    Product? targetProduct;
+    ProductPresentation? targetPresentation;
+
+    for (final p in catalog) {
+      for (final pres in p.presentaciones) {
+        if (pres.id == item.presentacionId) {
+          targetProduct = p;
+          targetPresentation = pres;
+          break;
+        }
+      }
+      if (targetProduct != null) break;
+    }
+
+    if (targetProduct != null && targetPresentation != null) {
+      final updatedItem = await AddReceptionItemDialog.show(
+        context,
+        product: targetProduct,
+        presentation: targetPresentation,
+        existingItem: item,
+      );
+
+      if (updatedItem != null) {
+        ref.read(purchaseReceptionProvider.notifier).updateItem(index, updatedItem);
+      }
+    } else {
+      AppSnackBars.showError(context, message: 'Producto original no encontrado en el catálogo');
     }
   }
 
@@ -534,34 +571,44 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     ),
                   ),
                   DataCell(
-                    IconButton(
-                      icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
-                      tooltip: 'Eliminar renglón',
-                      onPressed: () {
-                        final removedItem = item;
-                        final index = entry.key;
-                        ref.read(purchaseReceptionProvider.notifier).removeItem(index);
-                        
-                        AppSnackBars.show(
-                          context,
-                          message: 'Renglón eliminado: ${removedItem.productoNombre}',
-                          action: SnackBarAction(
-                            label: 'DESHACER',
-                            textColor: AppColors.primaryLight,
-                            onPressed: () {
-                              ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
-                              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                            },
-                          ),
-                        );
-                        
-                        // Forzar el cierre absoluto en Desktop
-                        Future.delayed(const Duration(milliseconds: 4000), () {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          }
-                        });
-                      },
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                          tooltip: 'Editar renglón',
+                          onPressed: () => _editItem(context, ref, item, entry.key),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
+                          tooltip: 'Eliminar renglón',
+                          onPressed: () {
+                            final removedItem = item;
+                            final index = entry.key;
+                            ref.read(purchaseReceptionProvider.notifier).removeItem(index);
+                            
+                            AppSnackBars.show(
+                              context,
+                              message: 'Renglón eliminado: ${removedItem.productoNombre}',
+                              action: SnackBarAction(
+                                label: 'DESHACER',
+                                textColor: AppColors.primaryLight,
+                                onPressed: () {
+                                  ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
+                                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                                },
+                              ),
+                            );
+                            
+                            // Forzar el cierre absoluto en Desktop
+                            Future.delayed(const Duration(milliseconds: 4000), () {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                              }
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ),
                 ],

@@ -135,6 +135,26 @@ class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
       state = state.copyWith(errorMessage: 'Error al cambiar estado: $e');
     }
   }
+
+  /// Absorbe uno o varios productos duplicados hacia el producto principal
+  Future<bool> unifyProducts(int targetProductId, List<int> sourceProductIds) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      bool allSuccess = true;
+      for (final sourceId in sourceProductIds) {
+        final success = await _repository.mergeProducts(sourceId, targetProductId);
+        if (!success) allSuccess = false;
+      }
+      await loadProducts();
+      return allSuccess;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error al unificar productos: $e',
+      );
+      return false;
+    }
+  }
 }
 
 /// Proveedor Riverpod para el controlador del catálogo de productos

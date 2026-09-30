@@ -23,6 +23,7 @@ import '../../domain/entities/cart_item.dart';
 import '../../domain/entities/sale.dart';
 import '../controllers/pos_cart_notifier.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import 'checkout_dialog.dart';
 
 /// Pantalla principal del Punto de Venta (POS Desktop) integrada con Caja, Clientes y Despacho FEFO
@@ -107,15 +108,37 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     }
   }
 
-  void _addToCart(Product product, ProductPresentation presentation) {
+  void _addToCart(Product product, ProductPresentation presentation, {bool isFraccion = true}) {
+    final cartState = ref.read(posCartProvider);
+    final availableStockMap = ref.read(availableStockMapProvider).valueOrNull ?? {};
+    final currentStock = availableStockMap[presentation.id!] ?? 0.0;
+    
+    double currentQtyInCart = 0.0;
+    for (final item in cartState.items) {
+      if (item.presentacionId == presentation.id!) {
+        // Obtenemos las unidades por caja de la presentación que está en el cart, pero asumimos que es constante
+        currentQtyInCart += item.isFraccion ? item.quantity : (item.quantity * presentation.unidadesPorCaja);
+      }
+    }
+    
+    final unitsToAdd = isFraccion ? 1.0 : presentation.unidadesPorCaja.toDouble();
+    if (currentQtyInCart + unitsToAdd > currentStock) {
+      AppSnackBars.showError(
+        context,
+        message: 'Stock insuficiente (Disponibles: ${currentStock.toInt()})',
+      );
+      return;
+    }
+
     ref.read(posCartProvider.notifier).addItem(
           CartItem(
             presentacionId: presentation.id!,
             productoNombre: product.nombreComercial,
-            presentacionNombre: presentation.nombreDescriptivo,
-            unitPrice: presentation.precioVentaCaja,
+            presentacionNombre: isFraccion ? '${presentation.nombreDescriptivo} (1 Uni)' : presentation.nombreDescriptivo,
+            unitPrice: isFraccion ? presentation.precioVentaFraccion : presentation.precioVentaCaja,
             quantity: 1.0,
             hasIva: presentation.tieneIva,
+            isFraccion: isFraccion,
           ),
         );
 
@@ -134,7 +157,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     for (final prod in catalog) {
       for (final pres in prod.presentaciones) {
         if (pres.codigoBarras == clean || prod.codigoBarras == clean) {
-          _addToCart(prod, pres);
+          _addToCart(prod, pres, isFraccion: true); // Por defecto añadir fracción al escanear
           return;
         }
       }
@@ -150,8 +173,47 @@ class _PosScreenState extends ConsumerState<PosScreen> {
         .toList();
 
     if (filtered.length == 1 && filtered.first.presentaciones.length == 1) {
-      _addToCart(filtered.first, filtered.first.presentaciones.first);
+      _addToCart(filtered.first, filtered.first.presentaciones.first, isFraccion: true);
     }
+  }
+
+  void _increaseCartQuantity(CartItem item) {
+    final cartState = ref.read(posCartProvider);
+    final availableStockMap = ref.read(availableStockMapProvider).valueOrNull ?? {};
+    final currentStock = availableStockMap[item.presentacionId] ?? 0.0;
+    final catalog = ref.read(productCatalogProvider).products;
+    
+    double currentQtyInCart = 0.0;
+    int unitsPerBox = 1;
+
+    for (final p in catalog) {
+      for (final pres in p.presentaciones) {
+        if (pres.id == item.presentacionId) {
+          unitsPerBox = pres.unidadesPorCaja;
+        }
+      }
+    }
+
+    for (final i in cartState.items) {
+      if (i.presentacionId == item.presentacionId) {
+        currentQtyInCart += i.isFraccion ? i.quantity : (i.quantity * unitsPerBox);
+      }
+    }
+    
+    final unitsToAdd = item.isFraccion ? 1.0 : unitsPerBox.toDouble();
+    if (currentQtyInCart + unitsToAdd > currentStock) {
+      AppSnackBars.showError(
+        context,
+        message: 'Stock insuficiente (Disponibles: ${currentStock.toInt()})',
+      );
+      return;
+    }
+
+    ref.read(posCartProvider.notifier).updateQuantity(
+      item.presentacionId,
+      item.isFraccion,
+      item.quantity + 1,
+    );
   }
 
   void _onCheckout() async {
@@ -274,6 +336,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Widget _buildProductCatalogPanel(BuildContext context) {
     final catalogState = ref.watch(productCatalogProvider);
+    final availableStockMap = ref.watch(availableStockMapProvider).valueOrNull ?? {};
     final allProducts = catalogState.products.where((p) => p.isActive && p.presentaciones.isNotEmpty).toList();
 
     final filtered = _searchQuery.trim().isEmpty
@@ -371,22 +434,41 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               ),
                             const SizedBox(height: 8),
 
-                            // Presentaciones seleccionables
+                            // Presentaciones seleccionables (Caja y Unidad)
                             Wrap(
                               spacing: 8,
                               runSpacing: 6,
-                              children: prod.presentaciones.map((pres) {
-                                return ActionChip(
-                                  avatar: const Icon(Icons.add_shopping_cart, size: 14, color: AppColors.primary),
-                                  label: Text(
-                                    '${pres.nombreDescriptivo} • ${AppFormatters.currency(pres.precioVentaCaja)} ${pres.tieneIva ? '(IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%)' : '(0%)'}',
-                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              children: prod.presentaciones.expand((pres) {
+                                final stock = availableStockMap[pres.id!] ?? 0.0;
+                                final agotado = stock <= 0;
+                                
+                                return [
+                                  // Botón Unidad/Fracción
+                                  ActionChip(
+                                    avatar: Icon(agotado ? Icons.block : Icons.medication, size: 14, color: agotado ? AppColors.textMuted : AppColors.primary),
+                                    label: Text(
+                                      agotado ? 'Agotado' : '1 Uni (Stock: ${stock.toInt()}) • ${AppFormatters.currency(pres.precioVentaFraccion)}',
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: agotado ? AppColors.textMuted : AppColors.textPrimary),
+                                    ),
+                                    backgroundColor: agotado ? AppColors.divider : AppColors.primarySurface,
+                                    side: BorderSide(color: agotado ? AppColors.border : AppColors.primary.withValues(alpha: 0.3)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    onPressed: agotado ? null : () => _addToCart(prod, pres, isFraccion: true),
                                   ),
-                                  backgroundColor: AppColors.background,
-                                  side: const BorderSide(color: AppColors.border),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  onPressed: () => _addToCart(prod, pres),
-                                );
+                                  // Botón Caja Completa
+                                  if (pres.unidadesPorCaja > 1)
+                                    ActionChip(
+                                      avatar: Icon(stock < pres.unidadesPorCaja ? Icons.block : Icons.inventory_2_outlined, size: 14, color: AppColors.textSecondary),
+                                      label: Text(
+                                        stock < pres.unidadesPorCaja ? 'Caja Agotada' : 'Caja (${pres.unidadesPorCaja}u) • ${AppFormatters.currency(pres.precioVentaCaja)}',
+                                        style: TextStyle(fontSize: 11, color: stock < pres.unidadesPorCaja ? AppColors.textMuted : AppColors.textSecondary),
+                                      ),
+                                      backgroundColor: AppColors.background,
+                                      side: const BorderSide(color: AppColors.border),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      onPressed: stock < pres.unidadesPorCaja ? null : () => _addToCart(prod, pres, isFraccion: false),
+                                    ),
+                                ];
                               }).toList(),
                             ),
                           ],
@@ -554,6 +636,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                   color: AppColors.textSecondary,
                                   onPressed: () => ref.read(posCartProvider.notifier).updateQuantity(
                                         item.presentacionId,
+                                        item.isFraccion,
                                         item.quantity - 1,
                                       ),
                                 ),
@@ -564,10 +647,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 IconButton(
                                   icon: const Icon(Icons.add_circle_outline, size: 18),
                                   color: AppColors.primary,
-                                  onPressed: () => ref.read(posCartProvider.notifier).updateQuantity(
-                                        item.presentacionId,
-                                        item.quantity + 1,
-                                      ),
+                                  onPressed: () => _increaseCartQuantity(item),
                                 ),
                               ],
                             ),
@@ -585,7 +665,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             // Eliminar
                             IconButton(
                               icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
-                              onPressed: () => ref.read(posCartProvider.notifier).removeItem(item.presentacionId),
+                              onPressed: () => ref.read(posCartProvider.notifier).removeItem(item.presentacionId, item.isFraccion),
                             ),
                           ],
                         ),

@@ -25,6 +25,11 @@ abstract class IProductRepository {
   /// Alterna el estado activo/inactivo (borrado lógico) de un producto
   Future<void> toggleProductStatus(int id, bool isActive);
 
+  /// Unifica un producto duplicado (origen) hacia un producto principal (destino).
+  /// Mueve todos los lotes del producto de origen a la presentación principal del destino,
+  /// y marca el producto de origen como inactivo.
+  Future<bool> mergeProducts(int sourceProductId, int targetProductId);
+
   /// Elimina una presentación específica
   Future<void> deletePresentation(int presentationId);
 }

@@ -23,6 +23,7 @@ class AppDataTable<T> extends StatelessWidget {
   final bool isLoading;
   final String emptyMessage;
   final void Function(T item)? onRowTap;
+  final String? tableKey;
 
   const AppDataTable({
     super.key,
@@ -31,6 +32,7 @@ class AppDataTable<T> extends StatelessWidget {
     this.isLoading = false,
     this.emptyMessage = 'No se encontraron registros.',
     this.onRowTap,
+    this.tableKey,
   });
 
   @override
@@ -109,6 +111,7 @@ class AppDataTable<T> extends StatelessWidget {
                   // Filas de Datos
                   Expanded(
                     child: ListView.separated(
+                      key: tableKey != null ? PageStorageKey(tableKey) : null,
                       itemCount: data.length,
                       separatorBuilder: (context, index) => const Divider(height: 1),
                       itemBuilder: (context, index) {
