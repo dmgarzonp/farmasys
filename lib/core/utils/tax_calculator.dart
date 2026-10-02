@@ -1,4 +1,4 @@
-import '../constants/app_constants.dart';
+
 
 /// Representación inmutable de un ítem para cálculo tributario
 class TaxableItem {

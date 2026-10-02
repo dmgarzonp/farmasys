@@ -1,6 +1,8 @@
 import 'package:drift/drift.dart';
 
 /// Tabla de catálogo de medicamentos y productos farmacéuticos
+@TableIndex(name: 'idx_productos_nombre', columns: {#nombreComercial})
+@TableIndex(name: 'idx_productos_codigo', columns: {#codigoBarras})
 class ProductosTable extends Table {
   @override
   String get tableName => 'productos';

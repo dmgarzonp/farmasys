@@ -15,6 +15,9 @@ abstract class IInventoryRepository {
   /// Stream reactivo de lotes para la UI de inventario en tiempo real
   Stream<List<BatchStock>> watchAllBatches();
 
+  /// Obtiene un lote específico por su ID
+  Future<BatchStock?> getBatchById(int id);
+
   /// Obtiene los lotes disponibles para una presentación ordenados por FEFO (más próximo a caducar primero)
   Future<List<BatchStock>> getBatchesForPresentation(int presentacionId);
 
@@ -35,6 +38,17 @@ abstract class IInventoryRepository {
 
   /// Realiza un ajuste manual de inventario (positivo o negativo) con registro de auditoría
   Future<void> adjustStock(int batchId, double newStock, String motivo);
+
+  /// Registra una salida específica de un lote (por devolución, cambio o vencimiento)
+  /// y opcionalmente incrementa el saldo a favor del proveedor si corresponde.
+  Future<void> registerBatchExit(
+    int batchId,
+    double quantity,
+    String reasonType, {
+    int? supplierId,
+    String? referenceDocument,
+    String? observations,
+  });
 
   /// Consulta el historial de movimientos de Kardex
   Future<List<StockMovement>> getKardexMovements({int? batchId, int limit = 100});

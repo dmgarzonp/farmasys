@@ -1,7 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/repositories/drift_product_repository.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/i_product_repository.dart';
+
+part 'product_catalog_notifier.g.dart';
 
 /// Filtros operativos para el catálogo farmacéutico
 enum ProductCatalogFilter {
@@ -79,18 +81,20 @@ class ProductCatalogState {
 }
 
 /// Controlador de negocio del catálogo de productos (SOLID: SRP)
-class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
-  final IProductRepository _repository;
-
-  ProductCatalogNotifier(this._repository) : super(const ProductCatalogState()) {
-    loadProducts();
+@riverpod
+class ProductCatalog extends _$ProductCatalog {
+  @override
+  ProductCatalogState build() {
+    Future.microtask(() => loadProducts());
+    return const ProductCatalogState();
   }
 
   /// Carga inicial o recarga de todos los productos
   Future<void> loadProducts() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final products = await _repository.getAllProducts(onlyActive: false);
+      final repository = ref.read(productRepositoryProvider);
+      final products = await repository.getAllProducts(onlyActive: false);
       state = state.copyWith(products: products, isLoading: false);
     } catch (e) {
       state = state.copyWith(
@@ -114,7 +118,8 @@ class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
   Future<bool> saveProduct(Product product) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _repository.saveProduct(product);
+      final repository = ref.read(productRepositoryProvider);
+      await repository.saveProduct(product);
       await loadProducts();
       return true;
     } catch (e) {
@@ -129,7 +134,8 @@ class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
   /// Alterna el estado activo / inactivo
   Future<void> toggleProductStatus(int id, bool isActive) async {
     try {
-      await _repository.toggleProductStatus(id, isActive);
+      final repository = ref.read(productRepositoryProvider);
+      await repository.toggleProductStatus(id, isActive);
       await loadProducts();
     } catch (e) {
       state = state.copyWith(errorMessage: 'Error al cambiar estado: $e');
@@ -141,8 +147,9 @@ class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       bool allSuccess = true;
+      final repository = ref.read(productRepositoryProvider);
       for (final sourceId in sourceProductIds) {
-        final success = await _repository.mergeProducts(sourceId, targetProductId);
+        final success = await repository.mergeProducts(sourceId, targetProductId);
         if (!success) allSuccess = false;
       }
       await loadProducts();
@@ -156,10 +163,3 @@ class ProductCatalogNotifier extends StateNotifier<ProductCatalogState> {
     }
   }
 }
-
-/// Proveedor Riverpod para el controlador del catálogo de productos
-final productCatalogProvider =
-    StateNotifierProvider<ProductCatalogNotifier, ProductCatalogState>((ref) {
-  final repository = ref.watch(productRepositoryProvider);
-  return ProductCatalogNotifier(repository);
-});

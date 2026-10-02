@@ -1,4 +1,5 @@
 class AlertaCaducidad {
+  final int loteId;
   final String productoNombre;
   final String presentacionNombre;
   final String lote;
@@ -6,6 +7,7 @@ class AlertaCaducidad {
   final double stockActual;
 
   AlertaCaducidad({
+    required this.loteId,
     required this.productoNombre,
     required this.presentacionNombre,
     required this.lote,

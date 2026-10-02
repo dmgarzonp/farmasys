@@ -1,7 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/utils/tax_calculator.dart';
 import '../../domain/entities/cart_item.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+
+part 'pos_cart_notifier.g.dart';
 
 /// Estado inmutable del Punto de Venta
 class PosCartState {
@@ -50,10 +52,12 @@ class PosCartState {
 }
 
 /// Notificador y controlador de lógica de negocio del carrito POS (SOLID: SRP)
-class PosCartNotifier extends StateNotifier<PosCartState> {
-  final Ref _ref;
-
-  PosCartNotifier(this._ref) : super(const PosCartState());
+@riverpod
+class PosCart extends _$PosCart {
+  @override
+  PosCartState build() {
+    return const PosCartState();
+  }
 
   /// Agrega o actualiza un producto en el carrito recalculando impuestos automáticamente
   void addItem(CartItem item) {
@@ -120,7 +124,7 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
             ))
         .toList();
 
-    final iva = _ref.read(settingsProvider).ivaVigente;
+    final iva = ref.read(settingsProvider).ivaVigente;
     final totals = TaxCalculator.calculate(taxableItems, vatRate: iva);
 
     state = state.copyWith(
@@ -130,8 +134,3 @@ class PosCartNotifier extends StateNotifier<PosCartState> {
     );
   }
 }
-
-/// Proveedor Riverpod para el carrito de compras
-final posCartProvider = StateNotifierProvider<PosCartNotifier, PosCartState>((ref) {
-  return PosCartNotifier(ref);
-});

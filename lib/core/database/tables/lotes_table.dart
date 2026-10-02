@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'presentaciones_table.dart';
 
 /// Almacena el inventario físico con trazabilidad de lote y vencimiento (FEFO)
+@TableIndex(name: 'idx_lotes_lote', columns: {#lote})
 class LotesTable extends Table {
   @override
   String get tableName => 'lotes';

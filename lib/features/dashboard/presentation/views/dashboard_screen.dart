@@ -3,6 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../dashboard_notifier.dart';
+import '../../../inventario/data/repositories/drift_inventory_repository.dart';
+import '../../../inventario/presentation/controllers/inventory_notifier.dart';
+import '../../../inventario/presentation/views/batch_return_dialog.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -180,20 +183,49 @@ class DashboardScreen extends ConsumerWidget {
                                     return Card(
                                       margin: const EdgeInsets.only(bottom: 8.0),
                                       color: esCritico ? Colors.red.shade50 : Colors.orange.shade50,
-                                      child: ListTile(
-                                        leading: Icon(
-                                          Icons.warning_amber_rounded, 
-                                          color: esCritico ? Colors.red : Colors.orange
-                                        ),
-                                        title: Text('${alerta.productoNombre} (${alerta.presentacionNombre})'),
-                                        subtitle: Text('Lote: ${alerta.lote} - Stock: ${alerta.stockActual} u.'),
-                                        trailing: Text(
-                                          'Vence: ${dateFormat.format(alerta.fechaVencimiento)}\n(${alerta.diasRestantes} días)',
-                                          style: TextStyle(
-                                            color: esCritico ? Colors.red : Colors.orange.shade900,
-                                            fontWeight: FontWeight.bold,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final inventoryRepo = ref.read(inventoryRepositoryProvider);
+                                          final batch = await inventoryRepo.getBatchById(alerta.loteId);
+                                          if (batch == null || !context.mounted) return;
+                                          
+                                          final result = await BatchReturnDialog.show(context, batch);
+                                          if (result != null && context.mounted) {
+                                            final quantity = result['quantity'] as double;
+                                            final reasonType = result['reasonType'] as String;
+                                            
+                                            final success = await ref.read(inventoryProvider.notifier).processMerchandiseReturn(
+                                                  batchId: batch.id!,
+                                                  quantity: quantity,
+                                                  reasonType: reasonType,
+                                                  supplierId: result['supplierId'] as int?,
+                                                  referenceDocument: result['referenceDocument'] as String?,
+                                                  observations: result['observations'] as String?,
+                                                );
+
+                                            if (success && context.mounted) {
+                                              ref.invalidate(dashboardStateProvider);
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                const SnackBar(content: Text('Salida/Devolución procesada con éxito')),
+                                              );
+                                            }
+                                          }
+                                        },
+                                        child: ListTile(
+                                          leading: Icon(
+                                            Icons.warning_amber_rounded, 
+                                            color: esCritico ? Colors.red : Colors.orange
                                           ),
-                                          textAlign: TextAlign.right,
+                                          title: Text('${alerta.productoNombre} (${alerta.presentacionNombre})'),
+                                          subtitle: Text('Lote: ${alerta.lote} - Stock: ${alerta.stockActual} u.\nTap para devolver/descartar'),
+                                          trailing: Text(
+                                            'Vence: ${dateFormat.format(alerta.fechaVencimiento)}\n(${alerta.diasRestantes} días)',
+                                            style: TextStyle(
+                                              color: esCritico ? Colors.red : Colors.orange.shade900,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                            textAlign: TextAlign.right,
+                                          ),
                                         ),
                                       ),
                                     );

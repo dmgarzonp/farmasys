@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'productos_table.dart';
 
 /// Define cómo se comercializa el producto (caja, blíster, frasco, unidad)
+@TableIndex(name: 'idx_presentaciones_codigo_barras', columns: {#codigoBarras})
 class PresentacionesTable extends Table {
   @override
   String get tableName => 'presentaciones';

@@ -1,7 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../data/repositories/drift_inventory_repository.dart';
 import '../../domain/entities/batch_stock.dart';
 import '../../domain/repositories/i_inventory_repository.dart';
+
+part 'inventory_notifier.g.dart';
 
 /// Filtros operativos del inventario farmacéutico
 enum InventoryFilter {
@@ -78,18 +80,20 @@ class InventoryState {
 }
 
 /// Controlador de negocio del inventario y trazabilidad FEFO (SOLID: SRP)
-class InventoryNotifier extends StateNotifier<InventoryState> {
-  final IInventoryRepository _repository;
-
-  InventoryNotifier(this._repository) : super(const InventoryState()) {
-    loadBatches();
+@riverpod
+class Inventory extends _$Inventory {
+  @override
+  InventoryState build() {
+    Future.microtask(() => loadBatches());
+    return const InventoryState();
   }
 
   /// Carga reactiva de todos los lotes
   Future<void> loadBatches() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      final batches = await _repository.getAllBatches();
+      final repository = ref.read(inventoryRepositoryProvider);
+      final batches = await repository.getAllBatches();
       state = state.copyWith(batches: batches, isLoading: false);
     } catch (e) {
       state = state.copyWith(
@@ -115,7 +119,8 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
   }) async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await _repository.registerBatchEntry(
+      final repository = ref.read(inventoryRepositoryProvider);
+      await repository.registerBatchEntry(
         batch,
         documentoReferencia: docRef,
         observaciones: obs,
@@ -134,7 +139,8 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
   /// Ajusta stock manualmente de un lote
   Future<bool> adjustStock(int batchId, double newStock, String reason) async {
     try {
-      await _repository.adjustStock(batchId, newStock, reason);
+      final repository = ref.read(inventoryRepositoryProvider);
+      await repository.adjustStock(batchId, newStock, reason);
       await loadBatches();
       return true;
     } catch (e) {
@@ -142,16 +148,42 @@ class InventoryNotifier extends StateNotifier<InventoryState> {
       return false;
     }
   }
+
+  /// Registra la salida/devolución de mercadería por caducidad o cambio
+  Future<bool> processMerchandiseReturn({
+    required int batchId,
+    required double quantity,
+    required String reasonType,
+    int? supplierId,
+    String? referenceDocument,
+    String? observations,
+  }) async {
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final repository = ref.read(inventoryRepositoryProvider);
+      await repository.registerBatchExit(
+        batchId,
+        quantity,
+        reasonType,
+        supplierId: supplierId,
+        referenceDocument: referenceDocument,
+        observations: observations,
+      );
+      await loadBatches();
+      return true;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Error al procesar devolución/salida: $e',
+      );
+      return false;
+    }
+  }
 }
 
-/// Proveedor Riverpod para la gestión del inventario
-final inventoryProvider = StateNotifierProvider<InventoryNotifier, InventoryState>((ref) {
-  final repository = ref.watch(inventoryRepositoryProvider);
-  return InventoryNotifier(repository);
-});
-
 /// Proveedor global reactivo para conocer el stock total disponible por presentación
-final availableStockMapProvider = StreamProvider<Map<int, double>>((ref) {
+@riverpod
+Stream<Map<int, double>> availableStockMap(Ref ref) {
   final repository = ref.watch(inventoryRepositoryProvider);
   
   return repository.watchAllBatches().map((batches) {
@@ -163,4 +195,4 @@ final availableStockMapProvider = StreamProvider<Map<int, double>>((ref) {
     }
     return stockMap;
   });
-});
+}

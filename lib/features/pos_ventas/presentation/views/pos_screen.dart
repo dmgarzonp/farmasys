@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
+import '../../../../core/utils/debouncer.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_dialogs.dart';
 import '../../../../shared/components/app_snackbars.dart';
@@ -37,6 +38,7 @@ class PosScreen extends ConsumerStatefulWidget {
 class _PosScreenState extends ConsumerState<PosScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final Debouncer _debouncer = Debouncer(milliseconds: 250);
 
   Customer _selectedCustomer = Customer.consumidorFinal();
   String _searchQuery = '';
@@ -52,6 +54,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   @override
   void dispose() {
+    _debouncer.dispose();
     _searchController.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -110,7 +113,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   void _addToCart(Product product, ProductPresentation presentation, {bool isFraccion = true}) {
     final cartState = ref.read(posCartProvider);
-    final availableStockMap = ref.read(availableStockMapProvider).valueOrNull ?? {};
+    final availableStockMap = ref.read(availableStockMapProvider).value ?? {};
     final currentStock = availableStockMap[presentation.id!] ?? 0.0;
     
     double currentQtyInCart = 0.0;
@@ -179,7 +182,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   void _increaseCartQuantity(CartItem item) {
     final cartState = ref.read(posCartProvider);
-    final availableStockMap = ref.read(availableStockMapProvider).valueOrNull ?? {};
+    final availableStockMap = ref.read(availableStockMapProvider).value ?? {};
     final currentStock = availableStockMap[item.presentacionId] ?? 0.0;
     final catalog = ref.read(productCatalogProvider).products;
     
@@ -336,7 +339,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
 
   Widget _buildProductCatalogPanel(BuildContext context) {
     final catalogState = ref.watch(productCatalogProvider);
-    final availableStockMap = ref.watch(availableStockMapProvider).valueOrNull ?? {};
+    final availableStockMap = ref.watch(availableStockMapProvider).value ?? {};
     final allProducts = catalogState.products.where((p) => p.isActive && p.presentaciones.isNotEmpty).toList();
 
     final filtered = _searchQuery.trim().isEmpty
@@ -361,7 +364,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             hintText: 'Escanear código de barras o escribir nombre del medicamento [F2]...',
             prefixIcon: Icons.search,
             shortcutBadge: 'F2',
-            onChanged: (val) => setState(() => _searchQuery = val),
+            onChanged: (val) => _debouncer.run(() {
+              setState(() => _searchQuery = val);
+            }),
             onSubmitted: _onSearchSubmitted,
           ),
           const SizedBox(height: 12),

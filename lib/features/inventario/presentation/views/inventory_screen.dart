@@ -11,9 +11,11 @@ import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/expiration_badge.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../../../../shared/components/xela_card.dart';
+import '../../../../core/utils/debouncer.dart';
 import '../../domain/entities/batch_stock.dart';
 import '../controllers/inventory_notifier.dart';
 import 'batch_entry_dialog.dart';
+import 'batch_return_dialog.dart';
 
 /// Pantalla de Gestión de Inventario, Lotes y Trazabilidad FEFO (Desktop High-Density)
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -26,9 +28,11 @@ class InventoryScreen extends ConsumerStatefulWidget {
 class _InventoryScreenState extends ConsumerState<InventoryScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final Debouncer _debouncer = Debouncer(milliseconds: 300);
 
   @override
   void dispose() {
+    _debouncer.dispose();
     _searchCtrl.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -120,10 +124,49 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
   }
 
+  void _onReturnBatch(BatchStock batch) async {
+    final result = await BatchReturnDialog.show(context, batch);
+    if (result != null && mounted) {
+      final quantity = result['quantity'] as double;
+      final reasonType = result['reasonType'] as String;
+      final supplierId = result['supplierId'] as int?;
+      final referenceDocument = result['referenceDocument'] as String?;
+      final observations = result['observations'] as String?;
+
+      final success = await ref.read(inventoryProvider.notifier).processMerchandiseReturn(
+            batchId: batch.id!,
+            quantity: quantity,
+            reasonType: reasonType,
+            supplierId: supplierId,
+            referenceDocument: referenceDocument,
+            observations: observations,
+          );
+
+      if (success && mounted) {
+        AppSnackBars.showSuccess(
+          context,
+          message: 'Salida de inventario registrada con éxito.',
+        );
+        // Si fue cambio, sugerir ir a compras
+        if (reasonType == 'cambio_proveedor') {
+          // You could show an optional dialog here or just redirect
+          AppSnackBars.showInfo(
+            context,
+            message: 'Navega a Compras para registrar el nuevo lote.',
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(inventoryProvider);
-    final batches = state.filteredBatches;
+    final batches = ref.watch(inventoryProvider.select((s) => s.filteredBatches));
+    final totalBatches = ref.watch(inventoryProvider.select((s) => s.totalBatches));
+    final expiringSoonCount = ref.watch(inventoryProvider.select((s) => s.expiringSoonCount));
+    final expiredCount = ref.watch(inventoryProvider.select((s) => s.expiredCount));
+    final currentFilter = ref.watch(inventoryProvider.select((s) => s.filter));
+    final isLoading = ref.watch(inventoryProvider.select((s) => s.isLoading));
 
     return CallbackShortcuts(
       bindings: {
@@ -174,14 +217,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                   children: [
                     _buildKpiCard(
                       title: 'Total Lotes Registrados',
-                      value: state.totalBatches.toString(),
+                      value: totalBatches.toString(),
                       icon: Icons.inventory_2_outlined,
                       color: AppColors.primary,
                     ),
                     const SizedBox(width: 16),
                     _buildKpiCard(
                       title: 'Próximos a Vencer (≤ 90 d)',
-                      value: state.expiringSoonCount.toString(),
+                      value: expiringSoonCount.toString(),
                       icon: Icons.access_time_outlined,
                       color: AppColors.warning,
                       onTap: () => ref.read(inventoryProvider.notifier).setFilter(InventoryFilter.expiringSoon),
@@ -189,7 +232,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                     const SizedBox(width: 16),
                     _buildKpiCard(
                       title: 'Lotes Caducados (Merma)',
-                      value: state.expiredCount.toString(),
+                      value: expiredCount.toString(),
                       icon: Icons.error_outline,
                       color: AppColors.danger,
                       onTap: () => ref.read(inventoryProvider.notifier).setFilter(InventoryFilter.expired),
@@ -212,14 +255,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                         hintText: 'Buscar lote, medicamento o ubicación [F3]...',
                         prefixIcon: Icons.search,
                         shortcutBadge: 'F3',
-                        onChanged: (q) => ref.read(inventoryProvider.notifier).setSearchQuery(q),
+                        onChanged: (q) => _debouncer.run(() {
+                          ref.read(inventoryProvider.notifier).setSearchQuery(q);
+                        }),
                       ),
                     ),
                     const SizedBox(width: 16),
                     Wrap(
                       spacing: 8,
                       children: InventoryFilter.values.map((f) {
-                        final isSelected = state.filter == f;
+                        final isSelected = currentFilter == f;
                         return ChoiceChip(
                           label: Text(f.label),
                           selected: isSelected,
@@ -246,7 +291,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
               // Tabla de Datos de Lotes
               Expanded(
-                child: state.isLoading
+                child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : batches.isEmpty
                         ? _buildEmptyState()
@@ -331,12 +376,22 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                 ),
                                 AppTableColumn<BatchStock>(
                                   label: 'Acciones',
-                                  width: 90,
+                                  width: 120,
                                   numeric: true,
-                                  builder: (b) => IconButton(
-                                    icon: const Icon(Icons.tune, size: 18, color: AppColors.primary),
-                                    tooltip: 'Ajustar Stock (Kardex)',
-                                    onPressed: () => _onAdjustStock(b),
+                                  builder: (b) => Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.outbox_rounded, size: 18, color: AppColors.danger),
+                                        tooltip: 'Registrar Salida / Devolución',
+                                        onPressed: () => _onReturnBatch(b),
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.tune, size: 18, color: AppColors.primary),
+                                        tooltip: 'Ajustar Stock (Kardex)',
+                                        onPressed: () => _onAdjustStock(b),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

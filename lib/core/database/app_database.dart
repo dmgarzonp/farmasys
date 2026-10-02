@@ -38,7 +38,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -61,6 +61,9 @@ class AppDatabase extends _$AppDatabase {
           if (from < 2) {
             await m.createTable(comprasTable);
             await m.createTable(detallesCompraTable);
+          }
+          if (from < 3) {
+            await m.addColumn(proveedoresTable, proveedoresTable.saldoAFavor);
           }
         },
         beforeOpen: (details) async {

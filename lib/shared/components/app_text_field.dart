@@ -18,6 +18,7 @@ class AppTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSubmitted;
   final String? Function(String?)? validator;
+  final String? errorText;
 
   const AppTextField({
     super.key,
@@ -36,6 +37,7 @@ class AppTextField extends StatelessWidget {
     this.onChanged,
     this.onSubmitted,
     this.validator,
+    this.errorText,
   });
 
   @override
@@ -74,6 +76,7 @@ class AppTextField extends StatelessWidget {
           decoration: InputDecoration(
             isDense: true,
             hintText: hintText,
+            errorText: errorText,
             hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
             prefixIcon: prefixIcon != null
                 ? Icon(prefixIcon, size: 18, color: AppColors.textMuted)

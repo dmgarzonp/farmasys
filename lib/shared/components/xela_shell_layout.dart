@@ -11,7 +11,7 @@ import '../../features/caja/presentation/views/close_cash_dialog.dart';
 import '../../features/caja/presentation/views/open_cash_dialog.dart';
 import '../../features/compras_recepcion/presentation/controllers/purchase_reception_notifier.dart';
 import '../../features/configuraciones/presentation/controllers/settings_notifier.dart';
-import '../../shared/components/app_dialogs.dart';
+
 import 'components.dart';
 
 /// Layout base de escritorio estilo Xela UI Kit.

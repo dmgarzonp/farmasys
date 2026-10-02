@@ -27,7 +27,7 @@ class ProductMergeDialog extends ConsumerStatefulWidget {
 
 class _ProductMergeDialogState extends ConsumerState<ProductMergeDialog> {
   final TextEditingController _searchCtrl = TextEditingController();
-  List<Product> _selectedDuplicates = [];
+  final List<Product> _selectedDuplicates = [];
   String _searchQuery = '';
 
   @override

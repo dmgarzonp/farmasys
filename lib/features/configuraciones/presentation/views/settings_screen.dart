@@ -87,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
                         children: [
                           const Text('Alerta de Vencimiento', style: TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text('Días antes para mostrar alerta', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          const Text('Días antes para mostrar alerta', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                         ],
                       ),
                       DropdownButton<int>(

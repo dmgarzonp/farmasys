@@ -48,6 +48,7 @@ class DriftSupplierRepository implements ISupplierRepository {
             telefonoContacto: Value(supplier.telefonoContacto?.trim()),
             emailContacto: Value(supplier.emailContacto?.trim().toLowerCase()),
             estado: Value(supplier.estado),
+            saldoAFavor: Value(supplier.saldoAFavor),
           ),
         );
   }
@@ -67,6 +68,7 @@ class DriftSupplierRepository implements ISupplierRepository {
         telefonoContacto: Value(supplier.telefonoContacto?.trim()),
         emailContacto: Value(supplier.emailContacto?.trim().toLowerCase()),
         estado: Value(supplier.estado),
+        saldoAFavor: Value(supplier.saldoAFavor),
       ),
     );
     return count > 0;
@@ -101,6 +103,7 @@ class DriftSupplierRepository implements ISupplierRepository {
       emailContacto: row.emailContacto,
       estado: row.estado,
       createdAt: row.createdAt,
+      saldoAFavor: row.saldoAFavor,
     );
   }
 }

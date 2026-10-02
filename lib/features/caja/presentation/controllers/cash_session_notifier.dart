@@ -1,8 +1,10 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/drift_cash_session_repository.dart';
 import '../../domain/entities/cash_session.dart';
 import '../../domain/repositories/i_cash_session_repository.dart';
+
+part 'cash_session_notifier.g.dart';
 
 /// Estado inmutable de la sesión de caja activa
 class CashSessionState {
@@ -33,11 +35,16 @@ class CashSessionState {
 }
 
 /// Controlador Riverpod para la sesión de caja del cajero actual (SOLID: SRP)
-class CashSessionNotifier extends StateNotifier<CashSessionState> {
-  final ICashSessionRepository _repository;
+@riverpod
+class CashSessionNotifier extends _$CashSessionNotifier {
+  late ICashSessionRepository _repository;
 
-  CashSessionNotifier(this._repository) : super(const CashSessionState()) {
-    loadActiveSession();
+  @override
+  CashSessionState build() {
+    _repository = ref.watch(cashSessionRepositoryProvider);
+    // Disparar carga asincrónica al construir
+    Future.microtask(() => loadActiveSession());
+    return const CashSessionState();
   }
 
   /// Carga la sesión activa actual
@@ -116,9 +123,3 @@ class CashSessionNotifier extends StateNotifier<CashSessionState> {
     }
   }
 }
-
-/// Proveedor Riverpod para el estado de la sesión de caja
-final cashSessionProvider = StateNotifierProvider<CashSessionNotifier, CashSessionState>((ref) {
-  final repo = ref.watch(cashSessionRepositoryProvider);
-  return CashSessionNotifier(repo);
-});

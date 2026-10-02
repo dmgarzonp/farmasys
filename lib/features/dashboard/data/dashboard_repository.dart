@@ -39,6 +39,7 @@ class DashboardRepository {
       final producto = row.readTable(_db.productosTable);
 
       return AlertaCaducidad(
+        loteId: lote.id,
         productoNombre: producto.nombreComercial,
         presentacionNombre: presentacion.nombreDescriptivo,
         lote: lote.lote,
@@ -51,7 +52,7 @@ class DashboardRepository {
   /// Obtiene presentaciones cuyo stock total (sumando todos sus lotes) es menor o igual al stock mínimo.
   Future<List<AlertaStock>> getProductosStockBajo() async {
     // Usamos custom statement porque agrupar y sumar con joins en Drift typed API puede ser verboso.
-    final sql = '''
+    const sql = '''
       SELECT 
         p.id as producto_id,
         p.nombre_comercial as nombreComercial,
@@ -89,7 +90,7 @@ class DashboardRepository {
       ..where((t) => t.fechaVenta.isBetweenValues(inicioDia, finDia));
 
     final ventas = await query.get();
-    return ventas.fold<double>(0.0, (sum, v) => sum + (v.total ?? 0.0));
+    return ventas.fold<double>(0.0, (sum, v) => sum + v.total);
   }
 
   /// Ganancia del Día (Ventas - Costos)
@@ -123,7 +124,7 @@ class DashboardRepository {
   Future<List<ProductoTop>> getTopProductosMes() async {
     final inicioMes = DateTime.now().subtract(const Duration(days: 30));
     
-    final sql = '''
+    const sql = '''
       SELECT 
         p.nombre_comercial as productoNombre,
         pr.nombre_descriptivo as presentacionNombre,
@@ -169,7 +170,7 @@ class DashboardRepository {
 
   /// Capital invertido en el inventario actual (Stock * Costo)
   Future<double> getCapitalInventario() async {
-    final sql = '''
+    const sql = '''
       SELECT COALESCE(SUM(stock_actual * precio_compra_unitario), 0) as capital
       FROM lotes
       WHERE stock_actual > 0;

@@ -33,7 +33,15 @@ class DriftInventoryRepository implements IInventoryRepository {
   @override
   Stream<List<BatchStock>> watchAllBatches() {
     final query = _buildBatchQuery();
+    query.limit(300); // OPTIMIZACIÓN: Límite para evitar sobrecarga en Desktop
     return query.watch().map((rows) => rows.map(_mapRowToBatch).toList());
+  }
+
+  @override
+  Future<BatchStock?> getBatchById(int id) async {
+    final query = _buildBatchQuery()..where(_db.lotesTable.id.equals(id));
+    final row = await query.getSingleOrNull();
+    return row != null ? _mapRowToBatch(row) : null;
   }
 
   @override
@@ -166,6 +174,58 @@ class DriftInventoryRepository implements IInventoryRepository {
               observaciones: Value(motivo),
             ),
           );
+    });
+  }
+
+  @override
+  Future<void> registerBatchExit(
+    int batchId,
+    double quantity,
+    String reasonType, {
+    int? supplierId,
+    String? referenceDocument,
+    String? observations,
+  }) async {
+    await _db.transaction(() async {
+      // 1. Obtener lote
+      final lotRow = await (_db.select(_db.lotesTable)..where((tbl) => tbl.id.equals(batchId))).getSingleOrNull();
+      if (lotRow == null) throw StateError('Lote no encontrado.');
+
+      // 2. Validar cantidad
+      if (quantity > lotRow.stockActual) {
+        throw StateError('La cantidad a retirar supera el stock actual del lote.');
+      }
+
+      // 3. Deducir stock
+      final newStock = lotRow.stockActual - quantity;
+      await (_db.update(_db.lotesTable)..where((tbl) => tbl.id.equals(batchId))).write(
+        LotesTableCompanion(stockActual: Value(newStock)),
+      );
+
+      // 4. Generar movimiento
+      await _db.into(_db.movimientosStockTable).insert(
+            MovimientosStockTableCompanion.insert(
+              tipo: reasonType,
+              loteId: batchId,
+              cantidad: quantity,
+              documentoReferencia: Value(referenceDocument),
+              fechaMovimiento: Value(DateTime.now()),
+              observaciones: Value(observations),
+            ),
+          );
+
+      // 5. Incrementar saldo a favor del proveedor (Si aplica)
+      if (reasonType == 'devolucion_proveedor' && supplierId != null) {
+        final supplierRow = await (_db.select(_db.proveedoresTable)..where((tbl) => tbl.id.equals(supplierId))).getSingleOrNull();
+        if (supplierRow != null) {
+          final devolucionValue = quantity * lotRow.precioCompraUnitario;
+          final newBalance = supplierRow.saldoAFavor + devolucionValue;
+          
+          await (_db.update(_db.proveedoresTable)..where((tbl) => tbl.id.equals(supplierId))).write(
+            ProveedoresTableCompanion(saldoAFavor: Value(newBalance)),
+          );
+        }
+      }
     });
   }
 

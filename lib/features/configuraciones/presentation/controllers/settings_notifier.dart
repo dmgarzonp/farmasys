@@ -1,17 +1,18 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/settings_state.dart';
 import '../../data/settings_repository.dart';
 
-final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  final repo = ref.read(settingsRepositoryProvider);
-  return SettingsNotifier(repo);
-});
+part 'settings_notifier.g.dart';
 
-class SettingsNotifier extends StateNotifier<SettingsState> {
-  final SettingsRepository _repo;
+@riverpod
+class SettingsNotifier extends _$SettingsNotifier {
+  late SettingsRepository _repo;
 
-  SettingsNotifier(this._repo) : super(const SettingsState()) {
+  @override
+  SettingsState build() {
+    _repo = ref.read(settingsRepositoryProvider);
     _loadSettings();
+    return const SettingsState();
   }
 
   Future<void> _loadSettings() async {

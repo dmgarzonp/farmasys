@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// Registro de distribuidores y proveedores farmacéuticos
+@TableIndex(name: 'idx_proveedores_ruc', columns: {#ruc})
 class ProveedoresTable extends Table {
   @override
   String get tableName => 'proveedores';
@@ -19,4 +20,7 @@ class ProveedoresTable extends Table {
 
   TextColumn get estado => text().withDefault(const Constant('activo'))(); // activo / inactivo
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  
+  // Saldo a favor por devoluciones o notas de crédito
+  RealColumn get saldoAFavor => real().withDefault(const Constant(0.0))();
 }

@@ -11,6 +11,7 @@ class Supplier {
   final String? emailContacto;
   final String estado; // 'activo' | 'inactivo'
   final DateTime? createdAt;
+  final double saldoAFavor;
 
   const Supplier({
     this.id,
@@ -24,6 +25,7 @@ class Supplier {
     this.emailContacto,
     this.estado = 'activo',
     this.createdAt,
+    this.saldoAFavor = 0.0,
   });
 
   bool get isActive => estado == 'activo';
@@ -40,6 +42,7 @@ class Supplier {
     String? emailContacto,
     String? estado,
     DateTime? createdAt,
+    double? saldoAFavor,
   }) {
     return Supplier(
       id: id ?? this.id,
@@ -53,6 +56,7 @@ class Supplier {
       emailContacto: emailContacto ?? this.emailContacto,
       estado: estado ?? this.estado,
       createdAt: createdAt ?? this.createdAt,
+      saldoAFavor: saldoAFavor ?? this.saldoAFavor,
     );
   }
 

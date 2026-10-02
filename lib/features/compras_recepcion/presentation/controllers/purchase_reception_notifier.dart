@@ -1,11 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../core/constants/app_constants.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../data/repositories/drift_purchase_repository.dart';
 import '../../../proveedores/domain/entities/supplier.dart';
 import '../../domain/entities/purchase_invoice.dart';
 import '../../domain/entities/purchase_item.dart';
 import '../../domain/repositories/i_purchase_repository.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
+
+part 'purchase_reception_notifier.g.dart';
 
 /// Estado inmutable de la recepción de mercadería / factura de compra
 class PurchaseReceptionState {
@@ -89,11 +91,12 @@ class PurchaseReceptionState {
 }
 
 /// Notifier que controla la lógica de recepción de mercadería y cuadre de factura
-class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
-  final IPurchaseRepository _purchaseRepo;
-  final Ref _ref;
-
-  PurchaseReceptionNotifier(this._purchaseRepo, this._ref) : super(PurchaseReceptionState(ivaVigente: _ref.read(settingsProvider).ivaVigente));
+@riverpod
+class PurchaseReception extends _$PurchaseReception {
+  @override
+  PurchaseReceptionState build() {
+    return PurchaseReceptionState(ivaVigente: ref.read(settingsProvider).ivaVigente);
+  }
 
   void loadDraft(PurchaseInvoice draft) {
     final supplier = Supplier(
@@ -140,7 +143,8 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
         observaciones: state.observations,
         items: state.items,
       );
-      final savedDraft = await _purchaseRepo.saveDraft(invoice);
+      final purchaseRepo = ref.read(purchaseRepositoryProvider);
+      final savedDraft = await purchaseRepo.saveDraft(invoice);
       state = state.copyWith(draftId: savedDraft.id, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, errorMessage: 'Error al guardar borrador: $e');
@@ -195,7 +199,7 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
   }
 
   void clear() {
-    state = PurchaseReceptionState(ivaVigente: _ref.read(settingsProvider).ivaVigente);
+    state = PurchaseReceptionState(ivaVigente: ref.read(settingsProvider).ivaVigente);
   }
 
   /// Guarda atómicamente la recepción en la base de datos
@@ -224,14 +228,11 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
         items: state.items,
       );
 
-      final registered = await _purchaseRepo.registerPurchase(invoice);
+      final purchaseRepo = ref.read(purchaseRepositoryProvider);
+      final registered = await purchaseRepo.registerPurchase(invoice);
       
-      // Si fue un borrador que ahora se asienta, lo borramos de la tabla si es necesario
-      // pero nuestro IPurchaseRepository inserta uno nuevo. 
-      // Espera, registerPurchase de DriftPurchaseRepository hace un insert. 
-      // Si proviene de un borrador, el borrador se quedará colgado a menos que lo borremos.
       if (state.draftId != null) {
-        await _purchaseRepo.deleteDraft(state.draftId!);
+        await purchaseRepo.deleteDraft(state.draftId!);
       }
       
       state = PurchaseReceptionState(lastConfirmedInvoice: registered);
@@ -243,12 +244,8 @@ class PurchaseReceptionNotifier extends StateNotifier<PurchaseReceptionState> {
   }
 }
 
-final purchaseReceptionProvider = StateNotifierProvider<PurchaseReceptionNotifier, PurchaseReceptionState>((ref) {
-  final repo = ref.read(purchaseRepositoryProvider);
-  return PurchaseReceptionNotifier(repo, ref);
-});
-
-final pendingPurchasesProvider = FutureProvider.autoDispose<List<PurchaseInvoice>>((ref) async {
-  final repo = ref.read(purchaseRepositoryProvider);
-  return await repo.getPendingPurchases();
-});
+@riverpod
+Future<List<PurchaseInvoice>> pendingPurchases(Ref ref) async {
+  final repo = ref.watch(purchaseRepositoryProvider);
+  return repo.getPendingPurchases();
+}

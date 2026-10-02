@@ -50,6 +50,7 @@ class DriftProductRepository implements IProductRepository {
       query.where((tbl) => tbl.estado.equals('activo'));
     }
     query.orderBy([(t) => OrderingTerm.asc(t.nombreComercial)]);
+    query.limit(300); // OPTIMIZACIÓN: Límite para evitar sobrecarga en UI
 
     return query.watch().asyncMap(_attachPresentations);
   }

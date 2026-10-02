@@ -10,6 +10,7 @@ import '../../../../shared/components/app_dialogs.dart';
 import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
+import '../../../../core/utils/debouncer.dart';
 import '../controllers/product_catalog_notifier.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 import '../../../inventario/presentation/controllers/inventory_notifier.dart';
@@ -28,9 +29,11 @@ class CatalogScreen extends ConsumerStatefulWidget {
 class _CatalogScreenState extends ConsumerState<CatalogScreen> {
   final TextEditingController _searchCtrl = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
+  final Debouncer _debouncer = Debouncer(milliseconds: 300);
 
   @override
   void dispose() {
+    _debouncer.dispose();
     _searchCtrl.dispose();
     _searchFocusNode.dispose();
     super.dispose();
@@ -97,9 +100,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final catalogState = ref.watch(productCatalogProvider);
-    final products = catalogState.filteredProducts;
-    final stockMap = ref.watch(availableStockMapProvider).valueOrNull ?? {};
+    final products = ref.watch(productCatalogProvider.select((s) => s.filteredProducts));
+    final currentFilter = ref.watch(productCatalogProvider.select((s) => s.filter));
+    final isLoading = ref.watch(productCatalogProvider.select((s) => s.isLoading));
+    final errorMessage = ref.watch(productCatalogProvider.select((s) => s.errorMessage));
+    final stockMap = ref.watch(availableStockMapProvider).value ?? {};
 
     return CallbackShortcuts(
       bindings: {
@@ -162,7 +167,9 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                         hintText: 'Buscar por nombre, principio activo, código [F3]...',
                         prefixIcon: Icons.search,
                         shortcutBadge: 'F3',
-                        onChanged: (q) => ref.read(productCatalogProvider.notifier).setSearchQuery(q),
+                        onChanged: (q) => _debouncer.run(() {
+                          ref.read(productCatalogProvider.notifier).setSearchQuery(q);
+                        }),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -171,7 +178,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                     Wrap(
                       spacing: 8,
                       children: ProductCatalogFilter.values.map((f) {
-                        final isSelected = catalogState.filter == f;
+                        final isSelected = currentFilter == f;
                         return ChoiceChip(
                           label: Text(f.label),
                           selected: isSelected,
@@ -197,7 +204,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               const Divider(height: 1, thickness: 1, color: AppColors.border),
 
               // Mensaje de Error si existiera
-              if (catalogState.errorMessage != null)
+              if (errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(12),
                   color: AppColors.danger.withValues(alpha: 0.1),
@@ -207,7 +214,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          catalogState.errorMessage!,
+                          errorMessage,
                           style: const TextStyle(color: AppColors.danger, fontSize: 13),
                         ),
                       ),
@@ -217,7 +224,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
               // Tabla de Alta Densidad con la lista de productos
               Expanded(
-                child: catalogState.isLoading
+                child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : products.isEmpty
                         ? _buildEmptyState()

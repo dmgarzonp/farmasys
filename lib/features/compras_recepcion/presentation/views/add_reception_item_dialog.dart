@@ -337,7 +337,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         prefixIcon: Icons.inventory_2_outlined,
                         keyboardType: TextInputType.number,
                         validator: (val) {
-                          final n = double.tryParse(val ?? '');
+                          final n = double.tryParse(val!);
                           if (n == null || n < 0) return 'Inválido';
                           return null;
                         },
@@ -366,14 +366,14 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         prefixIcon: Icons.payments_outlined,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (val) {
-                          final n = double.tryParse(val ?? '');
+                          final n = double.tryParse(val);
                           if (n != null) {
                             final cCaja = double.tryParse(_costoCajaCtrl.text.trim()) ?? 0.0;
                             _recalculatePvp(cCaja, n);
                           }
                         },
                         validator: (val) {
-                          final n = double.tryParse(val ?? '');
+                          final n = double.tryParse(val!);
                           if (n == null || n < 0) return 'Inválido';
                           return null;
                         },
@@ -387,14 +387,14 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         prefixIcon: Icons.attach_money_outlined,
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         onChanged: (val) {
-                          final n = double.tryParse(val ?? '');
+                          final n = double.tryParse(val);
                           if (n != null) {
                             final cUnit = double.tryParse(_costoUnitarioCtrl.text.trim()) ?? 0.0;
                             _recalculatePvp(n, cUnit);
                           }
                         },
                         validator: (val) {
-                          final n = double.tryParse(val ?? '');
+                          final n = double.tryParse(val!);
                           if (n == null || n < 0) return 'Inválido';
                           return null;
                         },
@@ -424,7 +424,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
                           ),
                           const Spacer(),
-                          Text(
+                          const Text(
                             'Se actualizará el catálogo',
                             style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                           ),

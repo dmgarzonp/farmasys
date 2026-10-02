@@ -1,13 +1,16 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../data/dashboard_repository.dart';
 import '../domain/dashboard_models.dart';
 
+part 'dashboard_notifier.g.dart';
+
 // Proveedor para el estado general del Dashboard (Caducidades, Stock Bajo y Ventas Hoy)
-final dashboardStateProvider = FutureProvider.autoDispose<DashboardState>((ref) async {
+@riverpod
+Future<DashboardState> dashboardState(Ref ref) async {
   final repository = ref.watch(dashboardRepositoryProvider);
 
   // Ejecutamos las consultas en paralelo para mayor rapidez
-  final resultados = await Future.wait([
+  final resultados = await Future.wait<dynamic>([
     repository.getLotesPorCaducar(diasAlerta: 90),
     repository.getProductosStockBajo(),
     repository.getTotalVentasHoy(),
@@ -29,7 +32,7 @@ final dashboardStateProvider = FutureProvider.autoDispose<DashboardState>((ref) 
     capitalInventario: resultados[5] as double,
     topProductos: resultados[6] as List<ProductoTop>,
   );
-});
+}
 
 class DashboardState {
   final List<AlertaCaducidad> lotesPorCaducar;

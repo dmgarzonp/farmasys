@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 /// Directorio de clientes para emisión de facturas electrónicas SRI
+@TableIndex(name: 'idx_clientes_documento', columns: {#documento})
 class ClientesTable extends Table {
   @override
   String get tableName => 'clientes';
