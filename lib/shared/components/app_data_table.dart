@@ -24,6 +24,7 @@ class AppDataTable<T> extends StatelessWidget {
   final String emptyMessage;
   final void Function(T item)? onRowTap;
   final String? tableKey;
+  final Widget? paginationControls;
 
   const AppDataTable({
     super.key,
@@ -33,6 +34,7 @@ class AppDataTable<T> extends StatelessWidget {
     this.emptyMessage = 'No se encontraron registros.',
     this.onRowTap,
     this.tableKey,
+    this.paginationControls,
   });
 
   @override
@@ -72,74 +74,82 @@ class AppDataTable<T> extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Calculate total required width to support horizontal scrolling safely (including 32px for horizontal padding)
-          final totalWidth = columns.fold<double>(0, (sum, col) => sum + (col.width ?? 150.0)) + 32.0;
-          final tableWidth = totalWidth > constraints.maxWidth ? totalWidth : constraints.maxWidth;
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Calculate total required width to support horizontal scrolling safely (including 32px for horizontal padding)
+                final totalWidth = columns.fold<double>(0, (sum, col) => sum + (col.width ?? 150.0)) + 32.0;
+                final tableWidth = totalWidth > constraints.maxWidth ? totalWidth : constraints.maxWidth;
 
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: tableWidth,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Encabezado de Columnas
-                  Container(
-                    color: AppColors.divider,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: columns.map((col) {
-                        final text = Text(
-                          col.label.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
-                            letterSpacing: 0.5,
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Encabezado de Columnas
+                        Container(
+                          color: AppColors.divider,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: columns.map((col) {
+                              final text = Text(
+                                col.label.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textSecondary,
+                                  letterSpacing: 0.5,
+                                ),
+                              );
+                              if (col.width != null) {
+                                return SizedBox(width: col.width, child: text);
+                              }
+                              return Expanded(child: text);
+                            }).toList(),
                           ),
-                        );
-                        if (col.width != null) {
-                          return SizedBox(width: col.width, child: text);
-                        }
-                        return Expanded(child: text);
-                      }).toList(),
+                        ),
+                        const Divider(height: 1),
+                        // Filas de Datos
+                        Expanded(
+                          child: ListView.separated(
+                            key: tableKey != null ? PageStorageKey(tableKey) : null,
+                            itemCount: data.length,
+                            separatorBuilder: (context, index) => const Divider(height: 1),
+                            itemBuilder: (context, index) {
+                              final item = data[index];
+                              return InkWell(
+                                onTap: onRowTap != null ? () => onRowTap!(item) : null,
+                                hoverColor: AppColors.primarySurface.withValues(alpha: 0.5),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                  child: Row(
+                                    children: columns.map((col) {
+                                      final widget = col.builder(item);
+                                      if (col.width != null) {
+                                        return SizedBox(width: col.width, child: widget);
+                                      }
+                                      return Expanded(child: widget);
+                                    }).toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const Divider(height: 1),
-                  // Filas de Datos
-                  Expanded(
-                    child: ListView.separated(
-                      key: tableKey != null ? PageStorageKey(tableKey) : null,
-                      itemCount: data.length,
-                      separatorBuilder: (context, index) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final item = data[index];
-                        return InkWell(
-                          onTap: onRowTap != null ? () => onRowTap!(item) : null,
-                          hoverColor: AppColors.primarySurface.withValues(alpha: 0.5),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                            child: Row(
-                              children: columns.map((col) {
-                                final widget = col.builder(item);
-                                if (col.width != null) {
-                                  return SizedBox(width: col.width, child: widget);
-                                }
-                                return Expanded(child: widget);
-                              }).toList(),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
+          ),
+          if (paginationControls != null) paginationControls!,
+        ],
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../../core/utils/paginated_result.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/i_product_repository.dart';
 
@@ -13,19 +14,24 @@ class DriftProductRepository implements IProductRepository {
   DriftProductRepository(this._db);
 
   @override
-  Future<List<Product>> searchProducts(String query) async {
+  Future<List<Product>> searchProducts(String query, {int limit = 50, bool onlyActive = false}) async {
     final cleanQuery = query.trim().toLowerCase();
-    if (cleanQuery.isEmpty) {
-      return getAllProducts();
+    final productsQuery = _db.select(_db.productosTable);
+
+    if (onlyActive) {
+      productsQuery.where((tbl) => tbl.estado.equals('activo'));
     }
 
-    final queryExpr = '%$cleanQuery%';
-
-    final productsQuery = _db.select(_db.productosTable)
-      ..where((tbl) =>
+    if (cleanQuery.isNotEmpty) {
+      final queryExpr = '%$cleanQuery%';
+      productsQuery.where((tbl) =>
           tbl.nombreComercial.lower().like(queryExpr) |
           tbl.principioActivo.lower().like(queryExpr) |
           tbl.codigoBarras.like(queryExpr));
+    }
+
+    productsQuery.orderBy([(t) => OrderingTerm.asc(t.nombreComercial)]);
+    productsQuery.limit(limit);
 
     final productRows = await productsQuery.get();
     return _attachPresentations(productRows);
@@ -44,6 +50,86 @@ class DriftProductRepository implements IProductRepository {
   }
 
   @override
+  Future<PaginatedResult<Product>> getProductsPaginated({
+    required int limit,
+    required int offset,
+    String? query,
+    bool? onlyActive,
+    bool? onlyAntibiotic,
+    bool? onlyPsychotropic,
+    bool? onlyPrescriptionRequired,
+    bool? onlyInactive,
+  }) async {
+    final productsQuery = _db.select(_db.productosTable);
+    
+    // Filtros de estado (basados en los switches de UI)
+    if (onlyActive == true) {
+      productsQuery.where((tbl) => tbl.estado.equals('activo'));
+    } else if (onlyInactive == true) {
+      productsQuery.where((tbl) => tbl.estado.equals('inactivo'));
+    }
+
+    if (onlyAntibiotic == true) {
+      productsQuery.where((tbl) => tbl.esAntibiotico.equals(true));
+    }
+    if (onlyPsychotropic == true) {
+      productsQuery.where((tbl) => tbl.esPsicotropico.equals(true));
+    }
+    if (onlyPrescriptionRequired == true) {
+      productsQuery.where((tbl) => tbl.requiereReceta.equals(true));
+    }
+
+    // Buscador
+    if (query != null && query.trim().isNotEmpty) {
+      final cleanQuery = query.trim().toLowerCase();
+      final queryExpr = '%$cleanQuery%';
+      productsQuery.where((tbl) =>
+          tbl.nombreComercial.lower().like(queryExpr) |
+          tbl.principioActivo.lower().like(queryExpr) |
+          tbl.codigoBarras.like(queryExpr));
+    }
+
+    // Construir la consulta de COUNT
+    // Replicamos la misma lógica en un JoinedSelectStatement o usando customSelect, pero Drift
+    // permite hacer count usando una query de agregación.
+    final countQuery = _db.selectOnly(_db.productosTable);
+    
+    // Filtros de estado para el count
+    if (onlyActive == true) {
+      countQuery.where(_db.productosTable.estado.equals('activo'));
+    } else if (onlyInactive == true) {
+      countQuery.where(_db.productosTable.estado.equals('inactivo'));
+    }
+    if (onlyAntibiotic == true) countQuery.where(_db.productosTable.esAntibiotico.equals(true));
+    if (onlyPsychotropic == true) countQuery.where(_db.productosTable.esPsicotropico.equals(true));
+    if (onlyPrescriptionRequired == true) countQuery.where(_db.productosTable.requiereReceta.equals(true));
+
+    if (query != null && query.trim().isNotEmpty) {
+      final cleanQuery = query.trim().toLowerCase();
+      final queryExpr = '%$cleanQuery%';
+      countQuery.where(
+          _db.productosTable.nombreComercial.lower().like(queryExpr) |
+          _db.productosTable.principioActivo.lower().like(queryExpr) |
+          _db.productosTable.codigoBarras.like(queryExpr));
+    }
+
+    final countExp = _db.productosTable.id.count();
+    countQuery.addColumns([countExp]);
+    final countResult = await countQuery.getSingle();
+    final totalCount = countResult.read(countExp) ?? 0;
+
+    // Aplicar paginación a la query original
+    productsQuery.orderBy([(t) => OrderingTerm.asc(t.nombreComercial)]);
+    productsQuery.limit(limit, offset: offset);
+
+    final productRows = await productsQuery.get();
+    final items = await _attachPresentations(productRows);
+
+    return PaginatedResult<Product>(
+      items: items,
+      totalCount: totalCount,
+    );
+  }
   Stream<List<Product>> watchAllProducts({bool onlyActive = true}) {
     final query = _db.select(_db.productosTable);
     if (onlyActive) {

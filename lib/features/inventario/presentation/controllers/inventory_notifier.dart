@@ -23,6 +23,11 @@ class InventoryState {
   final String searchQuery;
   final InventoryFilter filter;
   final String? errorMessage;
+  final int currentPage;
+  final int pageSize;
+  final int totalItems;
+  final int expiringSoonCount;
+  final int expiredCount;
 
   const InventoryState({
     this.batches = const [],
@@ -30,37 +35,14 @@ class InventoryState {
     this.searchQuery = '',
     this.filter = InventoryFilter.all,
     this.errorMessage,
+    this.currentPage = 1,
+    this.pageSize = 20,
+    this.totalItems = 0,
+    this.expiringSoonCount = 0,
+    this.expiredCount = 0,
   });
 
-  int get totalBatches => batches.length;
-  int get expiringSoonCount => batches.where((b) => b.isExpiringSoon && b.stockActual > 0).length;
-  int get expiredCount => batches.where((b) => b.isExpired).length;
-
-  /// Lotes filtrados reactivamente por búsqueda y vencimiento
-  List<BatchStock> get filteredBatches {
-    return batches.where((b) {
-      // 1. Filtro por vigencia / estado
-      final matchesFilter = switch (filter) {
-        InventoryFilter.all => true,
-        InventoryFilter.activeStock => b.stockActual > 0,
-        InventoryFilter.expiringSoon => b.isExpiringSoon && b.stockActual > 0,
-        InventoryFilter.expired => b.isExpired,
-      };
-
-      if (!matchesFilter) return false;
-
-      // 2. Filtro por texto de búsqueda
-      if (searchQuery.trim().isEmpty) return true;
-      final q = searchQuery.toLowerCase();
-
-      final matchesProduct = b.productName?.toLowerCase().contains(q) ?? false;
-      final matchesLot = b.lote.toLowerCase().contains(q);
-      final matchesPres = b.presentationName?.toLowerCase().contains(q) ?? false;
-      final matchesLocation = b.ubicacion?.toLowerCase().contains(q) ?? false;
-
-      return matchesProduct || matchesLot || matchesPres || matchesLocation;
-    }).toList();
-  }
+  int get totalPages => (totalItems / pageSize).ceil();
 
   InventoryState copyWith({
     List<BatchStock>? batches,
@@ -68,13 +50,23 @@ class InventoryState {
     String? searchQuery,
     InventoryFilter? filter,
     String? errorMessage,
+    int? currentPage,
+    int? pageSize,
+    int? totalItems,
+    int? expiringSoonCount,
+    int? expiredCount,
   }) {
     return InventoryState(
       batches: batches ?? this.batches,
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       filter: filter ?? this.filter,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage, // Nullable override
+      currentPage: currentPage ?? this.currentPage,
+      pageSize: pageSize ?? this.pageSize,
+      totalItems: totalItems ?? this.totalItems,
+      expiringSoonCount: expiringSoonCount ?? this.expiringSoonCount,
+      expiredCount: expiredCount ?? this.expiredCount,
     );
   }
 }
@@ -88,13 +80,55 @@ class Inventory extends _$Inventory {
     return const InventoryState();
   }
 
-  /// Carga reactiva de todos los lotes
+  /// Carga reactiva de lotes paginados
   Future<void> loadBatches() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final repository = ref.read(inventoryRepositoryProvider);
-      final batches = await repository.getAllBatches();
-      state = state.copyWith(batches: batches, isLoading: false);
+
+      bool onlyWithStock = false;
+      bool onlyExpiringSoon = false;
+      bool onlyExpired = false;
+
+      switch (state.filter) {
+        case InventoryFilter.all:
+          break;
+        case InventoryFilter.activeStock:
+          onlyWithStock = true;
+          break;
+        case InventoryFilter.expiringSoon:
+          onlyExpiringSoon = true;
+          break;
+        case InventoryFilter.expired:
+          onlyExpired = true;
+          break;
+      }
+
+      final offset = (state.currentPage - 1) * state.pageSize;
+
+      final result = await repository.getBatchesPaginated(
+        limit: state.pageSize,
+        offset: offset,
+        query: state.searchQuery,
+        onlyWithStock: onlyWithStock,
+        onlyExpiringSoon: onlyExpiringSoon,
+        onlyExpired: onlyExpired,
+      );
+
+      final expiringResult = await repository.getBatchesPaginated(
+        limit: 1, offset: 0, onlyExpiringSoon: true,
+      );
+      final expiredResult = await repository.getBatchesPaginated(
+        limit: 1, offset: 0, onlyExpired: true,
+      );
+
+      state = state.copyWith(
+        batches: result.items,
+        totalItems: result.totalCount,
+        expiringSoonCount: expiringResult.totalCount,
+        expiredCount: expiredResult.totalCount,
+        isLoading: false,
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -103,12 +137,33 @@ class Inventory extends _$Inventory {
     }
   }
 
+  void nextPage() {
+    if (state.currentPage < state.totalPages) {
+      state = state.copyWith(currentPage: state.currentPage + 1);
+      loadBatches();
+    }
+  }
+
+  void previousPage() {
+    if (state.currentPage > 1) {
+      state = state.copyWith(currentPage: state.currentPage - 1);
+      loadBatches();
+    }
+  }
+
+  void setPageSize(int size) {
+    state = state.copyWith(pageSize: size, currentPage: 1);
+    loadBatches();
+  }
+
   void setSearchQuery(String query) {
-    state = state.copyWith(searchQuery: query);
+    state = state.copyWith(searchQuery: query, currentPage: 1);
+    loadBatches();
   }
 
   void setFilter(InventoryFilter filter) {
-    state = state.copyWith(filter: filter);
+    state = state.copyWith(filter: filter, currentPage: 1);
+    loadBatches();
   }
 
   /// Registra un nuevo ingreso de lote físico
@@ -185,14 +240,5 @@ class Inventory extends _$Inventory {
 @riverpod
 Stream<Map<int, double>> availableStockMap(Ref ref) {
   final repository = ref.watch(inventoryRepositoryProvider);
-  
-  return repository.watchAllBatches().map((batches) {
-    final stockMap = <int, double>{};
-    for (final batch in batches) {
-      if (!batch.isExpired && batch.stockActual > 0) {
-        stockMap[batch.presentacionId] = (stockMap[batch.presentacionId] ?? 0.0) + batch.stockActual;
-      }
-    }
-    return stockMap;
-  });
+  return repository.watchAvailableStockMap();
 }

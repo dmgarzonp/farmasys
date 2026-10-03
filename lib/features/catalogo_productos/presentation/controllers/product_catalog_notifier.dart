@@ -24,6 +24,9 @@ class ProductCatalogState {
   final String searchQuery;
   final ProductCatalogFilter filter;
   final String? errorMessage;
+  final int currentPage;
+  final int pageSize;
+  final int totalItems;
 
   const ProductCatalogState({
     this.products = const [],
@@ -31,37 +34,12 @@ class ProductCatalogState {
     this.searchQuery = '',
     this.filter = ProductCatalogFilter.all,
     this.errorMessage,
+    this.currentPage = 1,
+    this.pageSize = 20,
+    this.totalItems = 0,
   });
 
-  /// Lista filtrada según búsqueda de texto y filtro de categoría ARCSA
-  List<Product> get filteredProducts {
-    return products.where((product) {
-      // 1. Filtro por categoría operativa
-      final matchesFilter = switch (filter) {
-        ProductCatalogFilter.all => product.isActive,
-        ProductCatalogFilter.antibiotics => product.isActive && product.esAntibiotico,
-        ProductCatalogFilter.psychotropic => product.isActive && product.esPsicotropico,
-        ProductCatalogFilter.prescriptionRequired => product.isActive && product.requiereReceta,
-        ProductCatalogFilter.inactive => !product.isActive,
-      };
-
-      if (!matchesFilter) return false;
-
-      // 2. Filtro por texto de búsqueda
-      if (searchQuery.trim().isEmpty) return true;
-      final q = searchQuery.toLowerCase();
-
-      final matchesName = product.nombreComercial.toLowerCase().contains(q);
-      final matchesActive = product.principioActivo?.toLowerCase().contains(q) ?? false;
-      final matchesBarcode = product.codigoBarras?.contains(q) ?? false;
-
-      final matchesPresentation = product.presentaciones.any((p) =>
-          p.nombreDescriptivo.toLowerCase().contains(q) ||
-          (p.codigoBarras?.contains(q) ?? false));
-
-      return matchesName || matchesActive || matchesBarcode || matchesPresentation;
-    }).toList();
-  }
+  int get totalPages => (totalItems / pageSize).ceil();
 
   ProductCatalogState copyWith({
     List<Product>? products,
@@ -69,13 +47,19 @@ class ProductCatalogState {
     String? searchQuery,
     ProductCatalogFilter? filter,
     String? errorMessage,
+    int? currentPage,
+    int? pageSize,
+    int? totalItems,
   }) {
     return ProductCatalogState(
       products: products ?? this.products,
       isLoading: isLoading ?? this.isLoading,
       searchQuery: searchQuery ?? this.searchQuery,
       filter: filter ?? this.filter,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage, // Nullable override
+      currentPage: currentPage ?? this.currentPage,
+      pageSize: pageSize ?? this.pageSize,
+      totalItems: totalItems ?? this.totalItems,
     );
   }
 }
@@ -89,13 +73,57 @@ class ProductCatalog extends _$ProductCatalog {
     return const ProductCatalogState();
   }
 
-  /// Carga inicial o recarga de todos los productos
+  /// Carga inicial o recarga de los productos paginados
   Future<void> loadProducts() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
     try {
       final repository = ref.read(productRepositoryProvider);
-      final products = await repository.getAllProducts(onlyActive: false);
-      state = state.copyWith(products: products, isLoading: false);
+
+      bool? onlyActive;
+      bool? onlyAntibiotic;
+      bool? onlyPsychotropic;
+      bool? onlyPrescriptionRequired;
+      bool? onlyInactive;
+      
+      switch (state.filter) {
+        case ProductCatalogFilter.all:
+          onlyActive = true;
+          break;
+        case ProductCatalogFilter.antibiotics:
+          onlyActive = true;
+          onlyAntibiotic = true;
+          break;
+        case ProductCatalogFilter.psychotropic:
+          onlyActive = true;
+          onlyPsychotropic = true;
+          break;
+        case ProductCatalogFilter.prescriptionRequired:
+          onlyActive = true;
+          onlyPrescriptionRequired = true;
+          break;
+        case ProductCatalogFilter.inactive:
+          onlyInactive = true;
+          break;
+      }
+
+      final offset = (state.currentPage - 1) * state.pageSize;
+
+      final result = await repository.getProductsPaginated(
+        limit: state.pageSize,
+        offset: offset,
+        query: state.searchQuery,
+        onlyActive: onlyActive,
+        onlyAntibiotic: onlyAntibiotic,
+        onlyPsychotropic: onlyPsychotropic,
+        onlyPrescriptionRequired: onlyPrescriptionRequired,
+        onlyInactive: onlyInactive,
+      );
+
+      state = state.copyWith(
+        products: result.items, 
+        totalItems: result.totalCount,
+        isLoading: false
+      );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -104,14 +132,35 @@ class ProductCatalog extends _$ProductCatalog {
     }
   }
 
-  /// Actualiza el query de búsqueda reactiva
+  /// Actualiza el query de búsqueda reactiva y recarga la página 1
   void setSearchQuery(String query) {
-    state = state.copyWith(searchQuery: query);
+    state = state.copyWith(searchQuery: query, currentPage: 1);
+    loadProducts();
   }
 
-  /// Cambia el filtro de categoría ARCSA
+  /// Cambia el filtro de categoría ARCSA y recarga la página 1
   void setFilter(ProductCatalogFilter filter) {
-    state = state.copyWith(filter: filter);
+    state = state.copyWith(filter: filter, currentPage: 1);
+    loadProducts();
+  }
+
+  void nextPage() {
+    if (state.currentPage < state.totalPages) {
+      state = state.copyWith(currentPage: state.currentPage + 1);
+      loadProducts();
+    }
+  }
+
+  void previousPage() {
+    if (state.currentPage > 1) {
+      state = state.copyWith(currentPage: state.currentPage - 1);
+      loadProducts();
+    }
+  }
+
+  void setPageSize(int size) {
+    state = state.copyWith(pageSize: size, currentPage: 1);
+    loadProducts();
   }
 
   /// Guarda o actualiza un producto en el catálogo

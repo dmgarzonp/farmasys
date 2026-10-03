@@ -7,6 +7,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
 import '../../../../shared/components/app_dialogs.dart';
+import '../../../../shared/components/app_pagination_controls.dart';
 import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../../../shared/components/xela_badge.dart';
@@ -100,10 +101,11 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final products = ref.watch(productCatalogProvider.select((s) => s.filteredProducts));
-    final currentFilter = ref.watch(productCatalogProvider.select((s) => s.filter));
-    final isLoading = ref.watch(productCatalogProvider.select((s) => s.isLoading));
-    final errorMessage = ref.watch(productCatalogProvider.select((s) => s.errorMessage));
+    final catalogState = ref.watch(productCatalogProvider);
+    final products = catalogState.products;
+    final currentFilter = catalogState.filter;
+    final isLoading = catalogState.isLoading;
+    final errorMessage = catalogState.errorMessage;
     final stockMap = ref.watch(availableStockMapProvider).value ?? {};
 
     return CallbackShortcuts(
@@ -233,6 +235,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                             child: AppDataTable<Product>(
                               tableKey: 'catalog_products_table',
                               data: products,
+                              paginationControls: AppPaginationControls(
+                                currentPage: catalogState.currentPage,
+                                totalPages: catalogState.totalPages,
+                                totalItems: catalogState.totalItems,
+                                pageSize: catalogState.pageSize,
+                                onNextPage: () => ref.read(productCatalogProvider.notifier).nextPage(),
+                                onPreviousPage: () => ref.read(productCatalogProvider.notifier).previousPage(),
+                                onPageSizeChanged: (size) => ref.read(productCatalogProvider.notifier).setPageSize(size),
+                              ),
                               columns: [
                                 AppTableColumn<Product>(
                                   label: 'Código / Barras',

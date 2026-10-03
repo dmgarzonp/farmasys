@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../data/repositories/drift_cash_session_repository.dart';
@@ -39,30 +40,26 @@ class CashSessionState {
 class CashSessionNotifier extends _$CashSessionNotifier {
   late ICashSessionRepository _repository;
 
+  StreamSubscription<CashSession?>? _subscription;
+
   @override
   CashSessionState build() {
     _repository = ref.watch(cashSessionRepositoryProvider);
-    // Disparar carga asincrónica al construir
-    Future.microtask(() => loadActiveSession());
-    return const CashSessionState();
-  }
-
-  /// Carga la sesión activa actual
-  Future<void> loadActiveSession() async {
-    state = state.copyWith(isLoading: true, errorMessage: null);
-    try {
-      final session = await _repository.getActiveSession();
+    
+    // Suscribirse a los cambios en vivo de la base de datos para que la caja se actualice al vender
+    _subscription = _repository.watchActiveSession().listen((session) {
       state = state.copyWith(
         activeSession: session,
         clearActiveSession: session == null,
         isLoading: false,
       );
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: 'Error al consultar turno de caja: $e',
-      );
-    }
+    });
+
+    ref.onDispose(() {
+      _subscription?.cancel();
+    });
+
+    return const CashSessionState(isLoading: true);
   }
 
   /// Abre un nuevo turno de caja

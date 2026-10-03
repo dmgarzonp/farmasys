@@ -1,3 +1,4 @@
+import '../../../../core/utils/paginated_result.dart';
 import '../entities/product.dart';
 
 /// Contrato abstracto para el repositorio de productos y presentaciones (SOLID: DIP & ISP).
@@ -5,10 +6,22 @@ import '../entities/product.dart';
 /// o un Mock de pruebas sin tocar la lógica de negocio ni la interfaz de usuario.
 abstract class IProductRepository {
   /// Búsqueda rápida por nombre comercial, principio activo o código de barras
-  Future<List<Product>> searchProducts(String query);
+  Future<List<Product>> searchProducts(String query, {int limit = 50, bool onlyActive = false});
 
   /// Obtiene todos los productos registrados (con filtro opcional de activos)
   Future<List<Product>> getAllProducts({bool onlyActive = true});
+
+  /// Obtiene productos de forma paginada
+  Future<PaginatedResult<Product>> getProductsPaginated({
+    required int limit,
+    required int offset,
+    String? query,
+    bool? onlyActive,
+    bool? onlyAntibiotic,
+    bool? onlyPsychotropic,
+    bool? onlyPrescriptionRequired,
+    bool? onlyInactive,
+  });
 
   /// Stream reactivo para observar los cambios en el catálogo en tiempo real
   Stream<List<Product>> watchAllProducts({bool onlyActive = true});

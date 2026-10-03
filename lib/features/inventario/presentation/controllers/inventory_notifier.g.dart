@@ -44,7 +44,7 @@ final class InventoryProvider
   }
 }
 
-String _$inventoryHash() => r'71e2ce5c438faea7638ce29182ed312b49daacfd';
+String _$inventoryHash() => r'c2f22a750ae5d9d5866629c86a4c680be352dfd0';
 
 /// Controlador de negocio del inventario y trazabilidad FEFO (SOLID: SRP)
 
@@ -102,4 +102,4 @@ final class AvailableStockMapProvider extends $FunctionalProvider<
   }
 }
 
-String _$availableStockMapHash() => r'ec6338071170af7ad3d243365ccb5afb69a18650';
+String _$availableStockMapHash() => r'633462464adca6b24d525258794f3055369c0f6e';

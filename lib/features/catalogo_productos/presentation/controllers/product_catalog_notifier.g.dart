@@ -44,7 +44,7 @@ final class ProductCatalogProvider
   }
 }
 
-String _$productCatalogHash() => r'd4f5944489fd013c6721e536c79904a7c6d5f085';
+String _$productCatalogHash() => r'763e7ad62c7b35691501d0d69397283f4ea61190';
 
 /// Controlador de negocio del catálogo de productos (SOLID: SRP)
 

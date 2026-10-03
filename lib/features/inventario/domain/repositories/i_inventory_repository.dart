@@ -1,4 +1,5 @@
 import '../../../../core/utils/fefo_comparator.dart';
+import '../../../../core/utils/paginated_result.dart';
 import '../entities/batch_stock.dart';
 import '../entities/stock_movement.dart';
 
@@ -12,8 +13,21 @@ abstract class IInventoryRepository {
     bool onlyExpired = false,
   });
 
-  /// Stream reactivo de lotes para la UI de inventario en tiempo real
+  /// Stream reactivo de lotes para stockMap
   Stream<List<BatchStock>> watchAllBatches();
+
+  /// Stream reactivo nativo de SQL para totalizar stock por presentación
+  Stream<Map<int, double>> watchAvailableStockMap();
+
+  /// Obtiene lotes de forma paginada para inventario
+  Future<PaginatedResult<BatchStock>> getBatchesPaginated({
+    required int limit,
+    required int offset,
+    String? query,
+    bool onlyWithStock = false,
+    bool onlyExpiringSoon = false,
+    bool onlyExpired = false,
+  });
 
   /// Obtiene un lote específico por su ID
   Future<BatchStock?> getBatchById(int id);

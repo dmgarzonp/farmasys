@@ -8,6 +8,7 @@ import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
 import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/components/app_pagination_controls.dart';
 import '../../../../shared/components/expiration_badge.dart';
 import '../../../../shared/components/xela_badge.dart';
 import '../../../../shared/components/xela_card.dart';
@@ -161,12 +162,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final batches = ref.watch(inventoryProvider.select((s) => s.filteredBatches));
-    final totalBatches = ref.watch(inventoryProvider.select((s) => s.totalBatches));
-    final expiringSoonCount = ref.watch(inventoryProvider.select((s) => s.expiringSoonCount));
-    final expiredCount = ref.watch(inventoryProvider.select((s) => s.expiredCount));
-    final currentFilter = ref.watch(inventoryProvider.select((s) => s.filter));
-    final isLoading = ref.watch(inventoryProvider.select((s) => s.isLoading));
+    final inventoryState = ref.watch(inventoryProvider);
+    final batches = inventoryState.batches;
+    final totalBatches = inventoryState.totalItems;
+    final expiringSoonCount = inventoryState.expiringSoonCount;
+    final expiredCount = inventoryState.expiredCount;
+    final currentFilter = inventoryState.filter;
+    final isLoading = inventoryState.isLoading;
 
     return CallbackShortcuts(
       bindings: {
@@ -299,6 +301,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                             padding: const EdgeInsets.all(16),
                             child: AppDataTable<BatchStock>(
                               data: batches,
+                              paginationControls: AppPaginationControls(
+                                currentPage: inventoryState.currentPage,
+                                totalPages: inventoryState.totalPages,
+                                totalItems: inventoryState.totalItems,
+                                pageSize: inventoryState.pageSize,
+                                onNextPage: () => ref.read(inventoryProvider.notifier).nextPage(),
+                                onPreviousPage: () => ref.read(inventoryProvider.notifier).previousPage(),
+                                onPageSizeChanged: (size) => ref.read(inventoryProvider.notifier).setPageSize(size),
+                              ),
                               columns: [
                                 AppTableColumn<BatchStock>(
                                   label: 'Nº Lote',

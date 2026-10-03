@@ -15,7 +15,7 @@ import '../../../caja/presentation/controllers/cash_session_notifier.dart';
 import '../../../caja/presentation/views/close_cash_dialog.dart';
 import '../../../caja/presentation/views/open_cash_dialog.dart';
 import '../../../catalogo_productos/domain/entities/product.dart';
-import '../../../catalogo_productos/presentation/controllers/product_catalog_notifier.dart';
+import '../controllers/pos_search_notifier.dart';
 import '../../../clientes/data/repositories/drift_customer_repository.dart';
 import '../../../clientes/domain/entities/customer.dart';
 import '../../../clientes/presentation/views/customer_select_dialog.dart';
@@ -142,6 +142,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             quantity: 1.0,
             hasIva: presentation.tieneIva,
             isFraccion: isFraccion,
+            unitsPerBox: presentation.unidadesPorCaja,
           ),
         );
 
@@ -154,7 +155,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final clean = text.trim();
     if (clean.isEmpty) return;
 
-    final catalog = ref.read(productCatalogProvider).products;
+    final searchState = ref.read(posSearchProvider);
+    final catalog = searchState.results;
 
     // 1. Búsqueda exacta por código de barras de presentación o producto
     for (final prod in catalog) {
@@ -184,18 +186,8 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     final cartState = ref.read(posCartProvider);
     final availableStockMap = ref.read(availableStockMapProvider).value ?? {};
     final currentStock = availableStockMap[item.presentacionId] ?? 0.0;
-    final catalog = ref.read(productCatalogProvider).products;
-    
     double currentQtyInCart = 0.0;
-    int unitsPerBox = 1;
-
-    for (final p in catalog) {
-      for (final pres in p.presentaciones) {
-        if (pres.id == item.presentacionId) {
-          unitsPerBox = pres.unidadesPorCaja;
-        }
-      }
-    }
+    int unitsPerBox = item.unitsPerBox;
 
     for (final i in cartState.items) {
       if (i.presentacionId == item.presentacionId) {
@@ -338,19 +330,9 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Widget _buildProductCatalogPanel(BuildContext context) {
-    final catalogState = ref.watch(productCatalogProvider);
+    final searchState = ref.watch(posSearchProvider);
     final availableStockMap = ref.watch(availableStockMapProvider).value ?? {};
-    final allProducts = catalogState.products.where((p) => p.isActive && p.presentaciones.isNotEmpty).toList();
-
-    final filtered = _searchQuery.trim().isEmpty
-        ? allProducts
-        : allProducts.where((p) {
-            final q = _searchQuery.toLowerCase();
-            return p.nombreComercial.toLowerCase().contains(q) ||
-                (p.principioActivo?.toLowerCase().contains(q) ?? false) ||
-                (p.codigoBarras?.contains(q) ?? false) ||
-                p.presentaciones.any((pres) => pres.codigoBarras?.contains(q) ?? false);
-          }).toList();
+    final filtered = searchState.results;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -366,6 +348,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             shortcutBadge: 'F2',
             onChanged: (val) => _debouncer.run(() {
               setState(() => _searchQuery = val);
+              ref.read(posSearchProvider.notifier).search(val);
             }),
             onSubmitted: _onSearchSubmitted,
           ),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/utils/fefo_comparator.dart';
+import '../../../../core/utils/paginated_result.dart';
 import '../../domain/entities/batch_stock.dart';
 import '../../domain/entities/stock_movement.dart';
 import '../../domain/repositories/i_inventory_repository.dart';
@@ -35,6 +36,88 @@ class DriftInventoryRepository implements IInventoryRepository {
     final query = _buildBatchQuery();
     query.limit(300); // OPTIMIZACIÓN: Límite para evitar sobrecarga en Desktop
     return query.watch().map((rows) => rows.map(_mapRowToBatch).toList());
+  }
+
+  @override
+  Stream<Map<int, double>> watchAvailableStockMap() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    // Unix timestamp conversion for SQLite date comparison, or we can just rely on Drift's date serialization
+    final todaySeconds = (today.millisecondsSinceEpoch / 1000).floor();
+
+    final query = _db.customSelect(
+      'SELECT presentacion_id, SUM(stock_actual) as total '
+      'FROM lotes '
+      'WHERE stock_actual > 0 AND fecha_vencimiento >= ? '
+      'GROUP BY presentacion_id',
+      variables: [Variable.withInt(todaySeconds)], // Drift uses unix timestamps internally
+      readsFrom: {_db.lotesTable},
+    );
+
+    return query.watch().map((rows) {
+      final map = <int, double>{};
+      for (final row in rows) {
+        final presId = row.read<int>('presentacion_id');
+        final total = row.read<double>('total');
+        map[presId] = total;
+      }
+      return map;
+    });
+  }
+
+  @override
+  Future<PaginatedResult<BatchStock>> getBatchesPaginated({
+    required int limit,
+    required int offset,
+    String? query,
+    bool onlyWithStock = false,
+    bool onlyExpiringSoon = false,
+    bool onlyExpired = false,
+  }) async {
+    final batchQuery = _buildBatchQuery(
+      onlyWithStock: onlyWithStock,
+      onlyExpiringSoon: onlyExpiringSoon,
+      onlyExpired: onlyExpired,
+    );
+
+    if (query != null && query.trim().isNotEmpty) {
+      final cleanQuery = query.trim().toLowerCase();
+      final queryExpr = '%$cleanQuery%';
+      batchQuery.where(
+          _db.productosTable.nombreComercial.lower().like(queryExpr) |
+          _db.lotesTable.lote.lower().like(queryExpr) |
+          _db.productosTable.codigoBarras.like(queryExpr));
+    }
+
+    // Count
+    final countQuery = _buildBatchQuery(
+      onlyWithStock: onlyWithStock,
+      onlyExpiringSoon: onlyExpiringSoon,
+      onlyExpired: onlyExpired,
+    );
+
+    if (query != null && query.trim().isNotEmpty) {
+      final cleanQuery = query.trim().toLowerCase();
+      final queryExpr = '%$cleanQuery%';
+      countQuery.where(
+          _db.productosTable.nombreComercial.lower().like(queryExpr) |
+          _db.lotesTable.lote.lower().like(queryExpr) |
+          _db.productosTable.codigoBarras.like(queryExpr));
+    }
+
+    final countExp = _db.lotesTable.id.count();
+    countQuery.addColumns([countExp]);
+    final countResult = await countQuery.getSingle();
+    final totalCount = countResult.read(countExp) ?? 0;
+
+    batchQuery.limit(limit, offset: offset);
+    final rows = await batchQuery.get();
+    final items = rows.map(_mapRowToBatch).toList();
+
+    return PaginatedResult<BatchStock>(
+      items: items,
+      totalCount: totalCount,
+    );
   }
 
   @override

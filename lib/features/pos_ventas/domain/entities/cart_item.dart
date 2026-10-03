@@ -10,6 +10,7 @@ class CartItem {
   final bool isFraccion;
   final double discount;
   final bool hasIva;
+  final int unitsPerBox;
 
   // Lotes asignados por FEFO para este renglón
   final List<LotAllocation> lotAllocations;
@@ -23,6 +24,7 @@ class CartItem {
     this.isFraccion = false,
     this.discount = 0.0,
     this.hasIva = false,
+    this.unitsPerBox = 1,
     this.lotAllocations = const [],
   });
 
@@ -43,6 +45,7 @@ class CartItem {
       isFraccion: isFraccion,
       discount: discount ?? this.discount,
       hasIva: hasIva,
+      unitsPerBox: unitsPerBox,
       lotAllocations: lotAllocations ?? this.lotAllocations,
     );
   }
