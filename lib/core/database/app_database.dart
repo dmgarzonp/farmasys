@@ -13,6 +13,9 @@ import 'tables/proveedores_table.dart';
 import 'tables/cajas_sesiones_table.dart';
 import 'tables/compras_table.dart';
 import 'tables/detalles_compra_table.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
+import 'tables/usuarios_table.dart';
 import 'database_seeder.dart';
 
 part 'app_database.g.dart';
@@ -31,6 +34,7 @@ part 'app_database.g.dart';
   CajasSesionesTable,
   ComprasTable,
   DetallesCompraTable,
+  UsuariosTable,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -38,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -64,6 +68,53 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.addColumn(proveedoresTable, proveedoresTable.saldoAFavor);
+          }
+          if (from < 4) {
+            await m.createTable(usuariosTable);
+            
+            // Insertar admin por defecto al migrar
+            final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
+            await into(usuariosTable).insert(
+              UsuariosTableCompanion.insert(
+                id: const Value(1),
+                username: 'admin',
+                passwordHash: adminPasswordHash,
+                role: UserRole.administrador,
+              ),
+            );
+          }
+          if (from < 5) {
+            // Asegurar que el admin exista si la migración 4 no lo creó
+            final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
+            final existingAdmin = await customSelect('SELECT id FROM usuarios_table WHERE username = \'admin\'').get();
+            if (existingAdmin.isEmpty) {
+              await into(usuariosTable).insert(
+                UsuariosTableCompanion.insert(
+                  id: const Value(1),
+                  username: 'admin',
+                  passwordHash: adminPasswordHash,
+                  role: UserRole.administrador,
+                ),
+              );
+            }
+          }
+          if (from < 6) {
+            await m.addColumn(usuariosTable, usuariosTable.fullName);
+            await m.addColumn(usuariosTable, usuariosTable.documento);
+            await m.addColumn(usuariosTable, usuariosTable.telefonoFijo); // Reused the space of old 'telefono'
+            await m.addColumn(usuariosTable, usuariosTable.hireDate);
+          }
+          if (from < 7) {
+            await m.addColumn(usuariosTable, usuariosTable.telefonoMovil);
+            await m.addColumn(usuariosTable, usuariosTable.correoPersonal);
+          }
+          if (from < 8) {
+            // Hotfix: telefonoFijo se añadió a la clase pero no a la migración para bases de datos que ya estaban en v6.
+            try {
+              await m.addColumn(usuariosTable, usuariosTable.telefonoFijo);
+            } catch (e) {
+              // Ignore if already exists (for databases that updated straight from v5 to v7)
+            }
           }
         },
         beforeOpen: (details) async {

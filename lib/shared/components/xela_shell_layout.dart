@@ -11,6 +11,8 @@ import '../../features/caja/presentation/views/close_cash_dialog.dart';
 import '../../features/caja/presentation/views/open_cash_dialog.dart';
 import '../../features/compras_recepcion/presentation/controllers/purchase_reception_notifier.dart';
 import '../../features/configuraciones/presentation/controllers/settings_notifier.dart';
+import '../../features/pos_ventas/presentation/controllers/pos_cart_notifier.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
 
 import 'components.dart';
 
@@ -51,22 +53,62 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
 
   @override
   void onWindowClose() async {
-    final purchaseState = ref.read(purchaseReceptionProvider);
-    final hasDraft = purchaseState.items.isNotEmpty || purchaseState.selectedSupplier != null;
-
-    if (hasDraft) {
+    // 1. Check for Active POS Sale
+    final posCartState = ref.read(posCartProvider);
+    if (posCartState.items.isNotEmpty) {
       final shouldExit = await AppConfirmDialog.show(
         context,
-        title: 'Borrador Guardado',
-        message: 'Tienes una recepción de compra en progreso. Se ha guardado un borrador automáticamente.\n\n¿Estás seguro de que deseas salir?',
+        title: 'Venta en Curso',
+        message: 'Tienes una venta en el Punto de Venta (POS) con productos escaneados.\n\nSi sales ahora, la venta actual se cancelará y los productos se vaciarán.\n\n¿Estás seguro de que deseas salir del sistema?',
+        confirmText: 'Salir de FarmSys',
+        cancelText: 'Cancelar',
+        isDestructive: true,
+      );
+      if (shouldExit) await windowManager.destroy();
+      return;
+    }
+
+    // 2. Check for Purchase Reception Draft
+    final purchaseState = ref.read(purchaseReceptionProvider);
+    final hasPurchaseDraft = purchaseState.items.isNotEmpty || purchaseState.selectedSupplier != null;
+    if (hasPurchaseDraft) {
+      final shouldExit = await AppConfirmDialog.show(
+        context,
+        title: 'Recepción de Compras en Curso',
+        message: 'Tienes una recepción de compra en progreso (borrador).\n\n¿Estás seguro de que deseas salir de FarmSys?',
         confirmText: 'Salir de FarmSys',
         cancelText: 'Continuar Trabajando',
         isDestructive: true,
       );
-      if (shouldExit) {
-        await windowManager.destroy();
-      }
-    } else {
+      if (shouldExit) await windowManager.destroy();
+      return;
+    }
+
+    // 3. Check for Active Cash Session (Arqueo de Caja pendiente)
+    final hasActiveCashSession = ref.read(cashSessionProvider).activeSession != null;
+    if (hasActiveCashSession) {
+      final shouldExit = await AppConfirmDialog.show(
+        context,
+        title: 'Turno de Caja Abierto',
+        message: 'ATENCIÓN: Tu turno de caja sigue abierto.\n\nLo ideal es realizar el arqueo (Cierre de Caja) antes de irte para cuadrar los valores de efectivo y evitar descuadres.\n\n¿Estás seguro de que deseas salir sin cerrar la caja?',
+        confirmText: 'Salir de FarmSys',
+        cancelText: 'Cancelar y hacer Arqueo',
+        isDestructive: true,
+      );
+      if (shouldExit) await windowManager.destroy();
+      return;
+    }
+
+    // 4. Default Safe Exit Confirmation
+    final shouldExit = await AppConfirmDialog.show(
+      context,
+      title: 'Salir del Sistema',
+      message: '¿Estás seguro de que deseas cerrar FarmSys?',
+      confirmText: 'Salir',
+      cancelText: 'Cancelar',
+      isDestructive: false,
+    );
+    if (shouldExit) {
       await windowManager.destroy();
     }
   }
@@ -184,7 +226,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
 
   Widget _buildHeaderBar() {
     return Container(
-      height: 52,
+      height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
         color: AppColors.cardBackground,
@@ -233,32 +275,71 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
                 icon: Icons.fact_check_rounded,
               ),
               const SizedBox(width: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.person_rounded, size: 14, color: AppColors.textSecondary),
-                    SizedBox(width: 6),
-                    Text(
-                      'Cajero: Administrador',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              _buildUserMenu(),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildUserMenu() {
+    final authState = ref.watch(authControllerProvider);
+    final user = authState.user;
+
+    if (user == null) {
+      return const SizedBox();
+    }
+
+    // Convertir enum a string amigable (ej: UserRole.administrador -> Administrador)
+    final roleString = user.role.name[0].toUpperCase() + user.role.name.substring(1);
+
+    return PopupMenuButton<String>(
+      onSelected: (value) {
+        if (value == 'logout') {
+          ref.read(authControllerProvider.notifier).logout();
+        }
+      },
+      position: PopupMenuPosition.under,
+      offset: const Offset(0, 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: AppColors.cardBackground,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.person_rounded, size: 14, color: AppColors.textSecondary),
+            const SizedBox(width: 6),
+            Text(
+              '$roleString: ${user.username}',
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
+          ],
+        ),
+      ),
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'logout',
+          child: Row(
+            children: const [
+              Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
+              SizedBox(width: 12),
+              Text('Cerrar Sesión', style: TextStyle(color: AppColors.error)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

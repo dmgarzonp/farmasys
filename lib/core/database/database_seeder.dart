@@ -1,9 +1,23 @@
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'app_database.dart';
+import 'tables/usuarios_table.dart';
 
 class DatabaseSeeder {
   static Future<void> run(AppDatabase db) async {
     await db.batch((batch) {
+      // 0. Usuarios (Admin por defecto)
+      final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
+      batch.insertAll(db.usuariosTable, [
+        UsuariosTableCompanion.insert(
+          id: const Value(1),
+          username: 'admin',
+          passwordHash: adminPasswordHash,
+          role: UserRole.administrador,
+        ),
+      ]);
+
       // 1. Productos
       batch.insertAll(db.productosTable, [
         ProductosTableCompanion.insert(

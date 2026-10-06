@@ -6,14 +6,59 @@ import '../../features/inventario/presentation/views/inventory_screen.dart';
 import '../../features/pos_ventas/presentation/views/pos_screen.dart';
 import '../../features/dashboard/presentation/views/dashboard_screen.dart';
 import '../../features/configuraciones/presentation/views/settings_screen.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../features/auth/presentation/views/login_screen.dart';
+import '../../features/usuarios/presentation/screens/users_list_screen.dart';
+import '../database/tables/usuarios_table.dart';
 
 import '../../shared/components/xela_shell_layout.dart';
 
 /// Configuración de navegación declarativa de FarmSys con diseño de shell Xela
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authState = ref.watch(authControllerProvider);
+
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/login',
+    redirect: (context, state) {
+      final isLoggingIn = state.uri.path == '/login';
+      final isAuth = authState.status == AuthStatus.authenticated;
+
+      if (authState.isLoading) {
+        if (!isLoggingIn) return '/login';
+        return null;
+      }
+
+      if (!isAuth && !isLoggingIn) return '/login';
+      
+      if (isAuth) {
+        final role = authState.user?.role;
+        final path = state.uri.path;
+
+        if (isLoggingIn) {
+          // Redirección inicial post-login según rol
+          return role == UserRole.cajero ? '/pos' : '/';
+        }
+
+        // RBAC Guards
+        if (role == UserRole.cajero) {
+          // Cajeros solo tienen acceso a POS
+          if (path != '/pos') return '/pos';
+        } else if (role == UserRole.farmaceutico) {
+          // Farmacéuticos no tienen acceso a configuración ni personal
+          if (path == '/settings' || path == '/usuarios') return '/';
+        } else if (role == UserRole.administrador) {
+          // Admin tiene acceso a todo. (Sin restricciones)
+        }
+      }
+
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return XelaShellLayout(
@@ -73,6 +118,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/settings',
                 name: 'settings',
                 builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/usuarios',
+                name: 'usuarios',
+                builder: (context, state) => const UsersListScreen(),
               ),
             ],
           ),

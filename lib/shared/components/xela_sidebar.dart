@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/constants/constants.dart';
+import '../../core/constants/constants.dart' hide UserRole;
 import '../../features/caja/presentation/controllers/cash_session_notifier.dart';
+import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../core/database/tables/usuarios_table.dart';
 import 'components.dart';
 
 /// Barra lateral de navegación estilo Xela UI Kit para escritorio
@@ -29,6 +31,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
   @override
   Widget build(BuildContext context) {
     final cashState = ref.watch(cashSessionProvider);
+    final userRole = ref.watch(authControllerProvider).user?.role;
     final width = _isExpanded ? 230.0 : 68.0;
 
     return AnimatedContainer(
@@ -54,13 +57,15 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             child: ListView(
               padding: const EdgeInsets.symmetric(horizontal: 10),
               children: [
-                _buildNavItem(
-                  label: 'Dashboard',
-                  route: '/',
-                  icon: Icons.dashboard_rounded,
-                  shortcut: 'F2',
-                ),
-                const SizedBox(height: 6),
+                if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
+                  _buildNavItem(
+                    label: 'Dashboard',
+                    route: '/',
+                    icon: Icons.dashboard_rounded,
+                    shortcut: 'F2',
+                  ),
+                  const SizedBox(height: 6),
+                ],
                 _buildNavItem(
                   label: 'Punto de Venta',
                   route: '/pos',
@@ -68,33 +73,44 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                   shortcut: 'F1',
                 ),
                 const SizedBox(height: 6),
-                _buildNavItem(
-                  label: 'Catálogo Maestro',
-                  route: '/catalog',
-                  icon: Icons.inventory_2_outlined,
-                  shortcut: 'F4',
-                ),
-                const SizedBox(height: 6),
-                _buildNavItem(
-                  label: 'Inventario FEFO',
-                  route: '/inventory',
-                  icon: Icons.warehouse_outlined,
-                  shortcut: 'F5',
-                ),
-                const SizedBox(height: 6),
-                _buildNavItem(
-                  label: 'Recepción Compras',
-                  route: '/purchases',
-                  icon: Icons.receipt_long_outlined,
-                  shortcut: 'F9',
-                ),
-                const SizedBox(height: 6),
-                _buildNavItem(
-                  label: 'Configuraciones',
-                  route: '/settings',
-                  icon: Icons.settings_rounded,
-                  shortcut: 'F12',
-                ),
+                if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
+                  _buildNavItem(
+                    label: 'Catálogo Maestro',
+                    route: '/catalog',
+                    icon: Icons.inventory_2_outlined,
+                    shortcut: 'F4',
+                  ),
+                  const SizedBox(height: 6),
+                  _buildNavItem(
+                    label: 'Inventario FEFO',
+                    route: '/inventory',
+                    icon: Icons.warehouse_outlined,
+                    shortcut: 'F5',
+                  ),
+                  const SizedBox(height: 6),
+                  _buildNavItem(
+                    label: 'Recepción Compras',
+                    route: '/purchases',
+                    icon: Icons.receipt_long_outlined,
+                    shortcut: 'F9',
+                  ),
+                  const SizedBox(height: 6),
+                ],
+                if (userRole == UserRole.administrador) ...[
+                  _buildNavItem(
+                    label: 'Usuarios',
+                    route: '/usuarios',
+                    icon: Icons.manage_accounts_rounded,
+                    shortcut: 'U',
+                  ),
+                  const SizedBox(height: 6),
+                  _buildNavItem(
+                    label: 'Configuraciones',
+                    route: '/settings',
+                    icon: Icons.settings_rounded,
+                    shortcut: 'F12',
+                  ),
+                ],
               ],
             ),
           ),

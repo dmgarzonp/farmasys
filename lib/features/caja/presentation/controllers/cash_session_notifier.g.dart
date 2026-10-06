@@ -45,7 +45,7 @@ final class CashSessionNotifierProvider
 }
 
 String _$cashSessionNotifierHash() =>
-    r'5b973d76cf5390a50d04f21d4b0cbb97854b50ab';
+    r'99bfa27424486095a69bd579d3f448a12a0558d0';
 
 /// Controlador Riverpod para la sesión de caja del cajero actual (SOLID: SRP)
 

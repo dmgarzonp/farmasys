@@ -6313,6 +6313,621 @@ class DetallesCompraTableCompanion
   }
 }
 
+class $UsuariosTableTable extends UsuariosTable
+    with TableInfo<$UsuariosTableTable, UsuariosTableData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsuariosTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _usernameMeta =
+      const VerificationMeta('username');
+  @override
+  late final GeneratedColumn<String> username = GeneratedColumn<String>(
+      'username', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 3, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _passwordHashMeta =
+      const VerificationMeta('passwordHash');
+  @override
+  late final GeneratedColumn<String> passwordHash = GeneratedColumn<String>(
+      'password_hash', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  late final GeneratedColumnWithTypeConverter<UserRole, int> role =
+      GeneratedColumn<int>('role', aliasedName, false,
+              type: DriftSqlType.int, requiredDuringInsert: true)
+          .withConverter<UserRole>($UsuariosTableTable.$converterrole);
+  static const VerificationMeta _isActiveMeta =
+      const VerificationMeta('isActive');
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+      'is_active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _fullNameMeta =
+      const VerificationMeta('fullName');
+  @override
+  late final GeneratedColumn<String> fullName = GeneratedColumn<String>(
+      'full_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _documentoMeta =
+      const VerificationMeta('documento');
+  @override
+  late final GeneratedColumn<String> documento = GeneratedColumn<String>(
+      'documento', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _telefonoFijoMeta =
+      const VerificationMeta('telefonoFijo');
+  @override
+  late final GeneratedColumn<String> telefonoFijo = GeneratedColumn<String>(
+      'telefono_fijo', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _telefonoMovilMeta =
+      const VerificationMeta('telefonoMovil');
+  @override
+  late final GeneratedColumn<String> telefonoMovil = GeneratedColumn<String>(
+      'telefono_movil', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _correoPersonalMeta =
+      const VerificationMeta('correoPersonal');
+  @override
+  late final GeneratedColumn<String> correoPersonal = GeneratedColumn<String>(
+      'correo_personal', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _hireDateMeta =
+      const VerificationMeta('hireDate');
+  @override
+  late final GeneratedColumn<DateTime> hireDate = GeneratedColumn<DateTime>(
+      'hire_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        username,
+        passwordHash,
+        role,
+        isActive,
+        createdAt,
+        fullName,
+        documento,
+        telefonoFijo,
+        telefonoMovil,
+        correoPersonal,
+        hireDate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'usuarios_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<UsuariosTableData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('username')) {
+      context.handle(_usernameMeta,
+          username.isAcceptableOrUnknown(data['username']!, _usernameMeta));
+    } else if (isInserting) {
+      context.missing(_usernameMeta);
+    }
+    if (data.containsKey('password_hash')) {
+      context.handle(
+          _passwordHashMeta,
+          passwordHash.isAcceptableOrUnknown(
+              data['password_hash']!, _passwordHashMeta));
+    } else if (isInserting) {
+      context.missing(_passwordHashMeta);
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(_isActiveMeta,
+          isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('full_name')) {
+      context.handle(_fullNameMeta,
+          fullName.isAcceptableOrUnknown(data['full_name']!, _fullNameMeta));
+    }
+    if (data.containsKey('documento')) {
+      context.handle(_documentoMeta,
+          documento.isAcceptableOrUnknown(data['documento']!, _documentoMeta));
+    }
+    if (data.containsKey('telefono_fijo')) {
+      context.handle(
+          _telefonoFijoMeta,
+          telefonoFijo.isAcceptableOrUnknown(
+              data['telefono_fijo']!, _telefonoFijoMeta));
+    }
+    if (data.containsKey('telefono_movil')) {
+      context.handle(
+          _telefonoMovilMeta,
+          telefonoMovil.isAcceptableOrUnknown(
+              data['telefono_movil']!, _telefonoMovilMeta));
+    }
+    if (data.containsKey('correo_personal')) {
+      context.handle(
+          _correoPersonalMeta,
+          correoPersonal.isAcceptableOrUnknown(
+              data['correo_personal']!, _correoPersonalMeta));
+    }
+    if (data.containsKey('hire_date')) {
+      context.handle(_hireDateMeta,
+          hireDate.isAcceptableOrUnknown(data['hire_date']!, _hireDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UsuariosTableData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UsuariosTableData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      username: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}username'])!,
+      passwordHash: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}password_hash'])!,
+      role: $UsuariosTableTable.$converterrole.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}role'])!),
+      isActive: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      fullName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}full_name']),
+      documento: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}documento']),
+      telefonoFijo: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}telefono_fijo']),
+      telefonoMovil: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}telefono_movil']),
+      correoPersonal: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}correo_personal']),
+      hireDate: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}hire_date']),
+    );
+  }
+
+  @override
+  $UsuariosTableTable createAlias(String alias) {
+    return $UsuariosTableTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<UserRole, int, int> $converterrole =
+      const EnumIndexConverter<UserRole>(UserRole.values);
+}
+
+class UsuariosTableData extends DataClass
+    implements Insertable<UsuariosTableData> {
+  final int id;
+  final String username;
+  final String passwordHash;
+  final UserRole role;
+  final bool isActive;
+  final DateTime createdAt;
+  final String? fullName;
+  final String? documento;
+  final String? telefonoFijo;
+  final String? telefonoMovil;
+  final String? correoPersonal;
+  final DateTime? hireDate;
+  const UsuariosTableData(
+      {required this.id,
+      required this.username,
+      required this.passwordHash,
+      required this.role,
+      required this.isActive,
+      required this.createdAt,
+      this.fullName,
+      this.documento,
+      this.telefonoFijo,
+      this.telefonoMovil,
+      this.correoPersonal,
+      this.hireDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['username'] = Variable<String>(username);
+    map['password_hash'] = Variable<String>(passwordHash);
+    {
+      map['role'] =
+          Variable<int>($UsuariosTableTable.$converterrole.toSql(role));
+    }
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || fullName != null) {
+      map['full_name'] = Variable<String>(fullName);
+    }
+    if (!nullToAbsent || documento != null) {
+      map['documento'] = Variable<String>(documento);
+    }
+    if (!nullToAbsent || telefonoFijo != null) {
+      map['telefono_fijo'] = Variable<String>(telefonoFijo);
+    }
+    if (!nullToAbsent || telefonoMovil != null) {
+      map['telefono_movil'] = Variable<String>(telefonoMovil);
+    }
+    if (!nullToAbsent || correoPersonal != null) {
+      map['correo_personal'] = Variable<String>(correoPersonal);
+    }
+    if (!nullToAbsent || hireDate != null) {
+      map['hire_date'] = Variable<DateTime>(hireDate);
+    }
+    return map;
+  }
+
+  UsuariosTableCompanion toCompanion(bool nullToAbsent) {
+    return UsuariosTableCompanion(
+      id: Value(id),
+      username: Value(username),
+      passwordHash: Value(passwordHash),
+      role: Value(role),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+      fullName: fullName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(fullName),
+      documento: documento == null && nullToAbsent
+          ? const Value.absent()
+          : Value(documento),
+      telefonoFijo: telefonoFijo == null && nullToAbsent
+          ? const Value.absent()
+          : Value(telefonoFijo),
+      telefonoMovil: telefonoMovil == null && nullToAbsent
+          ? const Value.absent()
+          : Value(telefonoMovil),
+      correoPersonal: correoPersonal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(correoPersonal),
+      hireDate: hireDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hireDate),
+    );
+  }
+
+  factory UsuariosTableData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UsuariosTableData(
+      id: serializer.fromJson<int>(json['id']),
+      username: serializer.fromJson<String>(json['username']),
+      passwordHash: serializer.fromJson<String>(json['passwordHash']),
+      role: $UsuariosTableTable.$converterrole
+          .fromJson(serializer.fromJson<int>(json['role'])),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      fullName: serializer.fromJson<String?>(json['fullName']),
+      documento: serializer.fromJson<String?>(json['documento']),
+      telefonoFijo: serializer.fromJson<String?>(json['telefonoFijo']),
+      telefonoMovil: serializer.fromJson<String?>(json['telefonoMovil']),
+      correoPersonal: serializer.fromJson<String?>(json['correoPersonal']),
+      hireDate: serializer.fromJson<DateTime?>(json['hireDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'username': serializer.toJson<String>(username),
+      'passwordHash': serializer.toJson<String>(passwordHash),
+      'role': serializer
+          .toJson<int>($UsuariosTableTable.$converterrole.toJson(role)),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'fullName': serializer.toJson<String?>(fullName),
+      'documento': serializer.toJson<String?>(documento),
+      'telefonoFijo': serializer.toJson<String?>(telefonoFijo),
+      'telefonoMovil': serializer.toJson<String?>(telefonoMovil),
+      'correoPersonal': serializer.toJson<String?>(correoPersonal),
+      'hireDate': serializer.toJson<DateTime?>(hireDate),
+    };
+  }
+
+  UsuariosTableData copyWith(
+          {int? id,
+          String? username,
+          String? passwordHash,
+          UserRole? role,
+          bool? isActive,
+          DateTime? createdAt,
+          Value<String?> fullName = const Value.absent(),
+          Value<String?> documento = const Value.absent(),
+          Value<String?> telefonoFijo = const Value.absent(),
+          Value<String?> telefonoMovil = const Value.absent(),
+          Value<String?> correoPersonal = const Value.absent(),
+          Value<DateTime?> hireDate = const Value.absent()}) =>
+      UsuariosTableData(
+        id: id ?? this.id,
+        username: username ?? this.username,
+        passwordHash: passwordHash ?? this.passwordHash,
+        role: role ?? this.role,
+        isActive: isActive ?? this.isActive,
+        createdAt: createdAt ?? this.createdAt,
+        fullName: fullName.present ? fullName.value : this.fullName,
+        documento: documento.present ? documento.value : this.documento,
+        telefonoFijo:
+            telefonoFijo.present ? telefonoFijo.value : this.telefonoFijo,
+        telefonoMovil:
+            telefonoMovil.present ? telefonoMovil.value : this.telefonoMovil,
+        correoPersonal:
+            correoPersonal.present ? correoPersonal.value : this.correoPersonal,
+        hireDate: hireDate.present ? hireDate.value : this.hireDate,
+      );
+  UsuariosTableData copyWithCompanion(UsuariosTableCompanion data) {
+    return UsuariosTableData(
+      id: data.id.present ? data.id.value : this.id,
+      username: data.username.present ? data.username.value : this.username,
+      passwordHash: data.passwordHash.present
+          ? data.passwordHash.value
+          : this.passwordHash,
+      role: data.role.present ? data.role.value : this.role,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      fullName: data.fullName.present ? data.fullName.value : this.fullName,
+      documento: data.documento.present ? data.documento.value : this.documento,
+      telefonoFijo: data.telefonoFijo.present
+          ? data.telefonoFijo.value
+          : this.telefonoFijo,
+      telefonoMovil: data.telefonoMovil.present
+          ? data.telefonoMovil.value
+          : this.telefonoMovil,
+      correoPersonal: data.correoPersonal.present
+          ? data.correoPersonal.value
+          : this.correoPersonal,
+      hireDate: data.hireDate.present ? data.hireDate.value : this.hireDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsuariosTableData(')
+          ..write('id: $id, ')
+          ..write('username: $username, ')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('role: $role, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('fullName: $fullName, ')
+          ..write('documento: $documento, ')
+          ..write('telefonoFijo: $telefonoFijo, ')
+          ..write('telefonoMovil: $telefonoMovil, ')
+          ..write('correoPersonal: $correoPersonal, ')
+          ..write('hireDate: $hireDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      id,
+      username,
+      passwordHash,
+      role,
+      isActive,
+      createdAt,
+      fullName,
+      documento,
+      telefonoFijo,
+      telefonoMovil,
+      correoPersonal,
+      hireDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UsuariosTableData &&
+          other.id == this.id &&
+          other.username == this.username &&
+          other.passwordHash == this.passwordHash &&
+          other.role == this.role &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt &&
+          other.fullName == this.fullName &&
+          other.documento == this.documento &&
+          other.telefonoFijo == this.telefonoFijo &&
+          other.telefonoMovil == this.telefonoMovil &&
+          other.correoPersonal == this.correoPersonal &&
+          other.hireDate == this.hireDate);
+}
+
+class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
+  final Value<int> id;
+  final Value<String> username;
+  final Value<String> passwordHash;
+  final Value<UserRole> role;
+  final Value<bool> isActive;
+  final Value<DateTime> createdAt;
+  final Value<String?> fullName;
+  final Value<String?> documento;
+  final Value<String?> telefonoFijo;
+  final Value<String?> telefonoMovil;
+  final Value<String?> correoPersonal;
+  final Value<DateTime?> hireDate;
+  const UsuariosTableCompanion({
+    this.id = const Value.absent(),
+    this.username = const Value.absent(),
+    this.passwordHash = const Value.absent(),
+    this.role = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.fullName = const Value.absent(),
+    this.documento = const Value.absent(),
+    this.telefonoFijo = const Value.absent(),
+    this.telefonoMovil = const Value.absent(),
+    this.correoPersonal = const Value.absent(),
+    this.hireDate = const Value.absent(),
+  });
+  UsuariosTableCompanion.insert({
+    this.id = const Value.absent(),
+    required String username,
+    required String passwordHash,
+    required UserRole role,
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.fullName = const Value.absent(),
+    this.documento = const Value.absent(),
+    this.telefonoFijo = const Value.absent(),
+    this.telefonoMovil = const Value.absent(),
+    this.correoPersonal = const Value.absent(),
+    this.hireDate = const Value.absent(),
+  })  : username = Value(username),
+        passwordHash = Value(passwordHash),
+        role = Value(role);
+  static Insertable<UsuariosTableData> custom({
+    Expression<int>? id,
+    Expression<String>? username,
+    Expression<String>? passwordHash,
+    Expression<int>? role,
+    Expression<bool>? isActive,
+    Expression<DateTime>? createdAt,
+    Expression<String>? fullName,
+    Expression<String>? documento,
+    Expression<String>? telefonoFijo,
+    Expression<String>? telefonoMovil,
+    Expression<String>? correoPersonal,
+    Expression<DateTime>? hireDate,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (username != null) 'username': username,
+      if (passwordHash != null) 'password_hash': passwordHash,
+      if (role != null) 'role': role,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (fullName != null) 'full_name': fullName,
+      if (documento != null) 'documento': documento,
+      if (telefonoFijo != null) 'telefono_fijo': telefonoFijo,
+      if (telefonoMovil != null) 'telefono_movil': telefonoMovil,
+      if (correoPersonal != null) 'correo_personal': correoPersonal,
+      if (hireDate != null) 'hire_date': hireDate,
+    });
+  }
+
+  UsuariosTableCompanion copyWith(
+      {Value<int>? id,
+      Value<String>? username,
+      Value<String>? passwordHash,
+      Value<UserRole>? role,
+      Value<bool>? isActive,
+      Value<DateTime>? createdAt,
+      Value<String?>? fullName,
+      Value<String?>? documento,
+      Value<String?>? telefonoFijo,
+      Value<String?>? telefonoMovil,
+      Value<String?>? correoPersonal,
+      Value<DateTime?>? hireDate}) {
+    return UsuariosTableCompanion(
+      id: id ?? this.id,
+      username: username ?? this.username,
+      passwordHash: passwordHash ?? this.passwordHash,
+      role: role ?? this.role,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      fullName: fullName ?? this.fullName,
+      documento: documento ?? this.documento,
+      telefonoFijo: telefonoFijo ?? this.telefonoFijo,
+      telefonoMovil: telefonoMovil ?? this.telefonoMovil,
+      correoPersonal: correoPersonal ?? this.correoPersonal,
+      hireDate: hireDate ?? this.hireDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (username.present) {
+      map['username'] = Variable<String>(username.value);
+    }
+    if (passwordHash.present) {
+      map['password_hash'] = Variable<String>(passwordHash.value);
+    }
+    if (role.present) {
+      map['role'] =
+          Variable<int>($UsuariosTableTable.$converterrole.toSql(role.value));
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (fullName.present) {
+      map['full_name'] = Variable<String>(fullName.value);
+    }
+    if (documento.present) {
+      map['documento'] = Variable<String>(documento.value);
+    }
+    if (telefonoFijo.present) {
+      map['telefono_fijo'] = Variable<String>(telefonoFijo.value);
+    }
+    if (telefonoMovil.present) {
+      map['telefono_movil'] = Variable<String>(telefonoMovil.value);
+    }
+    if (correoPersonal.present) {
+      map['correo_personal'] = Variable<String>(correoPersonal.value);
+    }
+    if (hireDate.present) {
+      map['hire_date'] = Variable<DateTime>(hireDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsuariosTableCompanion(')
+          ..write('id: $id, ')
+          ..write('username: $username, ')
+          ..write('passwordHash: $passwordHash, ')
+          ..write('role: $role, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('fullName: $fullName, ')
+          ..write('documento: $documento, ')
+          ..write('telefonoFijo: $telefonoFijo, ')
+          ..write('telefonoMovil: $telefonoMovil, ')
+          ..write('correoPersonal: $correoPersonal, ')
+          ..write('hireDate: $hireDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -6333,6 +6948,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ComprasTableTable comprasTable = $ComprasTableTable(this);
   late final $DetallesCompraTableTable detallesCompraTable =
       $DetallesCompraTableTable(this);
+  late final $UsuariosTableTable usuariosTable = $UsuariosTableTable(this);
   late final Index idxProductosNombre = Index('idx_productos_nombre',
       'CREATE INDEX idx_productos_nombre ON productos (nombre_comercial)');
   late final Index idxProductosCodigo = Index('idx_productos_codigo',
@@ -6362,6 +6978,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         cajasSesionesTable,
         comprasTable,
         detallesCompraTable,
+        usuariosTable,
         idxProductosNombre,
         idxProductosCodigo,
         idxPresentacionesCodigoBarras,
@@ -10887,6 +11504,289 @@ typedef $$DetallesCompraTableTableProcessedTableManager = ProcessedTableManager<
     (DetallesCompraTableData, $$DetallesCompraTableTableReferences),
     DetallesCompraTableData,
     PrefetchHooks Function({bool compraId, bool presentacionId})>;
+typedef $$UsuariosTableTableCreateCompanionBuilder = UsuariosTableCompanion
+    Function({
+  Value<int> id,
+  required String username,
+  required String passwordHash,
+  required UserRole role,
+  Value<bool> isActive,
+  Value<DateTime> createdAt,
+  Value<String?> fullName,
+  Value<String?> documento,
+  Value<String?> telefonoFijo,
+  Value<String?> telefonoMovil,
+  Value<String?> correoPersonal,
+  Value<DateTime?> hireDate,
+});
+typedef $$UsuariosTableTableUpdateCompanionBuilder = UsuariosTableCompanion
+    Function({
+  Value<int> id,
+  Value<String> username,
+  Value<String> passwordHash,
+  Value<UserRole> role,
+  Value<bool> isActive,
+  Value<DateTime> createdAt,
+  Value<String?> fullName,
+  Value<String?> documento,
+  Value<String?> telefonoFijo,
+  Value<String?> telefonoMovil,
+  Value<String?> correoPersonal,
+  Value<DateTime?> hireDate,
+});
+
+class $$UsuariosTableTableFilterComposer
+    extends Composer<_$AppDatabase, $UsuariosTableTable> {
+  $$UsuariosTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get username => $composableBuilder(
+      column: $table.username, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash, builder: (column) => ColumnFilters(column));
+
+  ColumnWithTypeConverterFilters<UserRole, UserRole, int> get role =>
+      $composableBuilder(
+          column: $table.role,
+          builder: (column) => ColumnWithTypeConverterFilters(column));
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+      column: $table.isActive, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get fullName => $composableBuilder(
+      column: $table.fullName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get documento => $composableBuilder(
+      column: $table.documento, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get telefonoFijo => $composableBuilder(
+      column: $table.telefonoFijo, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get telefonoMovil => $composableBuilder(
+      column: $table.telefonoMovil, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get correoPersonal => $composableBuilder(
+      column: $table.correoPersonal,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get hireDate => $composableBuilder(
+      column: $table.hireDate, builder: (column) => ColumnFilters(column));
+}
+
+class $$UsuariosTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $UsuariosTableTable> {
+  $$UsuariosTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+      column: $table.id, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get username => $composableBuilder(
+      column: $table.username, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get role => $composableBuilder(
+      column: $table.role, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+      column: $table.isActive, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get fullName => $composableBuilder(
+      column: $table.fullName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get documento => $composableBuilder(
+      column: $table.documento, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get telefonoFijo => $composableBuilder(
+      column: $table.telefonoFijo,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get telefonoMovil => $composableBuilder(
+      column: $table.telefonoMovil,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get correoPersonal => $composableBuilder(
+      column: $table.correoPersonal,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get hireDate => $composableBuilder(
+      column: $table.hireDate, builder: (column) => ColumnOrderings(column));
+}
+
+class $$UsuariosTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $UsuariosTableTable> {
+  $$UsuariosTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get username =>
+      $composableBuilder(column: $table.username, builder: (column) => column);
+
+  GeneratedColumn<String> get passwordHash => $composableBuilder(
+      column: $table.passwordHash, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<UserRole, int> get role =>
+      $composableBuilder(column: $table.role, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<String> get fullName =>
+      $composableBuilder(column: $table.fullName, builder: (column) => column);
+
+  GeneratedColumn<String> get documento =>
+      $composableBuilder(column: $table.documento, builder: (column) => column);
+
+  GeneratedColumn<String> get telefonoFijo => $composableBuilder(
+      column: $table.telefonoFijo, builder: (column) => column);
+
+  GeneratedColumn<String> get telefonoMovil => $composableBuilder(
+      column: $table.telefonoMovil, builder: (column) => column);
+
+  GeneratedColumn<String> get correoPersonal => $composableBuilder(
+      column: $table.correoPersonal, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get hireDate =>
+      $composableBuilder(column: $table.hireDate, builder: (column) => column);
+}
+
+class $$UsuariosTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UsuariosTableTable,
+    UsuariosTableData,
+    $$UsuariosTableTableFilterComposer,
+    $$UsuariosTableTableOrderingComposer,
+    $$UsuariosTableTableAnnotationComposer,
+    $$UsuariosTableTableCreateCompanionBuilder,
+    $$UsuariosTableTableUpdateCompanionBuilder,
+    (
+      UsuariosTableData,
+      BaseReferences<_$AppDatabase, $UsuariosTableTable, UsuariosTableData>
+    ),
+    UsuariosTableData,
+    PrefetchHooks Function()> {
+  $$UsuariosTableTableTableManager(_$AppDatabase db, $UsuariosTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$UsuariosTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$UsuariosTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$UsuariosTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            Value<String> username = const Value.absent(),
+            Value<String> passwordHash = const Value.absent(),
+            Value<UserRole> role = const Value.absent(),
+            Value<bool> isActive = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> fullName = const Value.absent(),
+            Value<String?> documento = const Value.absent(),
+            Value<String?> telefonoFijo = const Value.absent(),
+            Value<String?> telefonoMovil = const Value.absent(),
+            Value<String?> correoPersonal = const Value.absent(),
+            Value<DateTime?> hireDate = const Value.absent(),
+          }) =>
+              UsuariosTableCompanion(
+            id: id,
+            username: username,
+            passwordHash: passwordHash,
+            role: role,
+            isActive: isActive,
+            createdAt: createdAt,
+            fullName: fullName,
+            documento: documento,
+            telefonoFijo: telefonoFijo,
+            telefonoMovil: telefonoMovil,
+            correoPersonal: correoPersonal,
+            hireDate: hireDate,
+          ),
+          createCompanionCallback: ({
+            Value<int> id = const Value.absent(),
+            required String username,
+            required String passwordHash,
+            required UserRole role,
+            Value<bool> isActive = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<String?> fullName = const Value.absent(),
+            Value<String?> documento = const Value.absent(),
+            Value<String?> telefonoFijo = const Value.absent(),
+            Value<String?> telefonoMovil = const Value.absent(),
+            Value<String?> correoPersonal = const Value.absent(),
+            Value<DateTime?> hireDate = const Value.absent(),
+          }) =>
+              UsuariosTableCompanion.insert(
+            id: id,
+            username: username,
+            passwordHash: passwordHash,
+            role: role,
+            isActive: isActive,
+            createdAt: createdAt,
+            fullName: fullName,
+            documento: documento,
+            telefonoFijo: telefonoFijo,
+            telefonoMovil: telefonoMovil,
+            correoPersonal: correoPersonal,
+            hireDate: hireDate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable<$UsuariosTableTable, UsuariosTableData>(table),
+                    BaseReferences<_$AppDatabase, $UsuariosTableTable,
+                        UsuariosTableData>(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$UsuariosTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $UsuariosTableTable,
+    UsuariosTableData,
+    $$UsuariosTableTableFilterComposer,
+    $$UsuariosTableTableOrderingComposer,
+    $$UsuariosTableTableAnnotationComposer,
+    $$UsuariosTableTableCreateCompanionBuilder,
+    $$UsuariosTableTableUpdateCompanionBuilder,
+    (
+      UsuariosTableData,
+      BaseReferences<_$AppDatabase, $UsuariosTableTable, UsuariosTableData>
+    ),
+    UsuariosTableData,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -10913,4 +11813,6 @@ class $AppDatabaseManager {
       $$ComprasTableTableTableManager(_db, _db.comprasTable);
   $$DetallesCompraTableTableTableManager get detallesCompraTable =>
       $$DetallesCompraTableTableTableManager(_db, _db.detallesCompraTable);
+  $$UsuariosTableTableTableManager get usuariosTable =>
+      $$UsuariosTableTableTableManager(_db, _db.usuariosTable);
 }
