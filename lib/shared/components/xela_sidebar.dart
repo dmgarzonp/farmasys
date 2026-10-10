@@ -35,8 +35,8 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
     final width = _isExpanded ? 230.0 : 68.0;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      curve: Curves.easeInOut,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOutCubic,
       width: width,
       decoration: const BoxDecoration(
         color: AppColors.sidebarBg,
@@ -44,85 +44,92 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
           right: BorderSide(color: AppColors.sidebarBorder, width: 1),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header de Marca
-          _buildBrandHeader(),
-          const Divider(height: 1, color: AppColors.sidebarBorder),
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.centerLeft,
+          minWidth: 230,
+          maxWidth: 230,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header de Marca
+              _buildBrandHeader(),
+              const Divider(height: 1, color: AppColors.sidebarBorder),
 
-          // Enlaces de Navegación
-          const SizedBox(height: 12),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              children: [
-                if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
-                  _buildNavItem(
-                    label: 'Dashboard',
-                    route: '/',
-                    icon: Icons.dashboard_rounded,
-                    shortcut: 'F2',
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                _buildNavItem(
-                  label: 'Punto de Venta',
-                  route: '/pos',
-                  icon: Icons.point_of_sale_rounded,
-                  shortcut: 'F1',
+              // Enlaces de Navegación
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  children: [
+                    if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
+                      _buildNavItem(
+                        label: 'Dashboard',
+                        route: '/',
+                        icon: Icons.dashboard_rounded,
+                        shortcut: 'F2',
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    _buildNavItem(
+                      label: 'Punto de Venta',
+                      route: '/pos',
+                      icon: Icons.point_of_sale_rounded,
+                      shortcut: 'F1',
+                    ),
+                    const SizedBox(height: 6),
+                    if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
+                      _buildNavItem(
+                        label: 'Catálogo Maestro',
+                        route: '/catalog',
+                        icon: Icons.inventory_2_outlined,
+                        shortcut: 'F4',
+                      ),
+                      const SizedBox(height: 6),
+                      _buildNavItem(
+                        label: 'Inventario FEFO',
+                        route: '/inventory',
+                        icon: Icons.warehouse_outlined,
+                        shortcut: 'F5',
+                      ),
+                      const SizedBox(height: 6),
+                      _buildNavItem(
+                        label: 'Recepción Compras',
+                        route: '/purchases',
+                        icon: Icons.receipt_long_outlined,
+                        shortcut: 'F9',
+                      ),
+                      const SizedBox(height: 6),
+                    ],
+                    if (userRole == UserRole.administrador) ...[
+                      _buildNavItem(
+                        label: 'Usuarios',
+                        route: '/usuarios',
+                        icon: Icons.manage_accounts_rounded,
+                        shortcut: 'U',
+                      ),
+                      const SizedBox(height: 6),
+                      _buildNavItem(
+                        label: 'Configuraciones',
+                        route: '/settings',
+                        icon: Icons.settings_rounded,
+                        shortcut: 'F12',
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 6),
-                if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
-                  _buildNavItem(
-                    label: 'Catálogo Maestro',
-                    route: '/catalog',
-                    icon: Icons.inventory_2_outlined,
-                    shortcut: 'F4',
-                  ),
-                  const SizedBox(height: 6),
-                  _buildNavItem(
-                    label: 'Inventario FEFO',
-                    route: '/inventory',
-                    icon: Icons.warehouse_outlined,
-                    shortcut: 'F5',
-                  ),
-                  const SizedBox(height: 6),
-                  _buildNavItem(
-                    label: 'Recepción Compras',
-                    route: '/purchases',
-                    icon: Icons.receipt_long_outlined,
-                    shortcut: 'F9',
-                  ),
-                  const SizedBox(height: 6),
-                ],
-                if (userRole == UserRole.administrador) ...[
-                  _buildNavItem(
-                    label: 'Usuarios',
-                    route: '/usuarios',
-                    icon: Icons.manage_accounts_rounded,
-                    shortcut: 'U',
-                  ),
-                  const SizedBox(height: 6),
-                  _buildNavItem(
-                    label: 'Configuraciones',
-                    route: '/settings',
-                    icon: Icons.settings_rounded,
-                    shortcut: 'F12',
-                  ),
-                ],
-              ],
-            ),
+              ),
+
+              // Tarjeta de Control de Caja
+              _buildCashSection(cashState),
+
+              const Divider(height: 1, color: AppColors.sidebarBorder),
+
+              // Pie de barra con botón colapsar/expandir
+              _buildCollapseToggle(),
+            ],
           ),
-
-          // Tarjeta de Control de Caja
-          _buildCashSection(cashState),
-
-          const Divider(height: 1, color: AppColors.sidebarBorder),
-
-          // Pie de barra con botón colapsar/expandir
-          _buildCollapseToggle(),
-        ],
+        ),
       ),
     );
   }
@@ -130,7 +137,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
   Widget _buildBrandHeader() {
     return Container(
       height: 64,
-      padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 16 : 14),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
       child: Row(
         children: [
           Container(
@@ -153,10 +160,12 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
               size: 22,
             ),
           ),
-          if (_isExpanded) ...[
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
+          const SizedBox(width: 12),
+          Expanded(
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _isExpanded ? 1.0 : 0.0,
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -182,7 +191,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                 ],
               ),
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -204,7 +213,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
         hoverColor: AppColors.sidebarHoverBg,
         child: Container(
           height: 42,
-          padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 12 : 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: isActive ? AppColors.sidebarActiveBg : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
@@ -216,9 +225,11 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                 size: 20,
                 color: isActive ? AppColors.sidebarActiveText : AppColors.sidebarInactiveText,
               ),
-              if (_isExpanded) ...[
-                const SizedBox(width: 12),
-                Expanded(
+              const SizedBox(width: 12),
+              Expanded(
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: _isExpanded ? 1.0 : 0.0,
                   child: Text(
                     label,
                     style: TextStyle(
@@ -230,7 +241,11 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
+              ),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _isExpanded ? 1.0 : 0.0,
+                child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
                     color: isActive ? Colors.white : AppColors.background,
@@ -249,7 +264,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     ),
                   ),
                 ),
-              ],
+              ),
             ],
           ),
         ),
@@ -361,19 +376,21 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
       onTap: () => setState(() => _isExpanded = !_isExpanded),
       child: Container(
         height: 44,
-        padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 16 : 0),
-        alignment: _isExpanded ? Alignment.centerLeft : Alignment.center,
+        padding: EdgeInsets.symmetric(horizontal: _isExpanded ? 16 : 25), // 25 centers the 18px icon in a 68px box
+        alignment: Alignment.centerLeft,
         child: Row(
-          mainAxisAlignment: _isExpanded ? MainAxisAlignment.start : MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Icon(
               _isExpanded ? Icons.keyboard_double_arrow_left_rounded : Icons.keyboard_double_arrow_right_rounded,
               size: 18,
               color: AppColors.textMuted,
             ),
-            if (_isExpanded) ...[
-              const SizedBox(width: 8),
-              const Text(
+            const SizedBox(width: 8),
+            AnimatedOpacity(
+              duration: const Duration(milliseconds: 200),
+              opacity: _isExpanded ? 1.0 : 0.0,
+              child: const Text(
                 'Colapsar Menú',
                 style: TextStyle(
                   fontSize: 12,
@@ -381,7 +398,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                   color: AppColors.textMuted,
                 ),
               ),
-            ],
+            ),
           ],
         ),
       ),

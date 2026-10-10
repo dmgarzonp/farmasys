@@ -375,6 +375,9 @@ class DriftInventoryRepository implements IInventoryRepository {
       ),
     ]);
 
+    // Filtrar siempre para que no se muestren productos inactivos
+    query.where(_db.productosTable.estado.equals('activo'));
+
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final in90Days = today.add(const Duration(days: 90));

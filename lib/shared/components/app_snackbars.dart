@@ -21,7 +21,12 @@ class AppSnackBars {
         backgroundColor: backgroundColor,
         behavior: SnackBarBehavior.floating,
         width: 450,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 12, // Sombra más pronunciada (efecto premium)
+        dismissDirection: DismissDirection.horizontal, // Permitir deslizar para cerrar
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Bordes un poco más redondos
+          side: BorderSide(color: Colors.white.withValues(alpha: 0.1), width: 1), // Borde sutil brillante
+        ),
         action: action,
         duration: duration,
         showCloseIcon: true,

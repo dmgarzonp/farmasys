@@ -26,6 +26,9 @@ import '../controllers/pos_cart_notifier.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import 'checkout_dialog.dart';
+import 'ticket_preview_dialog.dart';
+import '../../domain/services/ticket_printer_service.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 
 /// Pantalla principal del Punto de Venta (POS Desktop) integrada con Caja, Clientes y Despacho FEFO
 class PosScreen extends ConsumerStatefulWidget {
@@ -263,8 +266,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           cartItems: cartState.items,
         );
 
-        // Limpiar carrito
+        // Mostrar vista previa del comprobante interno
+        final cashierName = ref.read(authControllerProvider).user?.username ?? 'Cajero';
+        
+        // Limpiar carrito antes de mostrar el modal para que el POS quede listo atrás
         ref.read(posCartProvider.notifier).clear();
+
+        if (mounted) {
+          // Se abrirá el modal interactivo de PdfPreview
+          await TicketPreviewDialog.show(
+            context,
+            sale: completedSale,
+            cashierName: cashierName,
+          );
+        }
 
         if (mounted) {
           AppSnackBars.showSuccess(
