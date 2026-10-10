@@ -8,6 +8,7 @@ import '../../features/dashboard/presentation/views/dashboard_screen.dart';
 import '../../features/configuraciones/presentation/views/settings_screen.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../features/auth/presentation/views/login_screen.dart';
+import '../../features/auth/presentation/views/change_password_screen.dart';
 import '../../features/usuarios/presentation/screens/users_list_screen.dart';
 import '../database/tables/usuarios_table.dart';
 
@@ -31,8 +32,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       if (!isAuth && !isLoggingIn) return '/login';
       
       if (isAuth) {
-        final role = authState.user?.role;
+        final user = authState.user;
+        final role = user?.role;
         final path = state.uri.path;
+        final isChangingPassword = path == '/change-password';
+
+        // Bloqueo Forzoso: Si el usuario requiere cambio de clave
+        if (user?.requiresPasswordChange == true) {
+          if (!isChangingPassword) return '/change-password';
+          return null; // Permitir que se quede en change-password
+        }
+
+        // Si ya no requiere cambio de clave y está intentando acceder a change-password, lo sacamos
+        if (isChangingPassword) {
+           return role == UserRole.cajero ? '/pos' : '/';
+        }
 
         if (isLoggingIn) {
           // Redirección inicial post-login según rol
@@ -58,6 +72,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         name: 'login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/change-password',
+        name: 'change_password',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

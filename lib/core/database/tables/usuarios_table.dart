@@ -13,6 +13,7 @@ class UsuariosTable extends Table {
   TextColumn get passwordHash => text()(); // SHA-256
   IntColumn get role => intEnum<UserRole>()();
   BoolColumn get isActive => boolean().withDefault(const Constant(true))();
+  BoolColumn get requiresPasswordChange => boolean().withDefault(const Constant(false))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   
   // Datos de Personal

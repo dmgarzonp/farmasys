@@ -176,6 +176,11 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
           onPressed: () => _openUserForm(context, ref, user),
         ),
         IconButton(
+          icon: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 20),
+          tooltip: 'Restablecer Contraseña',
+          onPressed: () => _resetUserPassword(context, ref, user),
+        ),
+        IconButton(
           icon: Icon(
             user.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
             color: user.isActive ? AppColors.error : AppColors.success,
@@ -256,6 +261,92 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
       } catch (e) {
         if (context.mounted) {
           AppSnackBars.showError(context, message: 'Error: ${e.toString()}');
+        }
+      }
+    }
+  }
+
+  Future<void> _resetUserPassword(BuildContext context, WidgetRef ref, User user) async {
+    final passwordController = TextEditingController(text: '${user.username}123');
+    bool obscureTemp = true;
+    bool forceChange = true;
+    final formKey = GlobalKey<FormState>();
+
+    final tempPassword = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Restablecer Contraseña'),
+          content: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Vas a restablecer la contraseña de ${user.username}.',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Ingresa la nueva contraseña para la cuenta.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: obscureTemp,
+                  decoration: InputDecoration(
+                    labelText: 'Contraseña Temporal',
+                    border: const OutlineInputBorder(),
+                    prefixIcon: const Icon(Icons.lock_reset),
+                    suffixIcon: IconButton(
+                      icon: Icon(obscureTemp ? Icons.visibility_off : Icons.visibility),
+                      onPressed: () => setStateDialog(() => obscureTemp = !obscureTemp),
+                    ),
+                  ),
+                  validator: (val) => val == null || val.length < 4 ? 'Mínimo 4 caracteres' : null,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: const Text('Exigir cambio de contraseña al ingresar', style: TextStyle(fontSize: 14)),
+                  subtitle: const Text('Si está activo, se bloqueará la cuenta hasta que el trabajador asigne su propia clave.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  value: forceChange,
+                  onChanged: (val) => setStateDialog(() => forceChange = val),
+                  activeColor: AppColors.primary,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(null),
+              child: const Text('CANCELAR', style: TextStyle(color: AppColors.textSecondary)),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (formKey.currentState!.validate()) {
+                  Navigator.of(ctx).pop(passwordController.text);
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
+              child: const Text('RESTABLECER'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (tempPassword != null && tempPassword.isNotEmpty) {
+      try {
+        await ref.read(usersControllerProvider.notifier).resetPassword(user, tempPassword, forceChange: forceChange);
+        if (context.mounted) {
+          AppSnackBars.showSuccess(context, message: 'Contraseña actualizada correctamente');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          AppSnackBars.showError(context, message: 'Error: \${e.toString()}');
         }
       }
     }

@@ -87,4 +87,39 @@ class AuthController extends _$AuthController {
       state = const AuthState(status: AuthStatus.unauthenticated);
     }
   }
+
+  Future<void> changePassword(String newPassword) async {
+    final user = state.user;
+    if (user == null) return;
+    
+    state = state.copyWith(isLoading: true, errorMessage: null);
+    try {
+      final repo = ref.read(authRepositoryProvider);
+      await repo.changePassword(user.id, newPassword);
+      
+      // Actualizamos el usuario en memoria para reflejar que ya no requiere cambio
+      // y refrescar el router
+      final updatedUser = User(
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        isActive: user.isActive,
+        requiresPasswordChange: false,
+        fullName: user.fullName,
+        documento: user.documento,
+        telefonoFijo: user.telefonoFijo,
+        telefonoMovil: user.telefonoMovil,
+        correoPersonal: user.correoPersonal,
+        hireDate: user.hireDate,
+      );
+      
+      state = AuthState(status: AuthStatus.authenticated, user: updatedUser);
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e.toString().replaceAll('Exception: ', ''),
+      );
+      throw e;
+    }
+  }
 }

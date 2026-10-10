@@ -121,7 +121,7 @@ class SriBackgroundWorker {
              await queueRepo.updateSriStatus(
                ventaId: invoice.id,
                estadoSri: 'autorizado',
-               mensajeSri: 'AUTORIZADO: \${response['numeroAutorizacion']}',
+               mensajeSri: "AUTORIZADO: \${response['numeroAutorizacion']}",
              );
           } else {
              // Si el SRI dice en proceso, mantenemos recibida. Si da error, rechazado.

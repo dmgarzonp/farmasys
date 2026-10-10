@@ -6359,6 +6359,16 @@ class $UsuariosTableTable extends UsuariosTable
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("is_active" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _requiresPasswordChangeMeta =
+      const VerificationMeta('requiresPasswordChange');
+  @override
+  late final GeneratedColumn<bool> requiresPasswordChange =
+      GeneratedColumn<bool>('requires_password_change', aliasedName, false,
+          type: DriftSqlType.bool,
+          requiredDuringInsert: false,
+          defaultConstraints: GeneratedColumn.constraintIsAlways(
+              'CHECK ("requires_password_change" IN (0, 1))'),
+          defaultValue: const Constant(false));
   static const VerificationMeta _createdAtMeta =
       const VerificationMeta('createdAt');
   @override
@@ -6410,6 +6420,7 @@ class $UsuariosTableTable extends UsuariosTable
         passwordHash,
         role,
         isActive,
+        requiresPasswordChange,
         createdAt,
         fullName,
         documento,
@@ -6448,6 +6459,12 @@ class $UsuariosTableTable extends UsuariosTable
     if (data.containsKey('is_active')) {
       context.handle(_isActiveMeta,
           isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta));
+    }
+    if (data.containsKey('requires_password_change')) {
+      context.handle(
+          _requiresPasswordChangeMeta,
+          requiresPasswordChange.isAcceptableOrUnknown(
+              data['requires_password_change']!, _requiresPasswordChangeMeta));
     }
     if (data.containsKey('created_at')) {
       context.handle(_createdAtMeta,
@@ -6503,6 +6520,9 @@ class $UsuariosTableTable extends UsuariosTable
           .read(DriftSqlType.int, data['${effectivePrefix}role'])!),
       isActive: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}is_active'])!,
+      requiresPasswordChange: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool,
+          data['${effectivePrefix}requires_password_change'])!,
       createdAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       fullName: attachedDatabase.typeMapping
@@ -6536,6 +6556,7 @@ class UsuariosTableData extends DataClass
   final String passwordHash;
   final UserRole role;
   final bool isActive;
+  final bool requiresPasswordChange;
   final DateTime createdAt;
   final String? fullName;
   final String? documento;
@@ -6549,6 +6570,7 @@ class UsuariosTableData extends DataClass
       required this.passwordHash,
       required this.role,
       required this.isActive,
+      required this.requiresPasswordChange,
       required this.createdAt,
       this.fullName,
       this.documento,
@@ -6567,6 +6589,7 @@ class UsuariosTableData extends DataClass
           Variable<int>($UsuariosTableTable.$converterrole.toSql(role));
     }
     map['is_active'] = Variable<bool>(isActive);
+    map['requires_password_change'] = Variable<bool>(requiresPasswordChange);
     map['created_at'] = Variable<DateTime>(createdAt);
     if (!nullToAbsent || fullName != null) {
       map['full_name'] = Variable<String>(fullName);
@@ -6596,6 +6619,7 @@ class UsuariosTableData extends DataClass
       passwordHash: Value(passwordHash),
       role: Value(role),
       isActive: Value(isActive),
+      requiresPasswordChange: Value(requiresPasswordChange),
       createdAt: Value(createdAt),
       fullName: fullName == null && nullToAbsent
           ? const Value.absent()
@@ -6628,6 +6652,8 @@ class UsuariosTableData extends DataClass
       role: $UsuariosTableTable.$converterrole
           .fromJson(serializer.fromJson<int>(json['role'])),
       isActive: serializer.fromJson<bool>(json['isActive']),
+      requiresPasswordChange:
+          serializer.fromJson<bool>(json['requiresPasswordChange']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       fullName: serializer.fromJson<String?>(json['fullName']),
       documento: serializer.fromJson<String?>(json['documento']),
@@ -6647,6 +6673,7 @@ class UsuariosTableData extends DataClass
       'role': serializer
           .toJson<int>($UsuariosTableTable.$converterrole.toJson(role)),
       'isActive': serializer.toJson<bool>(isActive),
+      'requiresPasswordChange': serializer.toJson<bool>(requiresPasswordChange),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'fullName': serializer.toJson<String?>(fullName),
       'documento': serializer.toJson<String?>(documento),
@@ -6663,6 +6690,7 @@ class UsuariosTableData extends DataClass
           String? passwordHash,
           UserRole? role,
           bool? isActive,
+          bool? requiresPasswordChange,
           DateTime? createdAt,
           Value<String?> fullName = const Value.absent(),
           Value<String?> documento = const Value.absent(),
@@ -6676,6 +6704,8 @@ class UsuariosTableData extends DataClass
         passwordHash: passwordHash ?? this.passwordHash,
         role: role ?? this.role,
         isActive: isActive ?? this.isActive,
+        requiresPasswordChange:
+            requiresPasswordChange ?? this.requiresPasswordChange,
         createdAt: createdAt ?? this.createdAt,
         fullName: fullName.present ? fullName.value : this.fullName,
         documento: documento.present ? documento.value : this.documento,
@@ -6696,6 +6726,9 @@ class UsuariosTableData extends DataClass
           : this.passwordHash,
       role: data.role.present ? data.role.value : this.role,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      requiresPasswordChange: data.requiresPasswordChange.present
+          ? data.requiresPasswordChange.value
+          : this.requiresPasswordChange,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       fullName: data.fullName.present ? data.fullName.value : this.fullName,
       documento: data.documento.present ? data.documento.value : this.documento,
@@ -6720,6 +6753,7 @@ class UsuariosTableData extends DataClass
           ..write('passwordHash: $passwordHash, ')
           ..write('role: $role, ')
           ..write('isActive: $isActive, ')
+          ..write('requiresPasswordChange: $requiresPasswordChange, ')
           ..write('createdAt: $createdAt, ')
           ..write('fullName: $fullName, ')
           ..write('documento: $documento, ')
@@ -6738,6 +6772,7 @@ class UsuariosTableData extends DataClass
       passwordHash,
       role,
       isActive,
+      requiresPasswordChange,
       createdAt,
       fullName,
       documento,
@@ -6754,6 +6789,7 @@ class UsuariosTableData extends DataClass
           other.passwordHash == this.passwordHash &&
           other.role == this.role &&
           other.isActive == this.isActive &&
+          other.requiresPasswordChange == this.requiresPasswordChange &&
           other.createdAt == this.createdAt &&
           other.fullName == this.fullName &&
           other.documento == this.documento &&
@@ -6769,6 +6805,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
   final Value<String> passwordHash;
   final Value<UserRole> role;
   final Value<bool> isActive;
+  final Value<bool> requiresPasswordChange;
   final Value<DateTime> createdAt;
   final Value<String?> fullName;
   final Value<String?> documento;
@@ -6782,6 +6819,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
     this.passwordHash = const Value.absent(),
     this.role = const Value.absent(),
     this.isActive = const Value.absent(),
+    this.requiresPasswordChange = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.fullName = const Value.absent(),
     this.documento = const Value.absent(),
@@ -6796,6 +6834,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
     required String passwordHash,
     required UserRole role,
     this.isActive = const Value.absent(),
+    this.requiresPasswordChange = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.fullName = const Value.absent(),
     this.documento = const Value.absent(),
@@ -6812,6 +6851,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
     Expression<String>? passwordHash,
     Expression<int>? role,
     Expression<bool>? isActive,
+    Expression<bool>? requiresPasswordChange,
     Expression<DateTime>? createdAt,
     Expression<String>? fullName,
     Expression<String>? documento,
@@ -6826,6 +6866,8 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
       if (passwordHash != null) 'password_hash': passwordHash,
       if (role != null) 'role': role,
       if (isActive != null) 'is_active': isActive,
+      if (requiresPasswordChange != null)
+        'requires_password_change': requiresPasswordChange,
       if (createdAt != null) 'created_at': createdAt,
       if (fullName != null) 'full_name': fullName,
       if (documento != null) 'documento': documento,
@@ -6842,6 +6884,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
       Value<String>? passwordHash,
       Value<UserRole>? role,
       Value<bool>? isActive,
+      Value<bool>? requiresPasswordChange,
       Value<DateTime>? createdAt,
       Value<String?>? fullName,
       Value<String?>? documento,
@@ -6855,6 +6898,8 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
       passwordHash: passwordHash ?? this.passwordHash,
       role: role ?? this.role,
       isActive: isActive ?? this.isActive,
+      requiresPasswordChange:
+          requiresPasswordChange ?? this.requiresPasswordChange,
       createdAt: createdAt ?? this.createdAt,
       fullName: fullName ?? this.fullName,
       documento: documento ?? this.documento,
@@ -6883,6 +6928,10 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (requiresPasswordChange.present) {
+      map['requires_password_change'] =
+          Variable<bool>(requiresPasswordChange.value);
     }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
@@ -6916,6 +6965,7 @@ class UsuariosTableCompanion extends UpdateCompanion<UsuariosTableData> {
           ..write('passwordHash: $passwordHash, ')
           ..write('role: $role, ')
           ..write('isActive: $isActive, ')
+          ..write('requiresPasswordChange: $requiresPasswordChange, ')
           ..write('createdAt: $createdAt, ')
           ..write('fullName: $fullName, ')
           ..write('documento: $documento, ')
@@ -11511,6 +11561,7 @@ typedef $$UsuariosTableTableCreateCompanionBuilder = UsuariosTableCompanion
   required String passwordHash,
   required UserRole role,
   Value<bool> isActive,
+  Value<bool> requiresPasswordChange,
   Value<DateTime> createdAt,
   Value<String?> fullName,
   Value<String?> documento,
@@ -11526,6 +11577,7 @@ typedef $$UsuariosTableTableUpdateCompanionBuilder = UsuariosTableCompanion
   Value<String> passwordHash,
   Value<UserRole> role,
   Value<bool> isActive,
+  Value<bool> requiresPasswordChange,
   Value<DateTime> createdAt,
   Value<String?> fullName,
   Value<String?> documento,
@@ -11560,6 +11612,10 @@ class $$UsuariosTableTableFilterComposer
 
   ColumnFilters<bool> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get requiresPasswordChange => $composableBuilder(
+      column: $table.requiresPasswordChange,
+      builder: (column) => ColumnFilters(column));
 
   ColumnFilters<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnFilters(column));
@@ -11609,6 +11665,10 @@ class $$UsuariosTableTableOrderingComposer
   ColumnOrderings<bool> get isActive => $composableBuilder(
       column: $table.isActive, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<bool> get requiresPasswordChange => $composableBuilder(
+      column: $table.requiresPasswordChange,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
       column: $table.createdAt, builder: (column) => ColumnOrderings(column));
 
@@ -11657,6 +11717,9 @@ class $$UsuariosTableTableAnnotationComposer
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<bool> get requiresPasswordChange => $composableBuilder(
+      column: $table.requiresPasswordChange, builder: (column) => column);
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
@@ -11711,6 +11774,7 @@ class $$UsuariosTableTableTableManager extends RootTableManager<
             Value<String> passwordHash = const Value.absent(),
             Value<UserRole> role = const Value.absent(),
             Value<bool> isActive = const Value.absent(),
+            Value<bool> requiresPasswordChange = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> fullName = const Value.absent(),
             Value<String?> documento = const Value.absent(),
@@ -11725,6 +11789,7 @@ class $$UsuariosTableTableTableManager extends RootTableManager<
             passwordHash: passwordHash,
             role: role,
             isActive: isActive,
+            requiresPasswordChange: requiresPasswordChange,
             createdAt: createdAt,
             fullName: fullName,
             documento: documento,
@@ -11739,6 +11804,7 @@ class $$UsuariosTableTableTableManager extends RootTableManager<
             required String passwordHash,
             required UserRole role,
             Value<bool> isActive = const Value.absent(),
+            Value<bool> requiresPasswordChange = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<String?> fullName = const Value.absent(),
             Value<String?> documento = const Value.absent(),
@@ -11753,6 +11819,7 @@ class $$UsuariosTableTableTableManager extends RootTableManager<
             passwordHash: passwordHash,
             role: role,
             isActive: isActive,
+            requiresPasswordChange: requiresPasswordChange,
             createdAt: createdAt,
             fullName: fullName,
             documento: documento,

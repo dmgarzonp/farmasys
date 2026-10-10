@@ -42,7 +42,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.connection);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -115,6 +115,9 @@ class AppDatabase extends _$AppDatabase {
             } catch (e) {
               // Ignore if already exists (for databases that updated straight from v5 to v7)
             }
+          }
+          if (from < 9) {
+            await m.addColumn(usuariosTable, usuariosTable.requiresPasswordChange);
           }
         },
         beforeOpen: (details) async {

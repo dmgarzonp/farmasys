@@ -5,6 +5,7 @@ class User {
   final String username;
   final UserRole role;
   final bool isActive;
+  final bool requiresPasswordChange;
   final String? fullName;
   final String? documento;
   final String? telefonoFijo;
@@ -17,6 +18,7 @@ class User {
     required this.username,
     required this.role,
     required this.isActive,
+    this.requiresPasswordChange = false,
     this.fullName,
     this.documento,
     this.telefonoFijo,
@@ -27,6 +29,6 @@ class User {
 
   @override
   String toString() {
-    return 'User(id: $id, username: $username, role: $role, isActive: $isActive, fullName: $fullName, documento: $documento, fijo: $telefonoFijo, movil: $telefonoMovil, correo: $correoPersonal, hireDate: $hireDate)';
+    return 'User(id: $id, username: $username, role: $role, isActive: $isActive, requiresPasswordChange: $requiresPasswordChange, fullName: $fullName, documento: $documento, fijo: $telefonoFijo, movil: $telefonoMovil, correo: $correoPersonal, hireDate: $hireDate)';
   }
 }

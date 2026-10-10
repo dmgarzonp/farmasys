@@ -94,4 +94,13 @@ class UsersController extends _$UsersController {
       return _fetchUsers();
     });
   }
+
+  Future<void> resetPassword(User user, String tempPassword, {bool forceChange = true}) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(() async {
+      final repo = ref.read(usersRepositoryProvider);
+      await repo.resetUserPassword(user.id, tempPassword, forceChange: forceChange);
+      return _fetchUsers();
+    });
+  }
 }

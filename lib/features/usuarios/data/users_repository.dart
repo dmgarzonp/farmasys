@@ -38,6 +38,7 @@ abstract class UsersRepository {
     String? correoPersonal,
     DateTime? hireDate,
   });
+  Future<void> resetUserPassword(int id, String temporalPassword, {bool forceChange = true});
 }
 
 class DriftUsersRepository implements UsersRepository {
@@ -142,12 +143,25 @@ class DriftUsersRepository implements UsersRepository {
     );
   }
 
+  @override
+  Future<void> resetUserPassword(int id, String temporalPassword, {bool forceChange = true}) async {
+    final passwordHash = sha256.convert(utf8.encode(temporalPassword)).toString();
+
+    final companion = UsuariosTableCompanion(
+      passwordHash: Value(passwordHash),
+      requiresPasswordChange: Value(forceChange),
+    );
+
+    await (_db.update(_db.usuariosTable)..where((t) => t.id.equals(id))).write(companion);
+  }
+
   User _mapToEntity(UsuariosTableData data) {
     return User(
       id: data.id,
       username: data.username,
       role: data.role,
       isActive: data.isActive,
+      requiresPasswordChange: data.requiresPasswordChange,
       fullName: data.fullName,
       documento: data.documento,
       telefonoFijo: data.telefonoFijo,

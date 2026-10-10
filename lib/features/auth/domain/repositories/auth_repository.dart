@@ -11,4 +11,8 @@ abstract class AuthRepository {
   /// Recupera el usuario actualmente logueado (ej. desde SharedPreferences).
   /// Retorna nulo si no hay sesión activa.
   Future<User?> getCurrentUser();
+
+  /// Cambia la contraseña del usuario actualmente autenticado, limpiando
+  /// la bandera de requiresPasswordChange.
+  Future<void> changePassword(int userId, String newPassword);
 }

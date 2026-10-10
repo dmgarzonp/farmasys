@@ -34,38 +34,33 @@ class DriftAuthRepository implements AuthRepository {
       throw Exception('Credenciales incorrectas o usuario inactivo');
     }
 
-    // Guardar sesión
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_sessionKey, userRow.id);
+    // La sesión ahora es efímera (solo en memoria).
+    // No guardamos el ID en SharedPreferences para forzar el login al abrir el programa.
 
     return _mapToEntity(userRow);
   }
 
-  @override
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_sessionKey);
+    // Al no haber persistencia, el logout solo impactará el estado en memoria 
+    // manejado por el AuthNotifier.
+  }
+
+  Future<User?> getCurrentUser() async {
+    // Siempre retornamos null al iniciar para forzar que el trabajador deba 
+    // ingresar sus credenciales en la pantalla de Login.
+    return null;
   }
 
   @override
-  Future<User?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId = prefs.getInt(_sessionKey);
+  Future<void> changePassword(int userId, String newPassword) async {
+    final passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
 
-    if (userId == null) return null;
+    final companion = UsuariosTableCompanion(
+      passwordHash: Value(passwordHash),
+      requiresPasswordChange: const Value(false),
+    );
 
-    final userRow = await (_db.select(_db.usuariosTable)
-          ..where((t) => t.id.equals(userId))
-          ..where((t) => t.isActive.equals(true)))
-        .getSingleOrNull();
-
-    if (userRow == null) {
-      // Si el usuario ya no existe o fue desactivado, limpiamos la sesión
-      await logout();
-      return null;
-    }
-
-    return _mapToEntity(userRow);
+    await (_db.update(_db.usuariosTable)..where((t) => t.id.equals(userId))).write(companion);
   }
 
   User _mapToEntity(UsuariosTableData data) {
@@ -74,6 +69,13 @@ class DriftAuthRepository implements AuthRepository {
       username: data.username,
       role: data.role,
       isActive: data.isActive,
+      requiresPasswordChange: data.requiresPasswordChange,
+      fullName: data.fullName,
+      documento: data.documento,
+      telefonoFijo: data.telefonoFijo,
+      telefonoMovil: data.telefonoMovil,
+      correoPersonal: data.correoPersonal,
+      hireDate: data.hireDate,
     );
   }
 }
