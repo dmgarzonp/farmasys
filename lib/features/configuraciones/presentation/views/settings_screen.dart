@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/components.dart';
 import '../controllers/settings_notifier.dart';
+import '../widgets/sri_setup_wizard_dialog.dart';
 import '../../../../core/licensing/application/license_service.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -155,6 +156,8 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildPremiumActiveState(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -162,11 +165,11 @@ class SettingsScreen extends ConsumerWidget {
           children: [
             const Icon(Icons.verified, color: AppColors.success, size: 28),
             const SizedBox(width: 12),
-            Column(
+            const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Licencia Premium Activa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.success)),
-                const Text('Módulo de Facturación Electrónica SRI desbloqueado.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text('Licencia Premium Activa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.success)),
+                Text('Módulo de Facturación Electrónica SRI desbloqueado.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
               ],
             ),
             const Spacer(),
@@ -181,105 +184,49 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: 24),
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.borderLight),
+            color: AppColors.primarySurface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Parámetros de Emisión', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 16),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSettingField(
-                      label: 'RUC del Emisor',
-                      value: ref.watch(settingsProvider).sriRuc,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(ruc: val),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSettingField(
-                      label: 'Razón Social',
-                      value: ref.watch(settingsProvider).sriRazonSocial,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(razonSocial: val),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildSettingField(
-                      label: 'Establecimiento (Ej. 001)',
-                      value: ref.watch(settingsProvider).sriEstablecimiento,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(establecimiento: val),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildSettingField(
-                      label: 'Punto Emisión (Ej. 001)',
-                      value: ref.watch(settingsProvider).sriPuntoEmision,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(puntoEmision: val),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              const Text('Firma Electrónica (Token/Archivo)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(
-                    flex: 2,
-                    child: _buildSettingField(
-                      label: 'Ruta del Archivo .p12',
-                      value: ref.watch(settingsProvider).sriFirmaPath,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(firmaPath: val),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    flex: 1,
-                    child: _buildSettingField(
-                      label: 'Contraseña',
-                      value: ref.watch(settingsProvider).sriFirmaPassword,
-                      obscureText: true,
-                      onChanged: (val) => ref.read(settingsProvider.notifier).updateSriSettings(firmaPassword: val),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Ambiente SRI:', style: TextStyle(fontWeight: FontWeight.w600)),
-                  DropdownButton<int>(
-                    value: ref.watch(settingsProvider).sriAmbiente,
-                    underline: const SizedBox(),
-                    items: const [
-                      DropdownMenuItem(value: 1, child: Text('1 - Pruebas')),
-                      DropdownMenuItem(value: 2, child: Text('2 - Producción')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        ref.read(settingsProvider.notifier).updateSriSettings(ambiente: val);
-                      }
-                    },
+                  const Text('Parámetros de Configuración SRI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryDark)),
+                  ElevatedButton.icon(
+                    onPressed: () => SriSetupWizardDialog.show(context),
+                    icon: const Icon(Icons.edit_rounded, size: 18),
+                    label: const Text('Configurar Parámetros'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                  )
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryItem(Icons.business_rounded, 'RUC Emisor', settings.sriRuc.isEmpty ? 'No configurado' : settings.sriRuc),
+                  ),
+                  Expanded(
+                    child: _buildSummaryItem(Icons.store_rounded, 'Establecimiento', settings.sriEstablecimiento.isEmpty ? 'No configurado' : '${settings.sriEstablecimiento}-${settings.sriPuntoEmision}'),
+                  ),
+                  Expanded(
+                    child: _buildSummaryItem(
+                      Icons.cloud_sync_rounded, 
+                      'Ambiente', 
+                      settings.sriAmbiente == 1 ? 'Pruebas' : 'Producción',
+                      color: settings.sriAmbiente == 1 ? AppColors.warning : AppColors.success,
+                    ),
                   ),
                 ],
-              )
+              ),
             ],
           ),
         )
@@ -287,27 +234,26 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSettingField({
-    required String label,
-    required String value,
-    required Function(String) onChanged,
-    bool obscureText = false,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildSummaryItem(IconData icon, String label, String value, {Color color = AppColors.textPrimary}) {
+    return Row(
       children: [
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-        const SizedBox(height: 4),
-        TextFormField(
-          initialValue: value,
-          obscureText: obscureText,
-          onChanged: onChanged,
-          decoration: const InputDecoration(
-            isDense: true,
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.borderLight),
           ),
+          child: Icon(icon, size: 20, color: AppColors.primary),
         ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+          ],
+        )
       ],
     );
   }
@@ -382,8 +328,8 @@ class SettingsScreen extends ConsumerWidget {
               try {
                 await ref.read(licenseServiceProvider.notifier).activatePremiumLicense(controller.text);
                 if (context.mounted) {
-                  Navigator.pop(context);
-                  AppDialogs.showSuccess(context, title: 'Licencia Activada', message: '¡Gracias por adquirir la versión Premium!');
+                  Navigator.pop(context); // Cierra diálogo de activación
+                  SriSetupWizardDialog.show(context); // Abre el Wizard
                 }
               } catch (e) {
                 if (context.mounted) {
