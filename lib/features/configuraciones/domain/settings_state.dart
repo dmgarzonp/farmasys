@@ -12,6 +12,13 @@ class SettingsState {
   final String sriFirmaPath;
   final String sriFirmaPassword;
 
+  // Backup Settings
+  final bool autoLocalBackupEnabled;
+  final bool autoCloudBackupEnabled;
+  final int scheduledBackupHour;
+  final int scheduledBackupMinute;
+  final String googleDriveEmail;
+
   const SettingsState({
     this.ivaVigente = 0.15,
     this.expirationAlertDays = 30,
@@ -23,6 +30,11 @@ class SettingsState {
     this.sriAmbiente = 1,
     this.sriFirmaPath = '',
     this.sriFirmaPassword = '',
+    this.autoLocalBackupEnabled = false,
+    this.autoCloudBackupEnabled = false,
+    this.scheduledBackupHour = 23,
+    this.scheduledBackupMinute = 50,
+    this.googleDriveEmail = '',
   });
 
   SettingsState copyWith({
@@ -36,6 +48,11 @@ class SettingsState {
     int? sriAmbiente,
     String? sriFirmaPath,
     String? sriFirmaPassword,
+    bool? autoLocalBackupEnabled,
+    bool? autoCloudBackupEnabled,
+    int? scheduledBackupHour,
+    int? scheduledBackupMinute,
+    String? googleDriveEmail,
   }) {
     return SettingsState(
       ivaVigente: ivaVigente ?? this.ivaVigente,
@@ -48,6 +65,11 @@ class SettingsState {
       sriAmbiente: sriAmbiente ?? this.sriAmbiente,
       sriFirmaPath: sriFirmaPath ?? this.sriFirmaPath,
       sriFirmaPassword: sriFirmaPassword ?? this.sriFirmaPassword,
+      autoLocalBackupEnabled: autoLocalBackupEnabled ?? this.autoLocalBackupEnabled,
+      autoCloudBackupEnabled: autoCloudBackupEnabled ?? this.autoCloudBackupEnabled,
+      scheduledBackupHour: scheduledBackupHour ?? this.scheduledBackupHour,
+      scheduledBackupMinute: scheduledBackupMinute ?? this.scheduledBackupMinute,
+      googleDriveEmail: googleDriveEmail ?? this.googleDriveEmail,
     );
   }
 }

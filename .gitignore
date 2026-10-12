@@ -46,3 +46,8 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Secrets and Environment configs
+secrets.json
+.env
+*.p12

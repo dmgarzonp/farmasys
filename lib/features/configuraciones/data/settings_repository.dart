@@ -19,6 +19,13 @@ class SettingsRepository {
   static const _keySriFirmaPath = 'settings_sri_firma_path';
   static const _keySriFirmaPassword = 'settings_sri_firma_password';
 
+  // Backup Keys
+  static const _keyAutoLocalBackup = 'settings_auto_local_backup';
+  static const _keyAutoCloudBackup = 'settings_auto_cloud_backup';
+  static const _keyScheduledBackupHour = 'settings_scheduled_backup_hour';
+  static const _keyScheduledBackupMinute = 'settings_scheduled_backup_minute';
+  static const _keyGoogleDriveEmail = 'settings_google_drive_email';
+
   Future<void> saveIva(double iva) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyIva, iva);
@@ -47,6 +54,40 @@ class SettingsRepository {
   Future<int?> getStockMinimo() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_keyStock);
+  }
+
+  // Backup Getters
+  Future<bool?> getAutoLocalBackup() async => (await SharedPreferences.getInstance()).getBool(_keyAutoLocalBackup);
+  Future<bool?> getAutoCloudBackup() async => (await SharedPreferences.getInstance()).getBool(_keyAutoCloudBackup);
+  Future<int?> getScheduledBackupHour() async => (await SharedPreferences.getInstance()).getInt(_keyScheduledBackupHour);
+  Future<int?> getScheduledBackupMinute() async => (await SharedPreferences.getInstance()).getInt(_keyScheduledBackupMinute);
+  Future<String?> getGoogleDriveEmail() async => (await SharedPreferences.getInstance()).getString(_keyGoogleDriveEmail);
+
+  // Backup Setters
+  Future<void> saveAutoLocalBackup(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAutoLocalBackup, enabled);
+  }
+
+  Future<void> saveAutoCloudBackup(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyAutoCloudBackup, enabled);
+  }
+
+  Future<void> saveScheduledBackupTime(int hour, int minute) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyScheduledBackupHour, hour);
+    await prefs.setInt(_keyScheduledBackupMinute, minute);
+  }
+
+  Future<void> saveGoogleDriveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyGoogleDriveEmail, email);
+  }
+
+  Future<void> clearGoogleDriveEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyGoogleDriveEmail);
   }
 
   // SRI Getters

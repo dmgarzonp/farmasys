@@ -45,6 +45,9 @@ dependencies:
     sdk: flutter
   riverpod_annotation: ^4.0.7
   file_picker: ^8.1.4
+  googleapis: ^17.0.0
+  googleapis_auth: ^2.3.4
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

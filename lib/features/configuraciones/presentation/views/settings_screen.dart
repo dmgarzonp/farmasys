@@ -5,7 +5,9 @@ import '../../../../shared/components/components.dart';
 import '../controllers/settings_notifier.dart';
 import '../widgets/sri_setup_wizard_dialog.dart';
 import '../../../../core/licensing/application/license_service.dart';
-
+import 'package:file_picker/file_picker.dart';
+import '../../domain/services/backup_service.dart';
+import '../../domain/services/google_drive_service.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -112,6 +114,8 @@ class SettingsScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            const SizedBox(height: 24),
+            _buildBackupSettings(context, ref),
             const SizedBox(height: 24),
 
             Consumer(
@@ -339,6 +343,310 @@ class SettingsScreen extends ConsumerWidget {
               }
             },
             child: const Text('Activar'),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildBackupSettings(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(settingsProvider);
+    final notifier = ref.read(settingsProvider.notifier);
+
+    return XelaCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Respaldo y Seguridad de Datos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const Divider(height: 32, color: AppColors.borderLight),
+          
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Respaldos Locales Automáticos', style: TextStyle(fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text('Guarda una copia en "Documentos" al cerrar la caja/app', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+              Switch(
+                value: state.autoLocalBackupEnabled,
+                activeColor: AppColors.primary,
+                onChanged: (val) {
+                  notifier.toggleAutoLocalBackup(val);
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Respaldo en Nube Automático (Google Drive)', style: TextStyle(fontWeight: FontWeight.w600)),
+                  SizedBox(height: 4),
+                  Text('Sube una copia segura a internet diariamente al cerrar', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                ],
+              ),
+              Switch(
+                value: state.autoCloudBackupEnabled,
+                activeColor: AppColors.primary,
+                onChanged: (val) async {
+                  if (val) {
+                    if (!googleDriveService.isAuthenticated) {
+                      try {
+                        final email = await googleDriveService.authenticate();
+                        await notifier.linkGoogleDrive(email);
+                        if (context.mounted) {
+                          AppSnackBars.showSuccess(context, message: 'Sincronizado con: $email');
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          AppDialogs.showError(context, title: 'Error de Vinculación', message: '$e');
+                        }
+                        await notifier.toggleAutoCloudBackup(false);
+                      }
+                    } else {
+                      await notifier.toggleAutoCloudBackup(true);
+                    }
+                  } else {
+                    await notifier.toggleAutoCloudBackup(false);
+                  }
+                },
+              ),
+            ],
+          ),
+          if (state.googleDriveEmail.isNotEmpty || (googleDriveService.isAuthenticated && (googleDriveService.currentUserEmail?.isNotEmpty ?? false))) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cloud_done_rounded, color: AppColors.primary, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const Text(
+                              'Cuenta vinculada a Google Drive',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text('ACTIVA', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          state.googleDriveEmail.isNotEmpty
+                              ? state.googleDriveEmail
+                              : (googleDriveService.currentUserEmail ?? 'Cuenta activa'),
+                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primaryDark),
+                        ),
+                      ],
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final currentEmail = state.googleDriveEmail.isNotEmpty
+                          ? state.googleDriveEmail
+                          : (googleDriveService.currentUserEmail ?? 'tu cuenta');
+
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          title: const Row(
+                            children: [
+                              Icon(Icons.link_off_rounded, color: AppColors.warning),
+                              SizedBox(width: 10),
+                              Text('Desvincular Google Drive', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                          content: Text(
+                            '¿Deseas desvincular la cuenta:\n\n'
+                            '• $currentEmail\n\n'
+                            'Se detendrán los respaldos automáticos en la nube hasta que vincules una nueva cuenta.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx, false),
+                              child: const Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.error,
+                                foregroundColor: Colors.white,
+                              ),
+                              onPressed: () => Navigator.pop(ctx, true),
+                              child: const Text('Desvincular'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true) {
+                        await googleDriveService.signOut();
+                        await notifier.unlinkGoogleDrive();
+                        if (context.mounted) {
+                          AppSnackBars.showSuccess(
+                            context,
+                            message: 'Cuenta desvinculada exitosamente. Ahora puedes conectar otra cuenta.',
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.link_off_rounded, size: 16),
+                    label: const Text('Desvincular cuenta'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: BorderSide(color: AppColors.error.withOpacity(0.4)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          if (state.autoLocalBackupEnabled || state.autoCloudBackupEnabled) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: AppColors.primarySurface,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule_rounded, color: AppColors.primaryDark, size: 20),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Hora del Respaldo Programado', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.primaryDark)),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Si el sistema queda abierto, respaldará a esta hora',
+                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withOpacity(0.8)),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      final picked = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay(
+                          hour: state.scheduledBackupHour,
+                          minute: state.scheduledBackupMinute,
+                        ),
+                      );
+                      if (picked != null) {
+                        notifier.updateScheduledBackupTime(picked.hour, picked.minute);
+                      }
+                    },
+                    icon: const Icon(Icons.access_time_rounded, size: 16),
+                    label: Text(
+                      '${state.scheduledBackupHour.toString().padLeft(2, '0')}:${state.scheduledBackupMinute.toString().padLeft(2, '0')}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.primaryDark,
+                      side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const Divider(height: 32, color: AppColors.borderLight),
+          const Text('Opciones Manuales', style: TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              ElevatedButton.icon(
+                onPressed: () async {
+                  String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+                  if (selectedDirectory != null) {
+                    try {
+                      final path = await backupService.exportToPath(selectedDirectory);
+                      if (context.mounted) {
+                        AppDialogs.showSuccess(context, title: 'Respaldo Exitoso', message: 'Copia guardada en:\n$path');
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        AppDialogs.showError(context, title: 'Error de Respaldo', message: e.toString());
+                      }
+                    }
+                  }
+                },
+                icon: const Icon(Icons.usb_rounded, size: 18),
+                label: const Text('Respaldar a USB / Carpeta Local'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primarySurface,
+                  foregroundColor: AppColors.primaryDark,
+                  elevation: 0,
+                  side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    if (!googleDriveService.isAuthenticated) {
+                      final email = await googleDriveService.authenticate();
+                      await notifier.linkGoogleDrive(email);
+                    }
+                    final dbFile = await backupService.getDatabaseFile();
+                    await googleDriveService.uploadDatabaseBackup(dbFile);
+                    if (context.mounted) {
+                      AppDialogs.showSuccess(context, title: 'Respaldo Exitoso', message: 'La copia de seguridad se ha subido a Google Drive.');
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      AppDialogs.showError(context, title: 'Error en la Nube', message: e.toString());
+                    }
+                  }
+                },
+                icon: const Icon(Icons.cloud_upload_rounded, size: 18),
+                label: const Text('Respaldar ahora en Drive'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primarySurface,
+                  foregroundColor: AppColors.primaryDark,
+                  elevation: 0,
+                  side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                ),
+              ),
+            ],
           ),
         ],
       ),

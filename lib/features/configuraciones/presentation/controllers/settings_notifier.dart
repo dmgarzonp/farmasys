@@ -28,6 +28,12 @@ class SettingsNotifier extends _$SettingsNotifier {
     final fPath = await _repo.getSriFirmaPath() ?? '';
     final fPass = await _repo.getSriFirmaPassword() ?? '';
 
+    final localBackup = await _repo.getAutoLocalBackup() ?? false;
+    final cloudBackup = await _repo.getAutoCloudBackup() ?? false;
+    final schedHour = await _repo.getScheduledBackupHour() ?? 23;
+    final schedMinute = await _repo.getScheduledBackupMinute() ?? 50;
+    final gdriveEmail = await _repo.getGoogleDriveEmail() ?? '';
+
     state = SettingsState(
       ivaVigente: iva,
       expirationAlertDays: exp,
@@ -39,7 +45,48 @@ class SettingsNotifier extends _$SettingsNotifier {
       sriAmbiente: amb,
       sriFirmaPath: fPath,
       sriFirmaPassword: fPass,
+      autoLocalBackupEnabled: localBackup,
+      autoCloudBackupEnabled: cloudBackup,
+      scheduledBackupHour: schedHour,
+      scheduledBackupMinute: schedMinute,
+      googleDriveEmail: gdriveEmail,
     );
+  }
+
+  Future<void> linkGoogleDrive(String email) async {
+    await _repo.saveGoogleDriveEmail(email);
+    await _repo.saveAutoCloudBackup(true);
+    state = state.copyWith(
+      googleDriveEmail: email,
+      autoCloudBackupEnabled: true,
+    );
+  }
+
+  Future<void> unlinkGoogleDrive() async {
+    await _repo.clearGoogleDriveEmail();
+    await _repo.saveAutoCloudBackup(false);
+    state = state.copyWith(
+      googleDriveEmail: '',
+      autoCloudBackupEnabled: false,
+    );
+  }
+
+  Future<void> updateScheduledBackupTime(int hour, int minute) async {
+    await _repo.saveScheduledBackupTime(hour, minute);
+    state = state.copyWith(
+      scheduledBackupHour: hour,
+      scheduledBackupMinute: minute,
+    );
+  }
+
+  Future<void> toggleAutoLocalBackup(bool enabled) async {
+    await _repo.saveAutoLocalBackup(enabled);
+    state = state.copyWith(autoLocalBackupEnabled: enabled);
+  }
+
+  Future<void> toggleAutoCloudBackup(bool enabled) async {
+    await _repo.saveAutoCloudBackup(enabled);
+    state = state.copyWith(autoCloudBackupEnabled: enabled);
   }
 
   Future<void> updateIva(double newIva) async {
