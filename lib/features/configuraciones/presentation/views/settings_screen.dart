@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/theme/app_theme.dart';
+import '../../../../core/theme/app_theme_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../shared/components/components.dart';
+import '../../domain/settings_state.dart';
 import '../controllers/settings_notifier.dart';
 import '../widgets/sri_setup_wizard_dialog.dart';
 import '../../../../core/licensing/application/license_service.dart';
@@ -15,24 +19,28 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final colors = AppColors.of(context);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Ajustes Globales del Sistema',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Configuraciones tributarias y de negocio',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: colors.textSecondary),
             ),
             const SizedBox(height: 32),
+
+            _buildCustomizationSettings(context, ref, state, notifier, colors),
+            const SizedBox(height: 24),
 
             XelaCard(
               padding: const EdgeInsets.all(24),
@@ -40,7 +48,7 @@ class SettingsScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Impuestos (Ecuador)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  const Divider(height: 32, color: AppColors.borderLight),
+                  Divider(height: 32, color: colors.borderLight),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -49,7 +57,7 @@ class SettingsScreen extends ConsumerWidget {
                         children: [
                           const Text('Porcentaje de IVA Vigente', style: TextStyle(fontWeight: FontWeight.w600)),
                           const SizedBox(height: 4),
-                          Text('Actualmente en ${(state.ivaVigente * 100).toInt()}%', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                          Text('Actualmente en ${(state.ivaVigente * 100).toInt()}%', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                         ],
                       ),
                       DropdownButton<double>(
@@ -161,19 +169,20 @@ class SettingsScreen extends ConsumerWidget {
 
   Widget _buildPremiumActiveState(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
+    final colors = AppColors.of(context);
     
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Icon(Icons.verified, color: AppColors.success, size: 28),
+            Icon(Icons.verified, color: colors.success, size: 28),
             const SizedBox(width: 12),
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Licencia Premium Activa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.success)),
-                Text('Módulo de Facturación Electrónica SRI desbloqueado.', style: TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                Text('Licencia Premium Activa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.success)),
+                Text('Módulo de Facturación Electrónica SRI desbloqueado.', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
               ],
             ),
             const Spacer(),
@@ -190,9 +199,9 @@ class SettingsScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: AppColors.primarySurface,
+            color: colors.primarySurface,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -200,13 +209,13 @@ class SettingsScreen extends ConsumerWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Parámetros de Configuración SRI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: AppColors.primaryDark)),
+                  Text('Parámetros de Configuración SRI', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.primaryText)),
                   ElevatedButton.icon(
                     onPressed: () => SriSetupWizardDialog.show(context),
                     icon: const Icon(Icons.edit_rounded, size: 18),
                     label: const Text('Configurar Parámetros'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: colors.primary,
                       foregroundColor: Colors.white,
                     ),
                   )
@@ -216,17 +225,19 @@ class SettingsScreen extends ConsumerWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildSummaryItem(Icons.business_rounded, 'RUC Emisor', settings.sriRuc.isEmpty ? 'No configurado' : settings.sriRuc),
+                    child: _buildSummaryItem(context, colors, Icons.business_rounded, 'RUC Emisor', settings.sriRuc.isEmpty ? 'No configurado' : settings.sriRuc),
                   ),
                   Expanded(
-                    child: _buildSummaryItem(Icons.store_rounded, 'Establecimiento', settings.sriEstablecimiento.isEmpty ? 'No configurado' : '${settings.sriEstablecimiento}-${settings.sriPuntoEmision}'),
+                    child: _buildSummaryItem(context, colors, Icons.store_rounded, 'Establecimiento', settings.sriEstablecimiento.isEmpty ? 'No configurado' : '${settings.sriEstablecimiento}-${settings.sriPuntoEmision}'),
                   ),
                   Expanded(
                     child: _buildSummaryItem(
+                      context,
+                      colors,
                       Icons.cloud_sync_rounded, 
                       'Ambiente', 
                       settings.sriAmbiente == 1 ? 'Pruebas' : 'Producción',
-                      color: settings.sriAmbiente == 1 ? AppColors.warning : AppColors.success,
+                      color: settings.sriAmbiente == 1 ? colors.warning : colors.success,
                     ),
                   ),
                 ],
@@ -238,24 +249,24 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSummaryItem(IconData icon, String label, String value, {Color color = AppColors.textPrimary}) {
+  Widget _buildSummaryItem(BuildContext context, AppThemeColors colors, IconData icon, String label, String value, {Color? color}) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.cardBackground,
             shape: BoxShape.circle,
-            border: Border.all(color: AppColors.borderLight),
+            border: Border.all(color: colors.borderLight),
           ),
-          child: Icon(icon, size: 20, color: AppColors.primary),
+          child: Icon(icon, size: 20, color: colors.primary),
         ),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-            Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color)),
+            Text(label, style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+            Text(value, style: TextStyle(fontWeight: FontWeight.bold, color: color ?? colors.textPrimary)),
           ],
         )
       ],
@@ -351,6 +362,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget _buildBackupSettings(BuildContext context, WidgetRef ref) {
     final state = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
+    final colors = AppColors.of(context);
 
     return XelaCard(
       padding: const EdgeInsets.all(24),
@@ -358,22 +370,25 @@ class SettingsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text('Respaldo y Seguridad de Datos', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          const Divider(height: 32, color: AppColors.borderLight),
+          Divider(height: 32, color: colors.borderLight),
           
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Respaldos Locales Automáticos', style: TextStyle(fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('Guarda una copia en "Documentos" al cerrar la caja/app', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Respaldos Locales Automáticos', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text('Guarda una copia en "Documentos" al cerrar la caja/app', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                  ],
+                ),
               ),
+              const SizedBox(width: 16),
               Switch(
                 value: state.autoLocalBackupEnabled,
-                activeColor: AppColors.primary,
+                activeColor: colors.primary,
                 onChanged: (val) {
                   notifier.toggleAutoLocalBackup(val);
                 },
@@ -384,17 +399,20 @@ class SettingsScreen extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Respaldo en Nube Automático (Google Drive)', style: TextStyle(fontWeight: FontWeight.w600)),
-                  SizedBox(height: 4),
-                  Text('Sube una copia segura a internet diariamente al cerrar', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Respaldo en Nube Automático (Google Drive)', style: TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text('Sube una copia segura a internet diariamente al cerrar', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                  ],
+                ),
               ),
+              const SizedBox(width: 16),
               Switch(
                 value: state.autoCloudBackupEnabled,
-                activeColor: AppColors.primary,
+                activeColor: colors.primary,
                 onChanged: (val) async {
                   if (val) {
                     if (!googleDriveService.isAuthenticated) {
@@ -425,19 +443,19 @@ class SettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
+                color: colors.primarySurface,
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+                border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.12),
+                      color: colors.primary.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.cloud_done_rounded, color: AppColors.primary, size: 22),
+                    child: Icon(Icons.cloud_done_rounded, color: colors.primary, size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -446,15 +464,15 @@ class SettingsScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            const Text(
+                            Text(
                               'Cuenta vinculada a Google Drive',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.textPrimary),
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: colors.textPrimary),
                             ),
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
-                                color: AppColors.primary,
+                                color: colors.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: const Text('ACTIVA', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
@@ -466,7 +484,7 @@ class SettingsScreen extends ConsumerWidget {
                           state.googleDriveEmail.isNotEmpty
                               ? state.googleDriveEmail
                               : (googleDriveService.currentUserEmail ?? 'Cuenta activa'),
-                          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.primaryDark),
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: colors.primaryText),
                         ),
                       ],
                     ),
@@ -537,25 +555,25 @@ class SettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.primarySurface,
+                color: colors.primarySurface,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.primary.withOpacity(0.2)),
+                border: Border.all(color: colors.primary.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.schedule_rounded, color: AppColors.primaryDark, size: 20),
+                      Icon(Icons.schedule_rounded, color: colors.primaryText, size: 20),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Hora del Respaldo Programado', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppColors.primaryDark)),
+                          Text('Hora del Respaldo Programado', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colors.primaryText)),
                           const SizedBox(height: 2),
                           Text(
                             'Si el sistema queda abierto, respaldará a esta hora',
-                            style: TextStyle(fontSize: 11, color: AppColors.textSecondary.withOpacity(0.8)),
+                            style: TextStyle(fontSize: 11, color: colors.textSecondary.withValues(alpha: 0.8)),
                           ),
                         ],
                       ),
@@ -580,18 +598,20 @@ class SettingsScreen extends ConsumerWidget {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.primaryDark,
-                      side: BorderSide(color: AppColors.primary.withOpacity(0.4)),
+                      foregroundColor: colors.primaryText,
+                      side: BorderSide(color: colors.primary.withValues(alpha: 0.4)),
                     ),
                   ),
                 ],
               ),
             ),
           ],
-          const Divider(height: 32, color: AppColors.borderLight),
+          Divider(height: 32, color: colors.borderLight),
           const Text('Opciones Manuales', style: TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
-          Row(
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
             children: [
               ElevatedButton.icon(
                 onPressed: () async {
@@ -612,13 +632,12 @@ class SettingsScreen extends ConsumerWidget {
                 icon: const Icon(Icons.usb_rounded, size: 18),
                 label: const Text('Respaldar a USB / Carpeta Local'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primarySurface,
-                  foregroundColor: AppColors.primaryDark,
+                  backgroundColor: colors.primarySurface,
+                  foregroundColor: colors.primaryText,
                   elevation: 0,
-                  side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                  side: BorderSide(color: colors.primary.withValues(alpha: 0.3)),
                 ),
               ),
-              const SizedBox(width: 12),
               ElevatedButton.icon(
                 onPressed: () async {
                   try {
@@ -640,10 +659,10 @@ class SettingsScreen extends ConsumerWidget {
                 icon: const Icon(Icons.cloud_upload_rounded, size: 18),
                 label: const Text('Respaldar ahora en Drive'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primarySurface,
-                  foregroundColor: AppColors.primaryDark,
+                  backgroundColor: colors.primarySurface,
+                  foregroundColor: colors.primaryText,
                   elevation: 0,
-                  side: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+                  side: BorderSide(color: colors.primary.withValues(alpha: 0.3)),
                 ),
               ),
             ],
@@ -652,4 +671,324 @@ class SettingsScreen extends ConsumerWidget {
       ),
     );
   }
+
+  Widget _buildCustomizationSettings(
+    BuildContext context,
+    WidgetRef ref,
+    SettingsState state,
+    SettingsNotifier notifier,
+    AppThemeColors colors,
+  ) {
+    return XelaCard(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: colors.primarySurface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.palette_rounded, color: colors.primaryText, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Identidad y Personalización de la Farmacia',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Nombre comercial, apariencia visual y colores corporativos',
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          Divider(height: 32, color: colors.borderLight),
+
+          // 1. Nombre Comercial de la Farmacia
+          const Text(
+            'Nombre Comercial de la Farmacia',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Este nombre se reflejará en el menú lateral, la barra de ventana y en los tickets térmicos del POS.',
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 10),
+          _PharmacyNameField(
+            initialValue: state.pharmacyName,
+            onSave: (newName) {
+              notifier.updatePharmacyName(newName);
+              AppDialogs.showSuccess(
+                context,
+                title: 'Nombre Actualizado',
+                message: 'El nombre de la farmacia ahora es "$newName".',
+              );
+            },
+          ),
+
+          const SizedBox(height: 24),
+          Divider(height: 1, color: colors.borderLight),
+          const SizedBox(height: 24),
+
+          // 2. Modo de Tema
+          const Text(
+            'Tema de Visualización',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Selecciona el modo visual para el trabajo diurno o turnos nocturnos.',
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildThemeModeChip(
+                context: context,
+                icon: Icons.light_mode_rounded,
+                label: 'Modo Claro',
+                isSelected: state.themeMode == ThemeMode.light,
+                onTap: () => notifier.updateThemeMode(ThemeMode.light),
+              ),
+              const SizedBox(width: 12),
+              _buildThemeModeChip(
+                context: context,
+                icon: Icons.dark_mode_rounded,
+                label: 'Modo Oscuro',
+                isSelected: state.themeMode == ThemeMode.dark,
+                onTap: () => notifier.updateThemeMode(ThemeMode.dark),
+              ),
+              const SizedBox(width: 12),
+              _buildThemeModeChip(
+                context: context,
+                icon: Icons.laptop_chromebook_rounded,
+                label: 'Según el Sistema',
+                isSelected: state.themeMode == ThemeMode.system,
+                onTap: () => notifier.updateThemeMode(ThemeMode.system),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+          Divider(height: 1, color: colors.borderLight),
+          const SizedBox(height: 24),
+
+          // 3. Paleta de Colores de Marca
+          const Text(
+            'Color Corporativo Institucional',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Elige la paleta cromática que mejor represente la identidad de tu farmacia.',
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: AppTheme.presets.map((preset) {
+              final isSelected = state.primaryColor.value == preset.primaryColor.value;
+              return InkWell(
+                onTap: () => notifier.updatePrimaryColor(preset.primaryColor),
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  width: 200,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isSelected ? preset.primaryColor.withValues(alpha: 0.12) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected ? preset.primaryColor : colors.border,
+                      width: isSelected ? 2 : 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: preset.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(preset.icon, color: Colors.white, size: 16),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              preset.name,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                color: isSelected ? preset.primaryColor : colors.textPrimary,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              preset.subtitle,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: colors.textMuted,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildThemeModeChip({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    final colors = AppColors.of(context);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? colors.primarySurface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? colors.primary : colors.border,
+            width: isSelected ? 1.8 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isSelected ? colors.primaryText : colors.textSecondary,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? colors.primaryText : colors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
+
+class _PharmacyNameField extends StatefulWidget {
+  final String initialValue;
+  final ValueChanged<String> onSave;
+
+  const _PharmacyNameField({
+    required this.initialValue,
+    required this.onSave,
+  });
+
+  @override
+  State<_PharmacyNameField> createState() => _PharmacyNameFieldState();
+}
+
+class _PharmacyNameFieldState extends State<_PharmacyNameField> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialValue);
+  }
+
+  @override
+  void didUpdateWidget(covariant _PharmacyNameField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialValue != widget.initialValue && _controller.text != widget.initialValue) {
+      _controller.text = widget.initialValue;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+    return Row(
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 380),
+          child: TextField(
+            controller: _controller,
+            style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.w500),
+            decoration: InputDecoration(
+              hintText: 'ej. Farmacia San José',
+              filled: true,
+              fillColor: colors.inputFill,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: colors.border),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: colors.border),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
+              ),
+              prefixIcon: Icon(Icons.storefront_rounded, size: 20, color: colors.textSecondary),
+            ),
+            onSubmitted: (val) => widget.onSave(val),
+          ),
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton.icon(
+          onPressed: () => widget.onSave(_controller.text),
+          icon: const Icon(Icons.save_rounded, size: 16),
+          label: const Text('Guardar'),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: colors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
+    );
+  }
+}
+

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
@@ -101,6 +102,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final catalogState = ref.watch(productCatalogProvider);
     final products = catalogState.products;
     final currentFilter = catalogState.filter;
@@ -116,26 +118,26 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: colors.background,
           body: Column(
             children: [
               // Barra de Acciones de Catálogo
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: const BoxDecoration(
-                  color: AppColors.cardBackground,
-                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                decoration: BoxDecoration(
+                  color: colors.cardBackground,
+                  border: Border(bottom: BorderSide(color: colors.border)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.inventory_2_outlined, color: AppColors.primary, size: 22),
+                    Icon(Icons.inventory_2_outlined, color: colors.primary, size: 22),
                     const SizedBox(width: 10),
-                    const Text(
+                    Text(
                       'Catálogo Maestro de Productos',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -157,7 +159,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
               // Barra de Búsqueda y Filtros Rápidos (Desktop Filter Toolbar)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                color: AppColors.cardBackground,
+                color: colors.cardBackground,
                 child: Row(
                   children: [
                     // Buscador con atajo
@@ -185,15 +187,15 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                           label: Text(f.label),
                           selected: isSelected,
                           onSelected: (_) => ref.read(productCatalogProvider.notifier).setFilter(f),
-                          selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                          backgroundColor: AppColors.background,
+                          selectedColor: colors.primarySurface,
+                          backgroundColor: colors.background,
                           labelStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            color: isSelected ? colors.primaryText : colors.textPrimary,
                           ),
                           side: BorderSide(
-                            color: isSelected ? AppColors.primary : AppColors.border,
+                            color: isSelected ? colors.primary : colors.border,
                           ),
                           visualDensity: VisualDensity.compact,
                         );
@@ -203,21 +205,21 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 ),
               ),
 
-              const Divider(height: 1, thickness: 1, color: AppColors.border),
+              Divider(height: 1, thickness: 1, color: colors.border),
 
               // Mensaje de Error si existiera
               if (errorMessage != null)
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: AppColors.danger.withValues(alpha: 0.1),
+                  color: colors.danger.withValues(alpha: 0.1),
                   child: Row(
                     children: [
-                      const Icon(Icons.error_outline, color: AppColors.danger, size: 20),
+                      Icon(Icons.error_outline, color: colors.danger, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           errorMessage,
-                          style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                          style: TextStyle(color: colors.danger, fontSize: 13),
                         ),
                       ),
                     ],
@@ -229,7 +231,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : products.isEmpty
-                        ? _buildEmptyState()
+                        ? _buildEmptyState(colors)
                         : Padding(
                             padding: const EdgeInsets.all(16),
                             child: AppDataTable<Product>(
@@ -250,10 +252,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                   width: 140,
                                   builder: (p) => Text(
                                     p.codigoBarras?.isNotEmpty == true ? p.codigoBarras! : 'S/C',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontFamily: 'monospace',
-                                      color: AppColors.textPrimary,
+                                      color: colors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -262,10 +264,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                   width: 200,
                                   builder: (p) => Text(
                                     p.nombreComercial,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w600,
                                       fontSize: 13,
-                                      color: AppColors.textPrimary,
+                                      color: colors.textPrimary,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -279,7 +281,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                       if (p.principioActivo != null) p.principioActivo,
                                       if (p.concentracion != null) p.concentracion,
                                     ].join(' - '),
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+                                    style: TextStyle(fontSize: 12, color: colors.textMuted),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -291,7 +293,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                     final pres = p.presentaciones.isNotEmpty ? p.presentaciones.first : null;
                                     return Text(
                                       pres?.nombreDescriptivo ?? 'General',
-                                      style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
+                                      style: TextStyle(fontSize: 12, color: colors.textPrimary),
                                     );
                                   },
                                 ),
@@ -310,7 +312,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: totalStock > 0 ? AppColors.success : AppColors.textMuted,
+                                        color: totalStock > 0 ? colors.success : colors.textMuted,
                                       ),
                                     );
                                   },
@@ -324,10 +326,10 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                     return Text(
                                       AppFormatters.currency(pres?.precioVentaCaja ?? 0.0),
                                       textAlign: TextAlign.right,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 13,
-                                        color: AppColors.primary,
+                                        color: colors.primary,
                                       ),
                                     );
                                   },
@@ -369,7 +371,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                           icon: Icons.warning_amber_rounded,
                                         ),
                                       if (!p.hasArcsaAlert)
-                                        const Text('Venta Libre', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                        Text('Venta Libre', style: TextStyle(fontSize: 11, color: colors.textMuted)),
                                     ],
                                   ),
                                 ),
@@ -381,7 +383,7 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.primary),
+                                        icon: Icon(Icons.edit_outlined, size: 18, color: colors.primary),
                                         tooltip: 'Editar producto',
                                         onPressed: () => _onEditProduct(p),
                                       ),
@@ -389,14 +391,14 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                                         icon: Icon(
                                           p.isActive ? Icons.toggle_on : Icons.toggle_off,
                                           size: 22,
-                                          color: p.isActive ? AppColors.success : AppColors.textMuted,
+                                          color: p.isActive ? colors.success : colors.textMuted,
                                         ),
                                         tooltip: p.isActive ? 'Inactivar' : 'Activar',
                                         onPressed: () => _onToggleStatus(p, stockMap),
                                       ),
                                       if (p.isActive)
                                         IconButton(
-                                          icon: const Icon(Icons.call_merge, size: 18, color: AppColors.danger),
+                                          icon: Icon(Icons.call_merge, size: 18, color: colors.danger),
                                           tooltip: 'Absorber Duplicados',
                                           onPressed: () => _onMergeProduct(p),
                                         ),
@@ -415,21 +417,21 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppThemeColors colors) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 64, color: AppColors.textMuted.withValues(alpha: 0.5)),
+          Icon(Icons.inventory_2_outlined, size: 64, color: colors.textMuted.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No se encontraron medicamentos en el catálogo',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Comience registrando un nuevo medicamento con [F2] o modifique los filtros de búsqueda.',
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 13, color: colors.textMuted),
           ),
           const SizedBox(height: 20),
           AppPrimaryButton(

@@ -29,37 +29,38 @@ class XelaBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     Color bg;
     Color textColor;
 
     switch (variant) {
       case XelaBadgeVariant.success:
-        bg = AppColors.pillSuccessBg;
-        textColor = AppColors.pillSuccessText;
+        bg = colors.pillSuccessBg;
+        textColor = colors.pillSuccessText;
         break;
       case XelaBadgeVariant.warning:
-        bg = AppColors.pillWarningBg;
-        textColor = AppColors.pillWarningText;
+        bg = colors.pillWarningBg;
+        textColor = colors.pillWarningText;
         break;
       case XelaBadgeVariant.danger:
-        bg = AppColors.pillDangerBg;
-        textColor = AppColors.pillDangerText;
+        bg = colors.pillDangerBg;
+        textColor = colors.pillDangerText;
         break;
       case XelaBadgeVariant.info:
-        bg = AppColors.pillInfoBg;
-        textColor = AppColors.pillInfoText;
+        bg = colors.pillInfoBg;
+        textColor = colors.pillInfoText;
         break;
       case XelaBadgeVariant.purple:
-        bg = AppColors.pillPurpleBg;
-        textColor = AppColors.pillPurpleText;
+        bg = colors.pillPurpleBg;
+        textColor = colors.pillPurpleText;
         break;
       case XelaBadgeVariant.primary:
-        bg = AppColors.primarySurface;
-        textColor = AppColors.primaryDark;
+        bg = colors.primarySurface;
+        textColor = colors.primaryText;
         break;
       case XelaBadgeVariant.neutral:
-        bg = AppColors.pillNeutralBg;
-        textColor = AppColors.pillNeutralText;
+        bg = colors.pillNeutralBg;
+        textColor = colors.pillNeutralText;
         break;
     }
 

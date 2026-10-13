@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../domain/entities/customer.dart';
@@ -81,15 +82,19 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
         const SingleActivator(LogicalKeyboardKey.enter): _onSave,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 520,
           padding: const EdgeInsets.all(24),
@@ -105,10 +110,10 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.person_add_outlined, color: AppColors.primary, size: 24),
+                      child: Icon(Icons.person_add_outlined, color: colors.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -117,11 +122,11 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                         children: [
                           Text(
                             widget.customer == null ? 'Registrar Nuevo Cliente' : 'Editar Datos de Cliente',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
-                          const Text(
+                          Text(
                             'Información para emisión de comprobante y facturación',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),

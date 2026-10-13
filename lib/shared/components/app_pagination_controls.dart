@@ -25,38 +25,39 @@ class AppPaginationControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final startItem = totalItems == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
     final endItem = (currentPage * pageSize) > totalItems ? totalItems : (currentPage * pageSize);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
-        border: Border(top: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: colors.cardBackground,
+        border: Border(top: BorderSide(color: colors.border)),
       ),
       child: Row(
         children: [
           Text(
             'Mostrando $startItem - $endItem de $totalItems registros',
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const Spacer(),
-          const Text(
+          Text(
             'Registros por página:',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           const SizedBox(width: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: colors.border),
               borderRadius: BorderRadius.circular(4),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<int>(
                 value: pageSizeOptions.contains(pageSize) ? pageSize : pageSizeOptions.first,
                 isDense: true,
-                style: const TextStyle(fontSize: 13, color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 13, color: colors.textPrimary, fontWeight: FontWeight.bold),
                 items: pageSizeOptions.map((size) {
                   return DropdownMenuItem<int>(
                     value: size,
@@ -73,20 +74,20 @@ class AppPaginationControls extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.chevron_left),
             onPressed: currentPage > 1 ? onPreviousPage : null,
-            color: AppColors.primary,
-            disabledColor: AppColors.textMuted.withValues(alpha: 0.5),
+            color: colors.primary,
+            disabledColor: colors.textMuted.withValues(alpha: 0.5),
             tooltip: 'Página anterior',
             splashRadius: 20,
           ),
           Text(
             'Página $currentPage de ${totalPages == 0 ? 1 : totalPages}',
-            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
             onPressed: currentPage < totalPages ? onNextPage : null,
-            color: AppColors.primary,
-            disabledColor: AppColors.textMuted.withValues(alpha: 0.5),
+            color: colors.primary,
+            disabledColor: colors.textMuted.withValues(alpha: 0.5),
             tooltip: 'Siguiente página',
             splashRadius: 20,
           ),

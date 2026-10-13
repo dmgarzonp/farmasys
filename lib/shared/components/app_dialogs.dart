@@ -45,6 +45,8 @@ class AppConfirmDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(false),
@@ -54,18 +56,18 @@ class AppConfirmDialog extends StatelessWidget {
         autofocus: true,
         child: AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: AppColors.cardBackground,
+          backgroundColor: colors.cardBackground,
           title: Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
           content: Text(
             message,
-            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           actions: [

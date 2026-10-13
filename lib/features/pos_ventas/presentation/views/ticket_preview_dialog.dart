@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,9 +6,9 @@ import 'package:printing/printing.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
-import '../../../../shared/components/xela_card.dart';
 import '../../domain/entities/sale.dart';
 import '../../domain/services/ticket_printer_service.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 
 /// Modal para previsualizar el ticket térmico antes de imprimir.
 /// Integra el widget [PdfPreview] de la librería printing.
@@ -38,6 +37,7 @@ class TicketPreviewDialog extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final printerService = ref.watch(ticketPrinterServiceProvider);
+    final settings = ref.watch(settingsProvider);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -119,6 +119,7 @@ class TicketPreviewDialog extends ConsumerWidget {
                   build: (format) => printerService.generateTicketPdf(
                     sale: sale,
                     cashierName: cashierName,
+                    pharmacyName: settings.pharmacyName,
                   ),
                   initialPageFormat: PdfPageFormat.roll80,
                   allowPrinting: true,

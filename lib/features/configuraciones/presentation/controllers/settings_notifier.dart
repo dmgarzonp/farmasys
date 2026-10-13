@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../domain/settings_state.dart';
 import '../../data/settings_repository.dart';
@@ -7,13 +8,18 @@ part 'settings_notifier.g.dart';
 @riverpod
 class SettingsNotifier extends _$SettingsNotifier {
   late SettingsRepository _repo;
+  bool _disposed = false;
 
   @override
   SettingsState build() {
+    _disposed = false;
+    ref.onDispose(() => _disposed = true);
     _repo = ref.read(settingsRepositoryProvider);
     _loadSettings();
     return const SettingsState();
   }
+
+  Future<void> reloadSettings() async => _loadSettings();
 
   Future<void> _loadSettings() async {
     final iva = await _repo.getIva() ?? 0.15;
@@ -34,6 +40,26 @@ class SettingsNotifier extends _$SettingsNotifier {
     final schedMinute = await _repo.getScheduledBackupMinute() ?? 50;
     final gdriveEmail = await _repo.getGoogleDriveEmail() ?? '';
 
+    final pharmacyName = await _repo.getPharmacyName() ?? 'Mi Farmacia';
+    final themeModeStr = await _repo.getThemeMode() ?? 'system';
+    final primaryColorValue = await _repo.getPrimaryColor() ?? 0xFF059669;
+
+    ThemeMode themeMode;
+    switch (themeModeStr) {
+      case 'light':
+        themeMode = ThemeMode.light;
+        break;
+      case 'dark':
+        themeMode = ThemeMode.dark;
+        break;
+      case 'system':
+      default:
+        themeMode = ThemeMode.system;
+        break;
+    }
+
+    if (_disposed) return;
+
     state = SettingsState(
       ivaVigente: iva,
       expirationAlertDays: exp,
@@ -50,7 +76,40 @@ class SettingsNotifier extends _$SettingsNotifier {
       scheduledBackupHour: schedHour,
       scheduledBackupMinute: schedMinute,
       googleDriveEmail: gdriveEmail,
+      pharmacyName: pharmacyName,
+      themeMode: themeMode,
+      primaryColor: Color(primaryColorValue),
     );
+  }
+
+  Future<void> updatePharmacyName(String name) async {
+    final trimmed = name.trim();
+    final valueToSave = trimmed.isEmpty ? 'Mi Farmacia' : trimmed;
+    await _repo.savePharmacyName(valueToSave);
+    state = state.copyWith(pharmacyName: valueToSave);
+  }
+
+  Future<void> updateThemeMode(ThemeMode mode) async {
+    String modeStr;
+    switch (mode) {
+      case ThemeMode.light:
+        modeStr = 'light';
+        break;
+      case ThemeMode.dark:
+        modeStr = 'dark';
+        break;
+      case ThemeMode.system:
+        modeStr = 'system';
+        break;
+    }
+    await _repo.saveThemeMode(modeStr);
+    state = state.copyWith(themeMode: mode);
+  }
+
+  Future<void> updatePrimaryColor(Color color) async {
+    // ignore: deprecated_member_use
+    await _repo.savePrimaryColor(color.value);
+    state = state.copyWith(primaryColor: color);
   }
 
   Future<void> linkGoogleDrive(String email) async {

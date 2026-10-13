@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/constants/constants.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../controllers/auth_controller.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
@@ -49,19 +50,21 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
             width: 450,
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.cardBackground,
+              color: colors.cardBackground,
               borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: colors.border),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.05),
@@ -76,22 +79,22 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(Icons.lock_reset_rounded, size: 64, color: AppColors.primary),
+                  Icon(Icons.lock_reset_rounded, size: 64, color: colors.primary),
                   const SizedBox(height: 16),
-                  const Text(
+                  Text(
                     'Cambio de Contraseña Obligatorio',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Hola \${user?.username ?? ''}, tu administrador ha restablecido tu contraseña. Por tu seguridad, debes elegir una nueva para continuar.',
+                    'Hola ${user?.username ?? ''}, tu administrador ha restablecido tu contraseña. Por tu seguridad, debes elegir una nueva para continuar.',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+                    style: TextStyle(color: colors.textSecondary, fontSize: 14),
                   ),
                   const SizedBox(height: 32),
                   

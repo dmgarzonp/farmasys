@@ -1,8 +1,17 @@
-import 'package:flutter/painting.dart';
+import 'package:flutter/material.dart';
+import '../theme/app_theme_colors.dart';
 
 /// Paleta de colores institucional para FarmSys
 class AppColors {
   AppColors._();
+
+  /// Obtiene los tokens adaptativos del tema activo según el contexto (Claro / Oscuro)
+  static AppThemeColors of(BuildContext context) {
+    return Theme.of(context).extension<AppThemeColors>() ??
+        (Theme.of(context).brightness == Brightness.dark
+            ? AppThemeColors.darkFallback
+            : AppThemeColors.lightFallback);
+  }
 
   // Primarios (Esmeralda Farmacéutico)
   static const Color primary = Color(0xFF059669);

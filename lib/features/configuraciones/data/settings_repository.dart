@@ -26,6 +26,11 @@ class SettingsRepository {
   static const _keyScheduledBackupMinute = 'settings_scheduled_backup_minute';
   static const _keyGoogleDriveEmail = 'settings_google_drive_email';
 
+  // Personalización Keys
+  static const _keyPharmacyName = 'settings_pharmacy_name';
+  static const _keyThemeMode = 'settings_theme_mode';
+  static const _keyPrimaryColor = 'settings_primary_color';
+
   Future<void> saveIva(double iva) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setDouble(_keyIva, iva);
@@ -88,6 +93,27 @@ class SettingsRepository {
   Future<void> clearGoogleDriveEmail() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyGoogleDriveEmail);
+  }
+
+  // Personalización Getters
+  Future<String?> getPharmacyName() async => (await SharedPreferences.getInstance()).getString(_keyPharmacyName);
+  Future<String?> getThemeMode() async => (await SharedPreferences.getInstance()).getString(_keyThemeMode);
+  Future<int?> getPrimaryColor() async => (await SharedPreferences.getInstance()).getInt(_keyPrimaryColor);
+
+  // Personalización Setters
+  Future<void> savePharmacyName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyPharmacyName, name);
+  }
+
+  Future<void> saveThemeMode(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyThemeMode, mode);
+  }
+
+  Future<void> savePrimaryColor(int colorValue) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyPrimaryColor, colorValue);
   }
 
   // SRI Getters

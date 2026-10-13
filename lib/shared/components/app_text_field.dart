@@ -42,6 +42,8 @@ class AppTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -49,10 +51,10 @@ class AppTextField extends StatelessWidget {
         if (label != null) ...[
           Text(
             label!,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: 6),
@@ -68,18 +70,18 @@ class AppTextField extends StatelessWidget {
           onChanged: onChanged,
           onFieldSubmitted: onSubmitted,
           validator: validator,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
             fontWeight: FontWeight.w500,
           ),
           decoration: InputDecoration(
             isDense: true,
             hintText: hintText,
             errorText: errorText,
-            hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+            hintStyle: TextStyle(color: colors.textMuted, fontSize: 13),
             prefixIcon: prefixIcon != null
-                ? Icon(prefixIcon, size: 18, color: AppColors.textMuted)
+                ? Icon(prefixIcon, size: 18, color: colors.textMuted)
                 : null,
             suffixIcon: shortcutBadge != null
                 ? Padding(
@@ -88,16 +90,16 @@ class AppTextField extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppColors.background,
+                          color: colors.background,
                           borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: colors.border),
                         ),
                         child: Text(
                           shortcutBadge!,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
@@ -105,23 +107,23 @@ class AppTextField extends StatelessWidget {
                   )
                 : suffix,
             filled: true,
-            fillColor: readOnly ? AppColors.divider : AppColors.cardBackground,
+            fillColor: readOnly ? colors.inputReadOnlyFill : colors.inputFill,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
+              borderSide: BorderSide(color: colors.primary, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.danger),
+              borderSide: BorderSide(color: colors.danger),
             ),
           ),
         ),

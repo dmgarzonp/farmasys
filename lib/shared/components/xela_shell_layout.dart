@@ -15,6 +15,7 @@ import '../../features/pos_ventas/presentation/controllers/pos_cart_notifier.dar
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 
 import 'components.dart';
+import '../extensions/theme_extensions.dart';
 
 /// Layout base de escritorio estilo Xela UI Kit.
 /// Integra la barra lateral fija colapsable, la barra superior contextual
@@ -166,6 +167,9 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+    final colors = AppColors.of(context);
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.f1): () => context.go('/pos'),
@@ -177,19 +181,19 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
         const SingleActivator(LogicalKeyboardKey.f9): () => context.go('/purchases'),
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
         body: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Barra de Título Personalizada (Frameless)
-            const SizedBox(
+            SizedBox(
               height: 36,
               child: WindowCaption(
                 brightness: Brightness.dark,
-                backgroundColor: AppColors.primary,
+                backgroundColor: settings.primaryColor,
                 title: Text(
-                  'FarmSys - Tu Farmacia',
-                  style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                  '${settings.pharmacyName} - FarmSys',
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -207,8 +211,8 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
                   Expanded(
                     child: Column(
                       children: [
-                        _buildHeaderBar(),
-                        const Divider(height: 1, color: AppColors.border),
+                        _buildHeaderBar(context, colors),
+                        Divider(height: 1, color: colors.border),
                         Expanded(
                           child: widget.navigationShell,
                         ),
@@ -224,12 +228,12 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
     );
   }
 
-  Widget _buildHeaderBar() {
+  Widget _buildHeaderBar(BuildContext context, AppThemeColors colors) {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 20),
-      decoration: const BoxDecoration(
-        color: AppColors.cardBackground,
+      decoration: BoxDecoration(
+        color: colors.cardBackground,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -237,24 +241,24 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
           // Título y Breadcrumb
           Row(
             children: [
-              const Text(
+              Text(
                 'FarmSys',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textMuted,
+                  color: colors.textMuted,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text('/', style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Text('/', style: TextStyle(color: colors.textMuted, fontSize: 13)),
               ),
               Text(
                 _getPageTitle(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -275,7 +279,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
                 icon: Icons.fact_check_rounded,
               ),
               const SizedBox(width: 16),
-              _buildUserMenu(),
+              _buildUserMenu(context, colors),
             ],
           ),
         ],
@@ -283,7 +287,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
     );
   }
 
-  Widget _buildUserMenu() {
+  Widget _buildUserMenu(BuildContext context, AppThemeColors colors) {
     final authState = ref.watch(authControllerProvider);
     final user = authState.user;
 
@@ -303,28 +307,28 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
       position: PopupMenuPosition.under,
       offset: const Offset(0, 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      color: AppColors.cardBackground,
+      color: colors.cardBackground,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: colors.background,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
-            const Icon(Icons.person_rounded, size: 14, color: AppColors.textSecondary),
+            Icon(Icons.person_rounded, size: 14, color: colors.textSecondary),
             const SizedBox(width: 6),
             Text(
               '$roleString: ${user.username}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: AppColors.textSecondary),
+            Icon(Icons.keyboard_arrow_down_rounded, size: 16, color: colors.textSecondary),
           ],
         ),
       ),

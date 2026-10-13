@@ -3,9 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/constants.dart' hide UserRole;
+import '../../core/theme/app_theme_colors.dart';
+import '../extensions/theme_extensions.dart';
 import '../../features/caja/presentation/controllers/cash_session_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../core/database/tables/usuarios_table.dart';
+import '../../features/configuraciones/presentation/controllers/settings_notifier.dart';
 import 'components.dart';
 
 /// Barra lateral de navegación estilo Xela UI Kit para escritorio
@@ -33,15 +36,16 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
     final cashState = ref.watch(cashSessionProvider);
     final userRole = ref.watch(authControllerProvider).user?.role;
     final width = _isExpanded ? 230.0 : 68.0;
+    final colors = AppColors.of(context);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
       width: width,
-      decoration: const BoxDecoration(
-        color: AppColors.sidebarBg,
+      decoration: BoxDecoration(
+        color: colors.sidebarBg,
         border: Border(
-          right: BorderSide(color: AppColors.sidebarBorder, width: 1),
+          right: BorderSide(color: colors.sidebarBorder, width: 1),
         ),
       ),
       child: ClipRect(
@@ -53,8 +57,8 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header de Marca
-              _buildBrandHeader(),
-              const Divider(height: 1, color: AppColors.sidebarBorder),
+              _buildBrandHeader(colors),
+              Divider(height: 1, color: colors.sidebarBorder),
 
               // Enlaces de Navegación
               const SizedBox(height: 12),
@@ -64,6 +68,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                   children: [
                     if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
                       _buildNavItem(
+                        colors: colors,
                         label: 'Dashboard',
                         route: '/',
                         icon: Icons.dashboard_rounded,
@@ -72,6 +77,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                       const SizedBox(height: 6),
                     ],
                     _buildNavItem(
+                      colors: colors,
                       label: 'Punto de Venta',
                       route: '/pos',
                       icon: Icons.point_of_sale_rounded,
@@ -80,6 +86,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     const SizedBox(height: 6),
                     if (userRole == UserRole.administrador || userRole == UserRole.farmaceutico) ...[
                       _buildNavItem(
+                        colors: colors,
                         label: 'Catálogo Maestro',
                         route: '/catalog',
                         icon: Icons.inventory_2_outlined,
@@ -87,6 +94,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                       ),
                       const SizedBox(height: 6),
                       _buildNavItem(
+                        colors: colors,
                         label: 'Inventario FEFO',
                         route: '/inventory',
                         icon: Icons.warehouse_outlined,
@@ -94,6 +102,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                       ),
                       const SizedBox(height: 6),
                       _buildNavItem(
+                        colors: colors,
                         label: 'Recepción Compras',
                         route: '/purchases',
                         icon: Icons.receipt_long_outlined,
@@ -103,6 +112,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     ],
                     if (userRole == UserRole.administrador) ...[
                       _buildNavItem(
+                        colors: colors,
                         label: 'Usuarios',
                         route: '/usuarios',
                         icon: Icons.manage_accounts_rounded,
@@ -110,6 +120,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                       ),
                       const SizedBox(height: 6),
                       _buildNavItem(
+                        colors: colors,
                         label: 'Configuraciones',
                         route: '/settings',
                         icon: Icons.settings_rounded,
@@ -121,12 +132,12 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
               ),
 
               // Tarjeta de Control de Caja
-              _buildCashSection(cashState),
+              _buildCashSection(cashState, colors),
 
-              const Divider(height: 1, color: AppColors.sidebarBorder),
+              Divider(height: 1, color: colors.sidebarBorder),
 
               // Pie de barra con botón colapsar/expandir
-              _buildCollapseToggle(),
+              _buildCollapseToggle(colors),
             ],
           ),
         ),
@@ -134,7 +145,9 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
     );
   }
 
-  Widget _buildBrandHeader() {
+  Widget _buildBrandHeader(AppThemeColors colors) {
+    final settings = ref.watch(settingsProvider);
+
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 15),
@@ -144,11 +157,11 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: settings.primaryColor,
               borderRadius: BorderRadius.circular(10),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.25),
+                  color: settings.primaryColor.withValues(alpha: 0.25),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
@@ -165,27 +178,27 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             child: AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: _isExpanded ? 1.0 : 0.0,
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppConstants.appName,
+                    settings.pharmacyName,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       letterSpacing: -0.3,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'Farmacia POS',
+                    'FarmSys POS',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -198,6 +211,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
   }
 
   Widget _buildNavItem({
+    required AppThemeColors colors,
     required String label,
     required String route,
     required IconData icon,
@@ -210,12 +224,12 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
       child: InkWell(
         onTap: () => context.go(route),
         borderRadius: BorderRadius.circular(10),
-        hoverColor: AppColors.sidebarHoverBg,
+        hoverColor: colors.sidebarHoverBg,
         child: Container(
           height: 42,
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: isActive ? AppColors.sidebarActiveBg : Colors.transparent,
+            color: isActive ? colors.sidebarActiveBg : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -223,7 +237,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
               Icon(
                 icon,
                 size: 20,
-                color: isActive ? AppColors.sidebarActiveText : AppColors.sidebarInactiveText,
+                color: isActive ? colors.sidebarActiveText : colors.sidebarInactiveText,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -235,7 +249,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-                      color: isActive ? AppColors.sidebarActiveText : AppColors.sidebarInactiveText,
+                      color: isActive ? colors.sidebarActiveText : colors.sidebarInactiveText,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -248,10 +262,10 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.white : AppColors.background,
+                    color: isActive ? colors.sidebarActiveBg : colors.background,
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                      color: isActive ? AppColors.primaryLight.withValues(alpha: 0.3) : AppColors.border,
+                      color: isActive ? colors.primaryLight.withValues(alpha: 0.3) : colors.border,
                       width: 1,
                     ),
                   ),
@@ -260,7 +274,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     style: TextStyle(
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
-                      color: isActive ? AppColors.primaryDark : AppColors.textMuted,
+                      color: isActive ? colors.sidebarActiveText : colors.textMuted,
                     ),
                   ),
                 ),
@@ -282,7 +296,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
     return content;
   }
 
-  Widget _buildCashSection(CashSessionState cashState) {
+  Widget _buildCashSection(CashSessionState cashState, AppThemeColors colors) {
     final isCashOpen = cashState.hasActiveSession;
     final session = cashState.activeSession;
 
@@ -298,13 +312,13 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isCashOpen ? AppColors.pillSuccessBg : AppColors.pillWarningBg,
+                color: isCashOpen ? colors.pillSuccessBg : colors.pillWarningBg,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(
                 isCashOpen ? Icons.lock_open_rounded : Icons.lock_outline_rounded,
                 size: 20,
-                color: isCashOpen ? AppColors.pillSuccessText : AppColors.pillWarningText,
+                color: isCashOpen ? colors.pillSuccessText : colors.pillWarningText,
               ),
             ),
           ),
@@ -316,7 +330,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
       padding: const EdgeInsets.all(12),
       child: XelaCard(
         padding: const EdgeInsets.all(10),
-        color: isCashOpen ? AppColors.primarySurface : AppColors.background,
+        color: isCashOpen ? colors.primarySurface : colors.cardBackground,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -333,9 +347,9 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             const SizedBox(height: 8),
             Text(
               isCashOpen ? 'Turno en Operación' : 'Sin turno activo',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -355,7 +369,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                   style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isCashOpen ? AppColors.secondary : AppColors.primary,
+                  backgroundColor: isCashOpen ? colors.secondary : colors.primary,
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.zero,
                   elevation: 0,
@@ -371,7 +385,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
     );
   }
 
-  Widget _buildCollapseToggle() {
+  Widget _buildCollapseToggle(AppThemeColors colors) {
     return InkWell(
       onTap: () => setState(() => _isExpanded = !_isExpanded),
       child: Container(
@@ -384,18 +398,18 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
             Icon(
               _isExpanded ? Icons.keyboard_double_arrow_left_rounded : Icons.keyboard_double_arrow_right_rounded,
               size: 18,
-              color: AppColors.textMuted,
+              color: colors.textMuted,
             ),
             const SizedBox(width: 8),
             AnimatedOpacity(
               duration: const Duration(milliseconds: 200),
               opacity: _isExpanded ? 1.0 : 0.0,
-              child: const Text(
+              child: Text(
                 'Colapsar Menú',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textMuted,
+                  color: colors.textMuted,
                 ),
               ),
             ),

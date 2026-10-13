@@ -20,21 +20,22 @@ class ExpirationBadge extends StatelessWidget {
     final DateTime today = DateTime(now.year, now.month, now.day);
     final int diffDays = exp.difference(today).inDays;
 
+    final colors = AppColors.of(context);
     final Color bgColor;
     final Color textColor;
     final String label;
 
     if (diffDays < 0) {
-      bgColor = AppColors.lotExpired;
-      textColor = AppColors.lotExpiredText;
+      bgColor = colors.lotExpired;
+      textColor = colors.lotExpiredText;
       label = 'VENCIDO (${diffDays.abs()}d)';
     } else if (diffDays <= 30) {
-      bgColor = AppColors.lotWarning;
-      textColor = AppColors.lotWarningText;
+      bgColor = colors.lotWarning;
+      textColor = colors.lotWarningText;
       label = 'PRÓXIMO (${diffDays}d)';
     } else {
-      bgColor = AppColors.lotOptimal;
-      textColor = AppColors.lotOptimalText;
+      bgColor = colors.lotOptimal;
+      textColor = colors.lotOptimalText;
       label = AppFormatters.date(expirationDate);
     }
 

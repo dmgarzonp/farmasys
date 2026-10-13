@@ -39,11 +39,13 @@ class AppDataTable<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
     if (isLoading) {
-      return const Center(
+      return Center(
         child: Padding(
-          padding: EdgeInsets.all(40.0),
-          child: CircularProgressIndicator(color: AppColors.primary),
+          padding: const EdgeInsets.all(40.0),
+          child: CircularProgressIndicator(color: colors.primary),
         ),
       );
     }
@@ -55,11 +57,11 @@ class AppDataTable<T> extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.inbox_outlined, size: 48, color: AppColors.textMuted),
+              Icon(Icons.inbox_outlined, size: 48, color: colors.textMuted),
               const SizedBox(height: 12),
               Text(
                 emptyMessage,
-                style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                style: TextStyle(fontSize: 14, color: colors.textSecondary, fontWeight: FontWeight.w500),
               ),
             ],
           ),
@@ -69,9 +71,9 @@ class AppDataTable<T> extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
+        color: colors.cardBackground,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -93,16 +95,16 @@ class AppDataTable<T> extends StatelessWidget {
                       children: [
                         // Encabezado de Columnas
                         Container(
-                          color: AppColors.divider,
+                          color: colors.divider,
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           child: Row(
                             children: columns.map((col) {
                               final text = Text(
                                 col.label.toUpperCase(),
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.textSecondary,
+                                  color: colors.textSecondary,
                                   letterSpacing: 0.5,
                                 ),
                               );
@@ -113,18 +115,18 @@ class AppDataTable<T> extends StatelessWidget {
                             }).toList(),
                           ),
                         ),
-                        const Divider(height: 1),
+                        Divider(height: 1, color: colors.border),
                         // Filas de Datos
                         Expanded(
                           child: ListView.separated(
                             key: tableKey != null ? PageStorageKey(tableKey) : null,
                             itemCount: data.length,
-                            separatorBuilder: (context, index) => const Divider(height: 1),
+                            separatorBuilder: (context, index) => Divider(height: 1, color: colors.border),
                             itemBuilder: (context, index) {
                               final item = data[index];
                               return InkWell(
                                 onTap: onRowTap != null ? () => onRowTap!(item) : null,
-                                hoverColor: AppColors.primarySurface.withValues(alpha: 0.5),
+                                hoverColor: colors.primarySurface.withValues(alpha: 0.5),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                   child: Row(

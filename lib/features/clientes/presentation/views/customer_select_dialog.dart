@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../data/repositories/drift_customer_repository.dart';
@@ -78,6 +79,7 @@ class _CustomerSelectDialogState extends ConsumerState<CustomerSelectDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
@@ -85,9 +87,12 @@ class _CustomerSelectDialogState extends ConsumerState<CustomerSelectDialog> {
         const SingleActivator(LogicalKeyboardKey.f2): _onNewCustomer,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 580,
           height: 520,
@@ -99,13 +104,13 @@ class _CustomerSelectDialogState extends ConsumerState<CustomerSelectDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.people_outline, color: AppColors.primary, size: 24),
-                      SizedBox(width: 8),
+                      Icon(Icons.people_outline, color: colors.primary, size: 24),
+                      const SizedBox(width: 8),
                       Text(
                         'Seleccionar Cliente',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                       ),
                     ],
                   ),
@@ -149,9 +154,9 @@ class _CustomerSelectDialogState extends ConsumerState<CustomerSelectDialog> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(Icons.person_search_outlined, size: 48, color: AppColors.textMuted),
+                                Icon(Icons.person_search_outlined, size: 48, color: colors.textMuted),
                                 const SizedBox(height: 8),
-                                const Text('No se encontraron clientes', style: TextStyle(color: AppColors.textSecondary)),
+                                Text('No se encontraron clientes', style: TextStyle(color: colors.textSecondary)),
                                 const SizedBox(height: 12),
                                 AppSecondaryButton(
                                   text: 'Registrar como Nuevo Cliente [F2]',
@@ -162,32 +167,32 @@ class _CustomerSelectDialogState extends ConsumerState<CustomerSelectDialog> {
                           )
                         : ListView.separated(
                             itemCount: _results.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1),
+                            separatorBuilder: (_, __) => Divider(height: 1, color: colors.divider),
                             itemBuilder: (ctx, index) {
                               final c = _results[index];
                               return ListTile(
                                 dense: true,
-                                hoverColor: AppColors.primary.withValues(alpha: 0.05),
+                                hoverColor: colors.primary.withValues(alpha: 0.08),
                                 leading: CircleAvatar(
                                   radius: 16,
                                   backgroundColor: c.isConsumidorFinal
-                                      ? AppColors.textMuted.withValues(alpha: 0.2)
-                                      : AppColors.primary.withValues(alpha: 0.1),
+                                      ? colors.textMuted.withValues(alpha: 0.2)
+                                      : colors.primarySurface,
                                   child: Icon(
                                     c.isConsumidorFinal ? Icons.public : Icons.person,
                                     size: 16,
-                                    color: c.isConsumidorFinal ? AppColors.textSecondary : AppColors.primary,
+                                    color: c.isConsumidorFinal ? colors.textSecondary : colors.primary,
                                   ),
                                 ),
                                 title: Text(
                                   c.nombreCompleto,
-                                  style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colors.textPrimary),
                                 ),
                                 subtitle: Text(
                                   '${c.documento} • ${c.direccion ?? 'Sin dirección'}',
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                 ),
-                                trailing: const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                                trailing: Icon(Icons.chevron_right, size: 18, color: colors.textMuted),
                                 onTap: () => Navigator.of(context).pop(c),
                               );
                             },

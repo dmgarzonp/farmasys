@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../extensions/theme_extensions.dart';
 
 enum AppButtonVariant { primary, secondary, success, danger, ghost }
 
@@ -26,8 +27,9 @@ class AppButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color bgColor = _getBackgroundColor();
-    final Color fgColor = _getForegroundColor();
+    final colors = AppColors.of(context);
+    final Color bgColor = _getBackgroundColor(colors);
+    final Color fgColor = _getForegroundColor(colors);
 
     final Widget content = Row(
       mainAxisSize: fullWidth ? MainAxisSize.max : MainAxisSize.min,
@@ -83,7 +85,7 @@ class AppButton extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
             side: variant == AppButtonVariant.secondary
-                ? const BorderSide(color: AppColors.border)
+                ? BorderSide(color: colors.border)
                 : BorderSide.none,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -94,31 +96,31 @@ class AppButton extends StatelessWidget {
     );
   }
 
-  Color _getBackgroundColor() {
+  Color _getBackgroundColor(AppThemeColors colors) {
     switch (variant) {
       case AppButtonVariant.primary:
-        return AppColors.primary;
+        return colors.primary;
       case AppButtonVariant.secondary:
-        return AppColors.cardBackground;
+        return colors.cardBackground;
       case AppButtonVariant.success:
-        return AppColors.success;
+        return colors.success;
       case AppButtonVariant.danger:
-        return AppColors.danger;
+        return colors.danger;
       case AppButtonVariant.ghost:
         return Colors.transparent;
     }
   }
 
-  Color _getForegroundColor() {
+  Color _getForegroundColor(AppThemeColors colors) {
     switch (variant) {
       case AppButtonVariant.primary:
       case AppButtonVariant.success:
       case AppButtonVariant.danger:
         return Colors.white;
       case AppButtonVariant.secondary:
-        return AppColors.textPrimary;
+        return colors.textPrimary;
       case AppButtonVariant.ghost:
-        return AppColors.textSecondary;
+        return colors.textSecondary;
     }
   }
 }

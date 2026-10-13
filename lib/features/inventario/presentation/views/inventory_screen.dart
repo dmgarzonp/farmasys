@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_data_table.dart';
@@ -162,6 +163,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final inventoryState = ref.watch(inventoryProvider);
     final batches = inventoryState.batches;
     final totalBatches = inventoryState.totalItems;
@@ -178,23 +180,23 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: colors.background,
           body: Column(
             children: [
               // Barra de Acciones de Inventario
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: const BoxDecoration(
-                  color: AppColors.cardBackground,
-                  border: Border(bottom: BorderSide(color: AppColors.border)),
+                decoration: BoxDecoration(
+                  color: colors.cardBackground,
+                  border: Border(bottom: BorderSide(color: colors.border)),
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.warehouse_outlined, color: AppColors.primary, size: 22),
+                    Icon(Icons.warehouse_outlined, color: colors.primary, size: 22),
                     const SizedBox(width: 10),
-                    const Text(
+                    Text(
                       'Trazabilidad FEFO & Lotes',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: colors.textPrimary),
                     ),
                     const SizedBox(width: 12),
                     XelaBadge(
@@ -221,14 +223,16 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       title: 'Total Lotes Registrados',
                       value: totalBatches.toString(),
                       icon: Icons.inventory_2_outlined,
-                      color: AppColors.primary,
+                      color: colors.primary,
+                      colors: colors,
                     ),
                     const SizedBox(width: 16),
                     _buildKpiCard(
                       title: 'Próximos a Vencer (≤ 90 d)',
                       value: expiringSoonCount.toString(),
                       icon: Icons.access_time_outlined,
-                      color: AppColors.warning,
+                      color: colors.warning,
+                      colors: colors,
                       onTap: () => ref.read(inventoryProvider.notifier).setFilter(InventoryFilter.expiringSoon),
                     ),
                     const SizedBox(width: 16),
@@ -236,7 +240,8 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       title: 'Lotes Caducados (Merma)',
                       value: expiredCount.toString(),
                       icon: Icons.error_outline,
-                      color: AppColors.danger,
+                      color: colors.danger,
+                      colors: colors,
                       onTap: () => ref.read(inventoryProvider.notifier).setFilter(InventoryFilter.expired),
                     ),
                   ],
@@ -246,7 +251,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
               // Barra de Búsqueda y Filtros
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: AppColors.cardBackground,
+                color: colors.cardBackground,
                 child: Row(
                   children: [
                     Expanded(
@@ -271,15 +276,15 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                           label: Text(f.label),
                           selected: isSelected,
                           onSelected: (_) => ref.read(inventoryProvider.notifier).setFilter(f),
-                          selectedColor: AppColors.primary.withValues(alpha: 0.15),
-                          backgroundColor: AppColors.background,
+                          selectedColor: colors.primarySurface,
+                          backgroundColor: colors.background,
                           labelStyle: TextStyle(
                             fontSize: 12,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                            color: isSelected ? colors.primaryText : colors.textPrimary,
                           ),
                           side: BorderSide(
-                            color: isSelected ? AppColors.primary : AppColors.border,
+                            color: isSelected ? colors.primary : colors.border,
                           ),
                           visualDensity: VisualDensity.compact,
                         );
@@ -289,14 +294,14 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 ),
               ),
 
-              const Divider(height: 1, thickness: 1, color: AppColors.border),
+              Divider(height: 1, thickness: 1, color: colors.border),
 
               // Tabla de Datos de Lotes
               Expanded(
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : batches.isEmpty
-                        ? _buildEmptyState()
+                        ? _buildEmptyState(colors)
                         : Padding(
                             padding: const EdgeInsets.all(16),
                             child: AppDataTable<BatchStock>(
@@ -316,11 +321,11 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   width: 120,
                                   builder: (b) => Text(
                                     b.lote,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontFamily: 'monospace',
                                       fontWeight: FontWeight.bold,
                                       fontSize: 12,
-                                      color: AppColors.textPrimary,
+                                      color: colors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -329,7 +334,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   width: 200,
                                   builder: (b) => Text(
                                     b.productName ?? 'Sin asignar',
-                                    style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                                    style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colors.textPrimary),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -339,7 +344,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   width: 150,
                                   builder: (b) => Text(
                                     b.presentationName ?? 'General',
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                                   ),
                                 ),
                                 AppTableColumn<BatchStock>(
@@ -356,7 +361,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     style: TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
-                                      color: b.stockActual <= 5 ? AppColors.danger : AppColors.textPrimary,
+                                      color: b.stockActual <= 5 ? colors.danger : colors.textPrimary,
                                     ),
                                   ),
                                 ),
@@ -366,7 +371,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   numeric: true,
                                   builder: (b) => Text(
                                     AppFormatters.currency(b.precioCompraUnitario),
-                                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 12, color: colors.textSecondary),
                                   ),
                                 ),
                                 AppTableColumn<BatchStock>(
@@ -375,13 +380,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                   builder: (b) => Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: AppColors.background,
+                                      color: colors.background,
                                       borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(color: AppColors.border),
+                                      border: Border.all(color: colors.border),
                                     ),
                                     child: Text(
                                       b.ubicacion ?? 'S/U',
-                                      style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                      style: TextStyle(fontSize: 11, color: colors.textMuted),
                                     ),
                                   ),
                                 ),
@@ -393,12 +398,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       IconButton(
-                                        icon: const Icon(Icons.outbox_rounded, size: 18, color: AppColors.danger),
+                                        icon: Icon(Icons.outbox_rounded, size: 18, color: colors.danger),
                                         tooltip: 'Registrar Salida / Devolución',
                                         onPressed: () => _onReturnBatch(b),
                                       ),
                                       IconButton(
-                                        icon: const Icon(Icons.tune, size: 18, color: AppColors.primary),
+                                        icon: Icon(Icons.tune, size: 18, color: colors.primary),
                                         tooltip: 'Ajustar Stock (Kardex)',
                                         onPressed: () => _onAdjustStock(b),
                                       ),
@@ -421,6 +426,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     required String value,
     required IconData icon,
     required Color color,
+    required AppThemeColors colors,
     VoidCallback? onTap,
   }) {
     return Expanded(
@@ -444,7 +450,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w500),
+                    style: TextStyle(fontSize: 12, color: colors.textSecondary, fontWeight: FontWeight.w500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -462,21 +468,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(AppThemeColors colors) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.warehouse_outlined, size: 64, color: AppColors.textMuted.withValues(alpha: 0.5)),
+          Icon(Icons.warehouse_outlined, size: 64, color: colors.textMuted.withValues(alpha: 0.5)),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'No hay lotes que coincidan con los filtros',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Use [F2] para registrar un ingreso de lote o cambie los filtros superiores.',
-            style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 13, color: colors.textMuted),
           ),
         ],
       ),

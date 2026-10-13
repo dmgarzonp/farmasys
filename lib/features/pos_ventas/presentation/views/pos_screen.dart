@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/debouncer.dart';
 import '../../../../shared/components/app_buttons.dart';
@@ -27,7 +27,6 @@ import '../../../configuraciones/presentation/controllers/settings_notifier.dart
 import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import 'checkout_dialog.dart';
 import 'ticket_preview_dialog.dart';
-import '../../domain/services/ticket_printer_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 /// Pantalla principal del Punto de Venta (POS Desktop) integrada con Caja, Clientes y Despacho FEFO
@@ -321,7 +320,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: context.colors.background,
           body: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -330,7 +329,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 flex: 6,
                 child: _buildProductCatalogPanel(context),
               ),
-              const VerticalDivider(width: 1, color: AppColors.border),
+              VerticalDivider(width: 1, color: context.colors.border),
 
               // Panel Derecho: Carrito, Cliente, Impuestos y Cobro
               Expanded(
@@ -345,6 +344,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Widget _buildProductCatalogPanel(BuildContext context) {
+    final colors = context.colors;
     final searchState = ref.watch(posSearchProvider);
     final availableStockMap = ref.watch(availableStockMapProvider).value ?? {};
     final filtered = searchState.results;
@@ -375,11 +375,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
             children: [
               Text(
                 _searchQuery.isEmpty ? 'MEDICAMENTOS DISPONIBLES (${filtered.length})' : 'RESULTADOS DE BÚSQUEDA (${filtered.length})',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.5),
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textSecondary, letterSpacing: 0.5),
               ),
-              const Text(
+              Text(
                 'Presione sobre una presentación para añadir al carrito',
-                style: TextStyle(fontSize: 11, color: AppColors.textMuted, fontStyle: FontStyle.italic),
+                style: TextStyle(fontSize: 11, color: colors.textMuted, fontStyle: FontStyle.italic),
               ),
             ],
           ),
@@ -388,13 +388,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           // Lista de Productos y Presentaciones
           Expanded(
             child: filtered.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
-                        SizedBox(height: 8),
-                        Text('No se encontraron medicamentos coincidentes.', style: TextStyle(color: AppColors.textSecondary)),
+                        Icon(Icons.search_off, size: 48, color: colors.textMuted),
+                        const SizedBox(height: 8),
+                        Text('No se encontraron medicamentos coincidentes.', style: TextStyle(color: colors.textSecondary)),
                       ],
                     ),
                   )
@@ -412,11 +412,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               children: [
                                 Text(
                                   prod.nombreComercial,
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary),
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: colors.textPrimary),
                                 ),
                                 if (prod.concentracion != null && prod.concentracion!.isNotEmpty) ...[
                                   const SizedBox(width: 6),
-                                  Text('(${prod.concentracion})', style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                                  Text('(${prod.concentracion})', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                                 ],
                                 const Spacer(),
                                 if (prod.requiereReceta)
@@ -432,7 +432,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 padding: const EdgeInsets.only(top: 2),
                                 child: Text(
                                   prod.principioActivo!,
-                                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                                  style: TextStyle(fontSize: 11, color: colors.textMuted),
                                 ),
                               ),
                             const SizedBox(height: 8),
@@ -448,26 +448,26 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 return [
                                   // Botón Unidad/Fracción
                                   ActionChip(
-                                    avatar: Icon(agotado ? Icons.block : Icons.medication, size: 14, color: agotado ? AppColors.textMuted : AppColors.primary),
+                                    avatar: Icon(agotado ? Icons.block : Icons.medication, size: 14, color: agotado ? colors.textMuted : colors.primary),
                                     label: Text(
                                       agotado ? 'Agotado' : '1 Uni (Stock: ${stock.toInt()}) • ${AppFormatters.currency(pres.precioVentaFraccion)}',
-                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: agotado ? AppColors.textMuted : AppColors.textPrimary),
+                                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: agotado ? colors.textMuted : colors.textPrimary),
                                     ),
-                                    backgroundColor: agotado ? AppColors.divider : AppColors.primarySurface,
-                                    side: BorderSide(color: agotado ? AppColors.border : AppColors.primary.withValues(alpha: 0.3)),
+                                    backgroundColor: agotado ? colors.divider : colors.primarySurface,
+                                    side: BorderSide(color: agotado ? colors.border : colors.primary.withValues(alpha: 0.3)),
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                     onPressed: agotado ? null : () => _addToCart(prod, pres, isFraccion: true),
                                   ),
                                   // Botón Caja Completa
                                   if (pres.unidadesPorCaja > 1)
                                     ActionChip(
-                                      avatar: Icon(stock < pres.unidadesPorCaja ? Icons.block : Icons.inventory_2_outlined, size: 14, color: AppColors.textSecondary),
+                                      avatar: Icon(stock < pres.unidadesPorCaja ? Icons.block : Icons.inventory_2_outlined, size: 14, color: colors.textSecondary),
                                       label: Text(
                                         stock < pres.unidadesPorCaja ? 'Caja Agotada' : 'Caja (${pres.unidadesPorCaja}u) • ${AppFormatters.currency(pres.precioVentaCaja)}',
-                                        style: TextStyle(fontSize: 11, color: stock < pres.unidadesPorCaja ? AppColors.textMuted : AppColors.textSecondary),
+                                        style: TextStyle(fontSize: 11, color: stock < pres.unidadesPorCaja ? colors.textMuted : colors.textSecondary),
                                       ),
-                                      backgroundColor: AppColors.background,
-                                      side: const BorderSide(color: AppColors.border),
+                                      backgroundColor: colors.surface,
+                                      side: BorderSide(color: colors.border),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                       onPressed: stock < pres.unidadesPorCaja ? null : () => _addToCart(prod, pres, isFraccion: false),
                                     ),
@@ -486,14 +486,15 @@ class _PosScreenState extends ConsumerState<PosScreen> {
   }
 
   Widget _buildCartPanel(BuildContext context, PosCartState cartState) {
+    final colors = context.colors;
     return Container(
-      color: AppColors.cardBackground,
+      color: colors.cardBackground,
       child: Column(
         children: [
           // Selector de Cliente en Cabecera del Carrito
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: AppColors.background,
+            color: colors.background,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -504,16 +505,16 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           color: _selectedCustomer.isConsumidorFinal
-                              ? AppColors.pillNeutralBg
-                              : AppColors.primarySurface,
+                              ? colors.pillNeutralBg
+                              : colors.primarySurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
                           _selectedCustomer.isConsumidorFinal ? Icons.public : Icons.person,
                           size: 18,
                           color: _selectedCustomer.isConsumidorFinal
-                              ? AppColors.pillNeutralText
-                              : AppColors.primary,
+                              ? colors.pillNeutralText
+                              : colors.primary,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -526,10 +527,10 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 Flexible(
                                   child: Text(
                                     _selectedCustomer.nombreCompleto,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: AppColors.textPrimary,
+                                      color: colors.textPrimary,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -545,7 +546,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                             ),
                             Text(
                               'DOC: ${_selectedCustomer.documento}',
-                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                              style: TextStyle(fontSize: 10, color: colors.textSecondary),
                             ),
                           ],
                         ),
@@ -562,22 +563,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: colors.border),
 
           // Título del Carrito
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            color: AppColors.cardBackground,
+            color: colors.cardBackground,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'CARRITO DE VENTA',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 0.5),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textSecondary, letterSpacing: 0.5),
                 ),
                 Text(
                   '${cartState.items.length} ítems',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.primary),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.primary),
                 ),
               ],
             ),
@@ -586,20 +587,20 @@ class _PosScreenState extends ConsumerState<PosScreen> {
           // Lista de Ítems en Carrito
           Expanded(
             child: cartState.isEmpty
-                ? const Center(
+                ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.shopping_cart_outlined, size: 48, color: AppColors.textMuted),
-                        SizedBox(height: 12),
+                        Icon(Icons.shopping_cart_outlined, size: 48, color: colors.textMuted),
+                        const SizedBox(height: 12),
                         Text(
                           'El carrito está vacío',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: colors.textSecondary),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           'Busque medicamentos en el panel izquierdo [F2]',
-                          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                          style: TextStyle(fontSize: 11, color: colors.textMuted),
                         ),
                       ],
                     ),
@@ -607,7 +608,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     itemCount: cartState.items.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    separatorBuilder: (_, __) => Divider(height: 1, color: colors.divider),
                     itemBuilder: (ctx, index) {
                       final item = cartState.items[index];
                       return Container(
@@ -620,11 +621,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 children: [
                                   Text(
                                     item.productoNombre,
-                                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                   ),
                                   Text(
                                     '${item.presentacionNombre} • ${AppFormatters.currency(item.unitPrice)} c/u',
-                                    style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                                    style: TextStyle(fontSize: 10, color: colors.textSecondary),
                                   ),
                                 ],
                               ),
@@ -636,7 +637,7 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               children: [
                                 IconButton(
                                   icon: const Icon(Icons.remove_circle_outline, size: 18),
-                                  color: AppColors.textSecondary,
+                                  color: colors.textSecondary,
                                   onPressed: () => ref.read(posCartProvider.notifier).updateQuantity(
                                         item.presentacionId,
                                         item.isFraccion,
@@ -645,11 +646,11 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                                 ),
                                 Text(
                                   '${item.quantity.toInt()}',
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.add_circle_outline, size: 18),
-                                  color: AppColors.primary,
+                                  color: colors.primary,
                                   onPressed: () => _increaseCartQuantity(item),
                                 ),
                               ],
@@ -661,13 +662,13 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                               child: Text(
                                 AppFormatters.currency(item.netSubtotal),
                                 textAlign: TextAlign.right,
-                                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                               ),
                             ),
 
                             // Eliminar
                             IconButton(
-                              icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.danger),
+                              icon: Icon(Icons.delete_outline, size: 18, color: colors.danger),
                               onPressed: () => ref.read(posCartProvider.notifier).removeItem(item.presentacionId, item.isFraccion),
                             ),
                           ],
@@ -677,40 +678,40 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ),
           ),
 
-          const Divider(height: 1),
+          Divider(height: 1, color: colors.border),
 
           // Liquidación Tributaria y Total General
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: const BoxDecoration(
-              color: AppColors.cardBackground,
+            decoration: BoxDecoration(
+              color: colors.cardBackground,
               border: Border(
-                top: BorderSide(color: AppColors.border, width: 1),
+                top: BorderSide(color: colors.border, width: 1),
               ),
             ),
             child: Column(
               children: [
-                _buildTotalRow('Subtotal 0% (Medicamentos)', cartState.totals.subtotal0),
+                _buildTotalRow('Subtotal 0% (Medicamentos)', cartState.totals.subtotal0, colors),
                 const SizedBox(height: 4),
-                _buildTotalRow('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.subtotalIva),
+                _buildTotalRow('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.subtotalIva, colors),
                 const SizedBox(height: 4),
-                _buildTotalRow('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.ivaAmount),
+                _buildTotalRow('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%', cartState.totals.ivaAmount, colors),
                 const SizedBox(height: 10),
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: colors.border),
                 const SizedBox(height: 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'TOTAL A PAGAR',
-                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                     Text(
                       AppFormatters.currency(cartState.totals.grandTotal),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
+                        color: colors.primary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -731,12 +732,12 @@ class _PosScreenState extends ConsumerState<PosScreen> {
     );
   }
 
-  Widget _buildTotalRow(String label, double amount) {
+  Widget _buildTotalRow(String label, double amount, AppThemeColors colors) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-        Text(AppFormatters.currency(amount), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+        Text(AppFormatters.currency(amount), style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colors.textPrimary)),
       ],
     );
   }

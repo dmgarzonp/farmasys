@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/components.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
@@ -203,6 +204,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final state = ref.watch(purchaseReceptionProvider);
 
     return CallbackShortcuts(
@@ -214,27 +216,27 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
       },
       child: Scaffold(
         key: _scaffoldKey,
-        backgroundColor: AppColors.backgroundLight,
+        backgroundColor: colors.background,
         endDrawer: _buildPendingPurchasesDrawer(context),
         body: Column(
           children: [
             // Barra de Acciones de Recepción
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              decoration: const BoxDecoration(
-                color: AppColors.cardBackground,
-                border: Border(bottom: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: colors.cardBackground,
+                border: Border(bottom: BorderSide(color: colors.border)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.receipt_long_outlined, color: AppColors.primary, size: 22),
+                  Icon(Icons.receipt_long_outlined, color: colors.primary, size: 22),
                   const SizedBox(width: 10),
-                  const Text(
+                  Text(
                     'Recepción de Mercadería & Facturas de Compra',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -275,6 +277,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   }
 
   Widget _buildInvoiceHeader(BuildContext context, PurchaseReceptionState state) {
+    final colors = context.colors;
     final supplier = state.selectedSupplier;
 
     return Padding(
@@ -292,10 +295,10 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: supplier != null ? AppColors.primarySurface : AppColors.backgroundDark,
+                  color: supplier != null ? colors.primarySurface : colors.surface,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: supplier != null ? AppColors.primary.withValues(alpha: 0.4) : AppColors.borderLight,
+                    color: supplier != null ? colors.primary.withValues(alpha: 0.4) : colors.border,
                   ),
                 ),
                 child: Row(
@@ -303,7 +306,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     Icon(
                       Icons.local_shipping_outlined,
                       size: 20,
-                      color: supplier != null ? AppColors.primaryDark : AppColors.textSecondary,
+                      color: supplier != null ? colors.primary : colors.textSecondary,
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -315,19 +318,19 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: supplier != null ? AppColors.textPrimary : AppColors.textSecondary,
+                              color: supplier != null ? colors.textPrimary : colors.textSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             supplier != null ? 'RUC: ${supplier.ruc}' : 'Presione para buscar o registrar distribuidora',
-                            style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 10, color: colors.textSecondary),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.arrow_drop_down, color: AppColors.textSecondary),
+                    Icon(Icons.arrow_drop_down, color: colors.textSecondary),
                   ],
                 ),
               ),
@@ -363,17 +366,17 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: AppColors.backgroundDark,
+              color: colors.surface,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.borderLight),
+              border: Border.all(color: colors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Fecha Recepción', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                Text('Fecha Recepción', style: TextStyle(fontSize: 10, color: colors.textSecondary)),
                 Text(
                   AppFormatters.date(state.receptionDate),
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                 ),
               ],
             ),
@@ -385,6 +388,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
 }
 
   Widget _buildProductSearchBar(BuildContext context) {
+    final colors = context.colors;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -415,17 +419,17 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
               margin: const EdgeInsets.only(top: 4),
               constraints: const BoxConstraints(maxHeight: 220),
               decoration: BoxDecoration(
-                color: AppColors.cardBackground,
+                color: colors.cardBackground,
                 borderRadius: BorderRadius.circular(8),
                 boxShadow: const [
                   BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, 4)),
                 ],
-                border: Border.all(color: AppColors.borderLight),
+                border: Border.all(color: colors.border),
               ),
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: _flatMatchingResults.length,
-                separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderLight),
+                separatorBuilder: (_, __) => Divider(height: 1, color: colors.divider),
                 itemBuilder: (context, index) {
                   final item = _flatMatchingResults[index];
                   final prod = item.product;
@@ -434,21 +438,21 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                   return InkWell(
                     onTap: () => _onSelectProduct(prod, pres),
                     child: Container(
-                      color: isSelected ? AppColors.primarySurface : null,
+                      color: isSelected ? colors.primarySurface : null,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       child: Row(
                         children: [
-                          Icon(Icons.medication_outlined, size: 18, color: isSelected ? AppColors.primary : AppColors.textSecondary),
+                          Icon(Icons.medication_outlined, size: 18, color: isSelected ? colors.primary : colors.textSecondary),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               '${prod.nombreComercial} - ${pres.nombreDescriptivo}',
-                              style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold, color: isSelected ? AppColors.primaryDark : AppColors.textPrimary),
+                              style: TextStyle(fontSize: 12, fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold, color: isSelected ? colors.primaryText : colors.textPrimary),
                             ),
                           ),
                           Text(
                             '${pres.unidadesPorCaja} un/caja • Costo: ${AppFormatters.currency(pres.precioCompraCaja)}',
-                            style: TextStyle(fontSize: 11, color: isSelected ? AppColors.primary : AppColors.textSecondary),
+                            style: TextStyle(fontSize: 11, color: isSelected ? colors.primary : colors.textSecondary),
                           ),
                         ],
                       ),
@@ -463,21 +467,22 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   }
 
   Widget _buildItemsDataGrid(BuildContext context, PurchaseReceptionState state) {
+    final colors = context.colors;
     if (state.items.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 56, color: AppColors.textSecondary.withValues(alpha: 0.3)),
+            Icon(Icons.receipt_long_outlined, size: 56, color: colors.textSecondary.withValues(alpha: 0.3)),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No hay renglones ingresados en esta factura de compra',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textSecondary),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Use el buscador o lector de códigos [F2] para agregar los medicamentos recibidos',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(fontSize: 12, color: colors.textSecondary),
             ),
           ],
         ),
@@ -515,7 +520,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     headingRowHeight: 40,
                     dataRowMinHeight: 40,
                     dataRowMaxHeight: 44,
-                    headingRowColor: WidgetStateProperty.all(AppColors.backgroundDark),
+                    headingRowColor: WidgetStateProperty.all(colors.divider),
             columns: const [
               DataColumn(label: Text('No.', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11))),
               DataColumn(label: Text('Medicamento y Presentación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11))),
@@ -543,7 +548,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(item.productoNombre, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                        Text(item.presentacionNombre, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                        Text(item.presentacionNombre, style: TextStyle(fontSize: 10, color: colors.textSecondary)),
                       ],
                     ),
                   ),
@@ -571,12 +576,12 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
+                          icon: Icon(Icons.edit_outlined, size: 16, color: colors.primary),
                           tooltip: 'Editar renglón',
                           onPressed: () => _editItem(context, ref, item, entry.key),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 16, color: AppColors.error),
+                          icon: Icon(Icons.delete_outline, size: 16, color: colors.danger),
                           tooltip: 'Eliminar renglón',
                           onPressed: () {
                             final removedItem = item;
@@ -588,7 +593,7 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                               message: 'Renglón eliminado: ${removedItem.productoNombre}',
                               action: SnackBarAction(
                                 label: 'DESHACER',
-                                textColor: AppColors.primaryLight,
+                                textColor: colors.primary,
                                 onPressed: () {
                                   ref.read(purchaseReceptionProvider.notifier).insertItem(index, removedItem);
                                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
@@ -621,8 +626,9 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
   }
 
   Widget _buildBottomSummaryBar(BuildContext context, PurchaseReceptionState state) {
+    final colors = context.colors;
     return Container(
-      color: AppColors.cardBackground,
+      color: colors.cardBackground,
       child: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -637,9 +643,9 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     // Métricas de Renglones
                     Row(
                       children: [
-                        _buildMetricChip('Renglones', '${state.items.length}'),
+                        _buildMetricChip('Renglones', '${state.items.length}', colors),
                         const SizedBox(width: 12),
-                        _buildMetricChip('Total Unidades', state.totalUnidades.toStringAsFixed(0)),
+                        _buildMetricChip('Total Unidades', state.totalUnidades.toStringAsFixed(0), colors),
                         const SizedBox(width: 16),
                         if (state.items.isNotEmpty)
                           AppSecondaryButton(
@@ -672,28 +678,28 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
                     // Cuadre de Factura: Subtotales e IVA
                     Row(
                       children: [
-                        _buildTotalItem('Subtotal 0%:', AppFormatters.currency(state.subtotalCero)),
+                        _buildTotalItem('Subtotal 0%:', AppFormatters.currency(state.subtotalCero), colors),
                         const SizedBox(width: 16),
-                        _buildTotalItem('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.subtotalDoce)),
+                        _buildTotalItem('Subtotal ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.subtotalDoce), colors),
                         const SizedBox(width: 16),
-                        _buildTotalItem('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.iva)),
+                        _buildTotalItem('IVA ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}%:', AppFormatters.currency(state.iva), colors),
                         const SizedBox(width: 24),
 
                         // Total General
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
-                            color: AppColors.primarySurface,
+                            color: colors.primarySurface,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                            border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text('TOTAL FACTURA PROVEEDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryDark)),
+                              Text('TOTAL FACTURA PROVEEDOR', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: colors.primaryText)),
                               Text(
                                 AppFormatters.currency(state.total),
-                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: AppColors.primaryDark),
+                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: colors.primaryText),
                               ),
                             ],
                           ),
@@ -732,50 +738,51 @@ class _PurchaseReceptionScreenState extends ConsumerState<PurchaseReceptionScree
     );
   }
 
-  Widget _buildMetricChip(String label, String value) {
+  Widget _buildMetricChip(String label, String value, AppThemeColors colors) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.backgroundDark,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         children: [
-          Text('$label: ', style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
-          Text(value, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          Text('$label: ', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+          Text(value, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         ],
       ),
     );
   }
 
-  Widget _buildTotalItem(String label, String value) {
+  Widget _buildTotalItem(String label, String value, AppThemeColors colors) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        Text(label, style: const TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-        Text(value, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+        Text(label, style: TextStyle(fontSize: 10, color: colors.textSecondary)),
+        Text(value, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary)),
       ],
     );
   }
 
   Widget _buildPendingPurchasesDrawer(BuildContext context) {
+    final colors = context.colors;
     return Drawer(
       width: 400,
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: colors.background,
       child: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(20),
-            color: AppColors.cardBackground,
-            child: const Row(
+            color: colors.cardBackground,
+            child: Row(
               children: [
-                Icon(Icons.history, color: AppColors.primary),
-                SizedBox(width: 12),
-                Text('Recepciones Pendientes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                Icon(Icons.history, color: colors.primary),
+                const SizedBox(width: 12),
+                Text('Recepciones Pendientes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary)),
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1, color: colors.border),
           Expanded(
             child: Consumer(
               builder: (context, ref, child) {

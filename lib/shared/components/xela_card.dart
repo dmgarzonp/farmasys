@@ -31,15 +31,16 @@ class XelaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     final effectiveRadius = borderRadius ?? BorderRadius.circular(12);
-    final effectiveBorder = border ?? Border.all(color: AppColors.border, width: 1);
+    final effectiveBorder = border ?? Border.all(color: colors.border, width: 1);
 
     final content = Container(
       width: width,
       height: height,
       margin: margin,
       decoration: BoxDecoration(
-        color: color ?? AppColors.cardBackground,
+        color: color ?? colors.cardBackground,
         borderRadius: effectiveRadius,
         border: effectiveBorder,
         boxShadow: const [
@@ -59,7 +60,7 @@ class XelaCard extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   header!,
-                  const Divider(height: 1, color: AppColors.border),
+                  Divider(height: 1, color: colors.border),
                   Padding(padding: padding, child: child),
                 ],
               ),
@@ -70,8 +71,8 @@ class XelaCard extends StatelessWidget {
       return InkWell(
         onTap: onTap,
         borderRadius: effectiveRadius,
-        hoverColor: AppColors.primary.withValues(alpha: 0.04),
-        splashColor: AppColors.primary.withValues(alpha: 0.08),
+        hoverColor: colors.primary.withValues(alpha: 0.06),
+        splashColor: colors.primary.withValues(alpha: 0.10),
         child: content,
       );
     }

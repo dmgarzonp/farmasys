@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'core/constants/app_constants.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'features/configuraciones/application/backup_scheduler.dart';
+import 'features/configuraciones/presentation/controllers/settings_notifier.dart';
 
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-/// Configuración de la aplicación raíz de FarmSys
+/// Configuración de la aplicación raíz de FarmSys con temas dinámicos
 class FarmSysApp extends ConsumerWidget {
   const FarmSysApp({super.key});
 
@@ -18,13 +18,16 @@ class FarmSysApp extends ConsumerWidget {
     // Inicializa el programador de respaldos en segundo plano
     ref.watch(backupSchedulerProvider);
 
+    final settings = ref.watch(settingsProvider);
     final router = ref.watch(appRouterProvider);
 
     return MaterialApp.router(
-      title: AppConstants.appName,
+      title: '${settings.pharmacyName} - FarmSys',
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
+      theme: AppTheme.buildLightTheme(settings.primaryColor),
+      darkTheme: AppTheme.buildDarkTheme(settings.primaryColor),
+      themeMode: settings.themeMode,
       routerConfig: router,
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,

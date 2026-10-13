@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/constants/constants.dart' hide UserRole;
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/database/tables/usuarios_table.dart';
 import '../../../../shared/components/components.dart';
 import '../../../auth/domain/entities/user_entity.dart';
@@ -22,10 +23,11 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
     final usersState = ref.watch(usersControllerProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -38,12 +40,12 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
               spacing: 16,
               runSpacing: 16,
               children: [
-                const Text(
+                Text(
                   'Personal y Usuarios',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 Wrap(
@@ -55,26 +57,29 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                       label: const Text('Activos'),
                       selected: _currentFilter == UserFilter.activos,
                       onSelected: (val) => setState(() => _currentFilter = UserFilter.activos),
-                      selectedColor: AppColors.primarySurface,
-                      labelStyle: TextStyle(color: _currentFilter == UserFilter.activos ? AppColors.primaryDark : AppColors.textSecondary),
-                      side: BorderSide(color: _currentFilter == UserFilter.activos ? AppColors.primary : AppColors.border),
+                      selectedColor: colors.primarySurface,
+                      backgroundColor: colors.surface,
+                      labelStyle: TextStyle(color: _currentFilter == UserFilter.activos ? colors.primaryText : colors.textSecondary),
+                      side: BorderSide(color: _currentFilter == UserFilter.activos ? colors.primary : colors.border),
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
                       label: const Text('Inactivos'),
                       selected: _currentFilter == UserFilter.inactivos,
                       onSelected: (val) => setState(() => _currentFilter = UserFilter.inactivos),
-                      selectedColor: AppColors.lotExpired,
-                      labelStyle: TextStyle(color: _currentFilter == UserFilter.inactivos ? AppColors.lotExpiredText : AppColors.textSecondary),
-                      side: BorderSide(color: _currentFilter == UserFilter.inactivos ? AppColors.danger : AppColors.border),
+                      selectedColor: colors.danger.withValues(alpha: 0.15),
+                      backgroundColor: colors.surface,
+                      labelStyle: TextStyle(color: _currentFilter == UserFilter.inactivos ? colors.danger : colors.textSecondary),
+                      side: BorderSide(color: _currentFilter == UserFilter.inactivos ? colors.danger : colors.border),
                     ),
                     ChoiceChip(
                       label: const Text('Todos'),
                       selected: _currentFilter == UserFilter.todos,
                       onSelected: (val) => setState(() => _currentFilter = UserFilter.todos),
-                      selectedColor: AppColors.sidebarHoverBg,
-                      labelStyle: TextStyle(color: _currentFilter == UserFilter.todos ? AppColors.textPrimary : AppColors.textSecondary),
-                      side: BorderSide(color: _currentFilter == UserFilter.todos ? AppColors.textPrimary : AppColors.border),
+                      selectedColor: colors.surface,
+                      backgroundColor: colors.surface,
+                      labelStyle: TextStyle(color: _currentFilter == UserFilter.todos ? colors.textPrimary : colors.textSecondary),
+                      side: BorderSide(color: _currentFilter == UserFilter.todos ? colors.primary : colors.border),
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton.icon(
@@ -202,15 +207,15 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
         if (user == null) {
           // Create
           await notifier.createUser(
-            username: result['username'],
-            password: result['password'],
-            role: result['role'],
-            fullName: result['fullName'],
-            documento: result['documento'],
-            telefonoFijo: result['telefonoFijo'],
-            telefonoMovil: result['telefonoMovil'],
-            correoPersonal: result['correoPersonal'],
-            hireDate: result['hireDate'],
+            username: result['username'] as String,
+            password: result['password'] as String,
+            role: result['role'] as UserRole,
+            fullName: result['fullName'] as String?,
+            documento: result['documento'] as String?,
+            telefonoFijo: result['telefonoFijo'] as String?,
+            telefonoMovil: result['telefonoMovil'] as String?,
+            correoPersonal: result['correoPersonal'] as String?,
+            hireDate: result['hireDate'] as DateTime?,
           );
           if (context.mounted) {
             AppSnackBars.showSuccess(context, message: 'Usuario creado exitosamente');
@@ -219,16 +224,16 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
           // Update
           await notifier.updateUser(
             id: user.id,
-            username: result['username'],
-            role: result['role'],
-            isActive: result['isActive'],
-            password: result['password']?.isNotEmpty == true ? result['password'] : null,
-            fullName: result['fullName'],
-            documento: result['documento'],
-            telefonoFijo: result['telefonoFijo'],
-            telefonoMovil: result['telefonoMovil'],
-            correoPersonal: result['correoPersonal'],
-            hireDate: result['hireDate'],
+            username: result['username'] as String,
+            role: result['role'] as UserRole,
+            isActive: result['isActive'] as bool,
+            password: (result['password'] as String?)?.isNotEmpty == true ? result['password'] as String : null,
+            fullName: result['fullName'] as String?,
+            documento: result['documento'] as String?,
+            telefonoFijo: result['telefonoFijo'] as String?,
+            telefonoMovil: result['telefonoMovil'] as String?,
+            correoPersonal: result['correoPersonal'] as String?,
+            hireDate: result['hireDate'] as DateTime?,
           );
           if (context.mounted) {
             AppSnackBars.showSuccess(context, message: 'Usuario actualizado exitosamente');
@@ -313,7 +318,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                   subtitle: const Text('Si está activo, se bloqueará la cuenta hasta que el trabajador asigne su propia clave.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
                   value: forceChange,
                   onChanged: (val) => setStateDialog(() => forceChange = val),
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                   contentPadding: EdgeInsets.zero,
                 ),
               ],

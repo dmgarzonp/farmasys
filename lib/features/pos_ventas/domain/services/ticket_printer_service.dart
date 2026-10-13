@@ -18,6 +18,7 @@ class TicketPrinterService {
   Future<Uint8List> generateTicketPdf({
     required Sale sale,
     required String cashierName,
+    String? pharmacyName,
   }) async {
     final pdf = pw.Document();
 
@@ -35,7 +36,9 @@ class TicketPrinterService {
             children: [
               // Cabecera
               pw.Text(
-                AppConstants.appName,
+                (pharmacyName != null && pharmacyName.trim().isNotEmpty)
+                    ? pharmacyName.trim()
+                    : AppConstants.appName,
                 style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
               ),
               pw.SizedBox(height: 2),
@@ -164,8 +167,13 @@ class TicketPrinterService {
   Future<void> printTicket({
     required Sale sale,
     required String cashierName,
+    String? pharmacyName,
   }) async {
-    final bytes = await generateTicketPdf(sale: sale, cashierName: cashierName);
+    final bytes = await generateTicketPdf(
+      sale: sale,
+      cashierName: cashierName,
+      pharmacyName: pharmacyName,
+    );
     await Printing.layoutPdf(
       onLayout: (PdfPageFormat format) async => bytes,
       name: 'Ticket_${sale.id}',

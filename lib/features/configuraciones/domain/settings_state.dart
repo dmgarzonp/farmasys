@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 class SettingsState {
   final double ivaVigente;
   final int expirationAlertDays;
@@ -19,6 +21,11 @@ class SettingsState {
   final int scheduledBackupMinute;
   final String googleDriveEmail;
 
+  // Personalización Settings
+  final String pharmacyName;
+  final ThemeMode themeMode;
+  final Color primaryColor;
+
   const SettingsState({
     this.ivaVigente = 0.15,
     this.expirationAlertDays = 30,
@@ -35,6 +42,9 @@ class SettingsState {
     this.scheduledBackupHour = 23,
     this.scheduledBackupMinute = 50,
     this.googleDriveEmail = '',
+    this.pharmacyName = 'Mi Farmacia',
+    this.themeMode = ThemeMode.system,
+    this.primaryColor = const Color(0xFF059669),
   });
 
   SettingsState copyWith({
@@ -53,6 +63,9 @@ class SettingsState {
     int? scheduledBackupHour,
     int? scheduledBackupMinute,
     String? googleDriveEmail,
+    String? pharmacyName,
+    ThemeMode? themeMode,
+    Color? primaryColor,
   }) {
     return SettingsState(
       ivaVigente: ivaVigente ?? this.ivaVigente,
@@ -70,6 +83,9 @@ class SettingsState {
       scheduledBackupHour: scheduledBackupHour ?? this.scheduledBackupHour,
       scheduledBackupMinute: scheduledBackupMinute ?? this.scheduledBackupMinute,
       googleDriveEmail: googleDriveEmail ?? this.googleDriveEmail,
+      pharmacyName: pharmacyName ?? this.pharmacyName,
+      themeMode: themeMode ?? this.themeMode,
+      primaryColor: primaryColor ?? this.primaryColor,
     );
   }
 }
