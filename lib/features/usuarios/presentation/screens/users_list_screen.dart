@@ -87,7 +87,7 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                       icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
                       label: const Text('Nuevo Usuario'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
+                        backgroundColor: colors.primary,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -172,23 +172,24 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
   }
 
   Widget _buildActions(BuildContext context, WidgetRef ref, User user) {
+    final colors = AppColors.of(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton(
-          icon: const Icon(Icons.edit_rounded, color: AppColors.textSecondary, size: 20),
+          icon: Icon(Icons.edit_rounded, color: colors.textSecondary, size: 20),
           tooltip: 'Editar',
           onPressed: () => _openUserForm(context, ref, user),
         ),
         IconButton(
-          icon: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 20),
+          icon: Icon(Icons.lock_reset_rounded, color: colors.primary, size: 20),
           tooltip: 'Restablecer Contraseña',
           onPressed: () => _resetUserPassword(context, ref, user),
         ),
         IconButton(
           icon: Icon(
             user.isActive ? Icons.block_rounded : Icons.check_circle_outline_rounded,
-            color: user.isActive ? AppColors.error : AppColors.success,
+            color: user.isActive ? colors.danger : colors.success,
             size: 20,
           ),
           tooltip: user.isActive ? 'Desactivar' : 'Activar',
@@ -279,68 +280,71 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
 
     final tempPassword = await showDialog<String>(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setStateDialog) => AlertDialog(
-          title: const Text('Restablecer Contraseña'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Vas a restablecer la contraseña de ${user.username}.',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Ingresa la nueva contraseña para la cuenta.',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: obscureTemp,
-                  decoration: InputDecoration(
-                    labelText: 'Contraseña Temporal',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock_reset),
-                    suffixIcon: IconButton(
-                      icon: Icon(obscureTemp ? Icons.visibility_off : Icons.visibility),
-                      onPressed: () => setStateDialog(() => obscureTemp = !obscureTemp),
-                    ),
+      builder: (ctx) {
+        final colors = AppColors.of(ctx);
+        return StatefulBuilder(
+          builder: (context, setStateDialog) => AlertDialog(
+            title: const Text('Restablecer Contraseña'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Vas a restablecer la contraseña de ${user.username}.',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  validator: (val) => val == null || val.length < 4 ? 'Mínimo 4 caracteres' : null,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  title: const Text('Exigir cambio de contraseña al ingresar', style: TextStyle(fontSize: 14)),
-                  subtitle: const Text('Si está activo, se bloqueará la cuenta hasta que el trabajador asigne su propia clave.', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-                  value: forceChange,
-                  onChanged: (val) => setStateDialog(() => forceChange = val),
-                  activeThumbColor: AppColors.primary,
-                  contentPadding: EdgeInsets.zero,
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ingresa la nueva contraseña para la cuenta.',
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: passwordController,
+                    obscureText: obscureTemp,
+                    decoration: InputDecoration(
+                      labelText: 'Contraseña Temporal',
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock_reset),
+                      suffixIcon: IconButton(
+                        icon: Icon(obscureTemp ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () => setStateDialog(() => obscureTemp = !obscureTemp),
+                      ),
+                    ),
+                    validator: (val) => val == null || val.length < 4 ? 'Mínimo 4 caracteres' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  SwitchListTile(
+                    title: const Text('Exigir cambio de contraseña al ingresar', style: TextStyle(fontSize: 14)),
+                    subtitle: Text('Si está activo, se bloqueará la cuenta hasta que el trabajador asigne su propia clave.', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                    value: forceChange,
+                    onChanged: (val) => setStateDialog(() => forceChange = val),
+                    activeThumbColor: colors.primary,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(null),
+                child: Text('CANCELAR', style: TextStyle(color: colors.textSecondary)),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.of(ctx).pop(passwordController.text);
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: colors.primary, foregroundColor: Colors.white),
+                child: const Text('RESTABLECER'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(null),
-              child: const Text('CANCELAR', style: TextStyle(color: AppColors.textSecondary)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.of(ctx).pop(passwordController.text);
-                }
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary, foregroundColor: Colors.white),
-              child: const Text('RESTABLECER'),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
     );
 
     if (tempPassword != null && tempPassword.isNotEmpty) {

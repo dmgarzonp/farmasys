@@ -274,34 +274,35 @@ class SettingsScreen extends ConsumerWidget {
   }
 
   Widget _buildFreeState(BuildContext context, WidgetRef ref) {
+    final colors = AppColors.of(context);
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.warning.withOpacity(0.1),
+        color: colors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.warning.withOpacity(0.5)),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(Icons.lock, color: AppColors.warning),
+              Icon(Icons.lock, color: colors.warning),
               const SizedBox(width: 12),
-              const Text('Función Premium Bloqueada', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.warning)),
+              Text('Función Premium Bloqueada', style: TextStyle(fontWeight: FontWeight.bold, color: colors.warning)),
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'La facturación electrónica con el SRI está disponible únicamente con una Licencia Premium. Activa tu licencia para emitir comprobantes electrónicos ilimitados.',
-            style: TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: colors.textSecondary),
           ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             icon: const Icon(Icons.key, size: 18),
             label: const Text('Activar Licencia Premium'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: colors.primary,
               foregroundColor: Colors.white,
             ),
             onPressed: () => _showActivationDialog(context, ref),

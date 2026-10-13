@@ -126,12 +126,14 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
 
   /// Configuración de tokens para Modo Claro
   factory AppThemeColors.light(Color primaryColor) {
+    final shades = _resolvePrimaryShades(primaryColor, isDark: false);
+
     return AppThemeColors(
       primary: primaryColor,
-      primaryLight: const Color(0xFF10B981),
-      primaryDark: const Color(0xFF047857),
-      primarySurface: const Color(0xFFECFDF5),
-      primaryText: const Color(0xFF047857),
+      primaryLight: shades.primaryLight,
+      primaryDark: shades.primaryDark,
+      primarySurface: shades.primarySurface,
+      primaryText: shades.primaryText,
       secondary: const Color(0xFF4F46E5),
       secondaryLight: const Color(0xFF6366F1),
       secondarySurface: const Color(0xFFEEF2FF),
@@ -158,8 +160,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       divider: const Color(0xFFF1F5F9),
       sidebarBg: const Color(0xFFFFFFFF),
       sidebarBorder: const Color(0xFFE2E8F0),
-      sidebarActiveBg: const Color(0xFFECFDF5),
-      sidebarActiveText: const Color(0xFF047857),
+      sidebarActiveBg: shades.sidebarActiveBg,
+      sidebarActiveText: shades.sidebarActiveText,
       sidebarInactiveText: const Color(0xFF64748B),
       sidebarHoverBg: const Color(0xFFF8FAFC),
       pillSuccessBg: const Color(0xFFDEF7EC),
@@ -179,12 +181,14 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
 
   /// Configuración de tokens para Modo Oscuro (Slate 900 / Slate 800)
   factory AppThemeColors.dark(Color primaryColor) {
+    final shades = _resolvePrimaryShades(primaryColor, isDark: true);
+
     return AppThemeColors(
       primary: primaryColor,
-      primaryLight: const Color(0xFF34D399),
-      primaryDark: const Color(0xFF059669),
-      primarySurface: primaryColor.withValues(alpha: 0.16),
-      primaryText: const Color(0xFF6EE7B7),
+      primaryLight: shades.primaryLight,
+      primaryDark: shades.primaryDark,
+      primarySurface: shades.primarySurface,
+      primaryText: shades.primaryText,
       secondary: const Color(0xFF6366F1),
       secondaryLight: const Color(0xFF818CF8),
       secondarySurface: const Color(0xFF312E81).withValues(alpha: 0.35),
@@ -211,8 +215,8 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       divider: const Color(0xFF334155),
       sidebarBg: const Color(0xFF0F172A), // Slate 900
       sidebarBorder: const Color(0xFF1E293B), // Slate 800
-      sidebarActiveBg: primaryColor.withValues(alpha: 0.20),
-      sidebarActiveText: const Color(0xFF6EE7B7),
+      sidebarActiveBg: shades.sidebarActiveBg,
+      sidebarActiveText: shades.sidebarActiveText,
       sidebarInactiveText: const Color(0xFF94A3B8),
       sidebarHoverBg: const Color(0xFF1E293B),
       pillSuccessBg: const Color(0xFF064E3B).withValues(alpha: 0.50),
@@ -388,5 +392,174 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       pillNeutralBg: Color.lerp(pillNeutralBg, other.pillNeutralBg, t)!,
       pillNeutralText: Color.lerp(pillNeutralText, other.pillNeutralText, t)!,
     );
+  }
+}
+
+/// Contenedor de tonos derivados armónicos para el color corporativo
+class _PrimaryShades {
+  final Color primaryLight;
+  final Color primaryDark;
+  final Color primarySurface;
+  final Color primaryText;
+  final Color sidebarActiveBg;
+  final Color sidebarActiveText;
+
+  const _PrimaryShades({
+    required this.primaryLight,
+    required this.primaryDark,
+    required this.primarySurface,
+    required this.primaryText,
+    required this.sidebarActiveBg,
+    required this.sidebarActiveText,
+  });
+}
+
+/// Resuelve paletas armónicas profesionales para los 6 presets farmacéuticos de FarmSys
+/// o genera tonalidades adaptativas HSL para cualquier color corporativo personalizado.
+_PrimaryShades _resolvePrimaryShades(Color color, {required bool isDark}) {
+  // ignore: deprecated_member_use
+  final value = color.value;
+
+  switch (value) {
+    case 0xFF059669: // Esmeralda Salud
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFF34D399),
+              primaryDark: Color(0xFF047857),
+              primarySurface: Color(0x33059669),
+              primaryText: Color(0xFF6EE7B7),
+              sidebarActiveBg: Color(0x33059669),
+              sidebarActiveText: Color(0xFF6EE7B7),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFF10B981),
+              primaryDark: Color(0xFF047857),
+              primarySurface: Color(0xFFECFDF5),
+              primaryText: Color(0xFF047857),
+              sidebarActiveBg: Color(0xFFECFDF5),
+              sidebarActiveText: Color(0xFF047857),
+            );
+
+    case 0xFF0284C7: // Azul Clínico
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFF7DD3FC),
+              primaryDark: Color(0xFF0284C7),
+              primarySurface: Color(0x330284C7),
+              primaryText: Color(0xFF7DD3FC),
+              sidebarActiveBg: Color(0x330284C7),
+              sidebarActiveText: Color(0xFF7DD3FC),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFF38BDF8),
+              primaryDark: Color(0xFF0369A1),
+              primarySurface: Color(0xFFF0F9FF),
+              primaryText: Color(0xFF0369A1),
+              sidebarActiveBg: Color(0xFFE0F2FE),
+              sidebarActiveText: Color(0xFF0369A1),
+            );
+
+    case 0xFF0D9488: // Turquesa Laboratorio
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFF5EEAD4),
+              primaryDark: Color(0xFF0D9488),
+              primarySurface: Color(0x330D9488),
+              primaryText: Color(0xFF5EEAD4),
+              sidebarActiveBg: Color(0x330D9488),
+              sidebarActiveText: Color(0xFF5EEAD4),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFF14B8A6),
+              primaryDark: Color(0xFF0F766E),
+              primarySurface: Color(0xFFF0FDFA),
+              primaryText: Color(0xFF0F766E),
+              sidebarActiveBg: Color(0xFFCCFBF1),
+              sidebarActiveText: Color(0xFF0F766E),
+            );
+
+    case 0xFF6366F1: // Índigo Dermocosmética
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFFA5B4FC),
+              primaryDark: Color(0xFF6366F1),
+              primarySurface: Color(0x336366F1),
+              primaryText: Color(0xFFA5B4FC),
+              sidebarActiveBg: Color(0x336366F1),
+              sidebarActiveText: Color(0xFFA5B4FC),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFF818CF8),
+              primaryDark: Color(0xFF4338CA),
+              primarySurface: Color(0xFFEEF2FF),
+              primaryText: Color(0xFF4338CA),
+              sidebarActiveBg: Color(0xFFE0E7FF),
+              sidebarActiveText: Color(0xFF4338CA),
+            );
+
+    case 0xFFDC2626: // Carmín Cruz Médica
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFFFCA5A5),
+              primaryDark: Color(0xFFDC2626),
+              primarySurface: Color(0x33DC2626),
+              primaryText: Color(0xFFFCA5A5),
+              sidebarActiveBg: Color(0x33DC2626),
+              sidebarActiveText: Color(0xFFFCA5A5),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFFEF4444),
+              primaryDark: Color(0xFFB91C1C),
+              primarySurface: Color(0xFFFEF2F2),
+              primaryText: Color(0xFFB91C1C),
+              sidebarActiveBg: Color(0xFFFEE2E2),
+              sidebarActiveText: Color(0xFFB91C1C),
+            );
+
+    case 0xFFD97706: // Ámbar Vital
+      return isDark
+          ? const _PrimaryShades(
+              primaryLight: Color(0xFFFCD34D),
+              primaryDark: Color(0xFFD97706),
+              primarySurface: Color(0x33D97706),
+              primaryText: Color(0xFFFCD34D),
+              sidebarActiveBg: Color(0x33D97706),
+              sidebarActiveText: Color(0xFFFCD34D),
+            )
+          : const _PrimaryShades(
+              primaryLight: Color(0xFFF59E0B),
+              primaryDark: Color(0xFFB45309),
+              primarySurface: Color(0xFFFFFBEB),
+              primaryText: Color(0xFFB45309),
+              sidebarActiveBg: Color(0xFFFEF3C7),
+              sidebarActiveText: Color(0xFFB45309),
+            );
+
+    default:
+      // Algoritmo adaptativo HSL para tonalidades personalizadas
+      final hsl = HSLColor.fromColor(color);
+      if (isDark) {
+        final lightTone = hsl.withLightness((hsl.lightness + 0.28).clamp(0.65, 0.88)).toColor();
+        return _PrimaryShades(
+          primaryLight: lightTone,
+          primaryDark: color,
+          primarySurface: color.withValues(alpha: 0.20),
+          primaryText: lightTone,
+          sidebarActiveBg: color.withValues(alpha: 0.20),
+          sidebarActiveText: lightTone,
+        );
+      } else {
+        final lightTone = hsl.withLightness((hsl.lightness + 0.15).clamp(0.0, 1.0)).toColor();
+        final darkTone = hsl.withLightness((hsl.lightness - 0.15).clamp(0.0, 1.0)).toColor();
+        final textTone = hsl.withLightness(0.28).toColor();
+        return _PrimaryShades(
+          primaryLight: lightTone,
+          primaryDark: darkTone,
+          primarySurface: color.withValues(alpha: 0.10),
+          primaryText: textTone,
+          sidebarActiveBg: color.withValues(alpha: 0.12),
+          sidebarActiveText: textTone,
+        );
+      }
   }
 }

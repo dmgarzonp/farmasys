@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../../../core/constants/constants.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
+import '../../../configuraciones/domain/settings_state.dart';
+import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -56,27 +59,79 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
     }
   }
 
+  List<Color> _getHeroGradientColors(Color primary) {
+    // ignore: deprecated_member_use
+    final value = primary.value;
+    switch (value) {
+      case 0xFF059669: // Esmeralda Salud
+        return const [
+          Color(0xFF022C22),
+          Color(0xFF064E3B),
+          Color(0xFF047857),
+        ];
+      case 0xFF0284C7: // Azul Clínico
+        return const [
+          Color(0xFF082F49),
+          Color(0xFF0369A1),
+          Color(0xFF0284C7),
+        ];
+      case 0xFF0D9488: // Turquesa Laboratorio
+        return const [
+          Color(0xFF042F2E),
+          Color(0xFF0F766E),
+          Color(0xFF0D9488),
+        ];
+      case 0xFF6366F1: // Índigo Dermocosmética
+        return const [
+          Color(0xFF1E1B4B),
+          Color(0xFF4338CA),
+          Color(0xFF6366F1),
+        ];
+      case 0xFFDC2626: // Carmín Cruz Médica
+        return const [
+          Color(0xFF450A0A),
+          Color(0xFF991B1B),
+          Color(0xFFDC2626),
+        ];
+      case 0xFFD97706: // Ámbar Vital
+        return const [
+          Color(0xFF451A03),
+          Color(0xFFB45309),
+          Color(0xFFD97706),
+        ];
+      default:
+        final hsl = HSLColor.fromColor(primary);
+        final darkShade = hsl.withLightness(0.12).withSaturation((hsl.saturation * 0.9).clamp(0.0, 1.0)).toColor();
+        final midShade = hsl.withLightness(0.24).toColor();
+        return [darkShade, midShade, primary];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
+    final settings = ref.watch(settingsProvider);
+    final colors = context.colors;
+    final isDark = context.isDark;
+    final heroGradientColors = _getHeroGradientColors(settings.primaryColor);
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: colors.background,
       body: Column(
         children: [
           // Barra superior de ventana nativa (Window Drag & Caption)
-          const SizedBox(
+          SizedBox(
             height: 38,
             child: WindowCaption(
               brightness: Brightness.dark,
-              backgroundColor: Color(0xFF022C22),
+              backgroundColor: heroGradientColors.first,
               title: Row(
                 children: [
-                  Icon(Icons.local_pharmacy_rounded, size: 16, color: AppColors.primaryLight),
-                  SizedBox(width: 8),
+                  Icon(Icons.local_pharmacy_rounded, size: 16, color: colors.primaryLight),
+                  const SizedBox(width: 8),
                   Text(
-                    'FarmSys - Inicio de Sesión',
-                    style: TextStyle(
+                    '${settings.pharmacyName} - Inicio de Sesión',
+                    style: const TextStyle(
                       color: Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -100,20 +155,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                       // Panel Izquierdo: Branding y Valor Institucional (Hero Panel)
                       Expanded(
                         flex: 5,
-                        child: _buildHeroPanel(),
+                        child: _buildHeroPanel(colors, settings, heroGradientColors),
                       ),
 
                       // Panel Derecho: Formulario de Acceso Limpio y Premium
                       Expanded(
                         flex: 6,
                         child: Container(
-                          color: const Color(0xFFF8FAFC),
+                          color: isDark ? colors.background : const Color(0xFFF8FAFC),
                           child: Center(
                             child: SingleChildScrollView(
                               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 32),
                               child: ConstrainedBox(
                                 constraints: const BoxConstraints(maxWidth: 420),
-                                child: _buildLoginForm(authState),
+                                child: _buildLoginForm(authState, colors, settings, isDark),
                               ),
                             ),
                           ),
@@ -124,15 +179,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                 } else {
                   // Vista adaptativa para ventanas más estrechas
                   return Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF022C22),
-                          Color(0xFF064E3B),
-                          Color(0xFF0F172A),
-                        ],
+                        colors: heroGradientColors,
                       ),
                     ),
                     child: Center(
@@ -143,7 +194,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                           child: Container(
                             padding: const EdgeInsets.all(36),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: isDark ? colors.cardBackground : Colors.white,
                               borderRadius: BorderRadius.circular(20),
                               boxShadow: [
                                 BoxShadow(
@@ -153,7 +204,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                                 ),
                               ],
                             ),
-                            child: _buildLoginForm(authState, showHeaderLogo: true),
+                            child: _buildLoginForm(authState, colors, settings, isDark, showHeaderLogo: true),
                           ),
                         ),
                       ),
@@ -168,18 +219,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
     );
   }
 
-  /// Panel Hero Institucional con estética esmeralda de alta gama
-  Widget _buildHeroPanel() {
+  /// Panel Hero Institucional adaptado al color corporativo
+  Widget _buildHeroPanel(AppThemeColors colors, SettingsState settings, List<Color> heroColors) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF022C22), // Esmeralda muy oscuro
-            Color(0xFF064E3B), // Esmeralda institucional
-            Color(0xFF047857), // Esmeralda profundo
-          ],
+          colors: heroColors,
         ),
       ),
       child: Stack(
@@ -205,7 +252,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
               height: 320,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: AppColors.primaryLight.withValues(alpha: 0.08),
+                color: colors.primaryLight.withValues(alpha: 0.10),
               ),
             ),
           ),
@@ -227,12 +274,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.verified_rounded, size: 14, color: AppColors.primaryLight),
-                          SizedBox(width: 6),
-                          Text(
+                          Icon(Icons.verified_rounded, size: 14, color: colors.primaryLight),
+                          const SizedBox(width: 6),
+                          const Text(
                             'FarmSys v1.0 • Edición Comercial',
                             style: TextStyle(
                               color: Colors.white,
@@ -265,23 +312,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
                           ),
                         ],
                       ),
-                      child: const Center(
+                      child: Center(
                         child: Icon(
                           Icons.local_pharmacy_rounded,
                           size: 38,
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text(
-                      'FarmSys',
-                      style: TextStyle(
+                    Text(
+                      settings.pharmacyName.isEmpty ? 'FarmSys' : settings.pharmacyName,
+                      style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                         letterSpacing: -0.5,
                       ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -390,8 +439,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
     );
   }
 
-  /// Formulario de autenticación estilizado y limpio
-  Widget _buildLoginForm(AuthState authState, {bool showHeaderLogo = false}) {
+  /// Formulario de autenticación estilizado y adaptado a Modo Oscuro y Color Corporativo
+  Widget _buildLoginForm(
+    AuthState authState,
+    AppThemeColors colors,
+    SettingsState settings,
+    bool isDark, {
+    bool showHeaderLogo = false,
+  }) {
     return Form(
       key: _formKey,
       child: Column(
@@ -399,11 +454,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (showHeaderLogo) ...[
-            const Center(
+            Center(
               child: Icon(
                 Icons.local_pharmacy_rounded,
                 size: 50,
-                color: AppColors.primary,
+                color: colors.primary,
               ),
             ),
             const SizedBox(height: 16),
@@ -415,13 +470,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.primarySurface,
+                  color: colors.primarySurface,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
+                child: Text(
                   'ACCESO AUTORIZADO',
                   style: TextStyle(
-                    color: AppColors.primaryDark,
+                    color: colors.primaryText,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.6,
@@ -431,21 +486,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             'Iniciar Sesión',
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
               letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Ingresa tus credenciales para acceder a tu turno de trabajo.',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               height: 1.4,
             ),
           ),
@@ -457,19 +512,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
               padding: const EdgeInsets.all(12),
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.08),
+                color: colors.danger.withValues(alpha: 0.10),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                border: Border.all(color: colors.danger.withValues(alpha: 0.3)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 20),
+                  Icon(Icons.error_outline_rounded, color: colors.danger, size: 20),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       authState.errorMessage!,
-                      style: const TextStyle(
-                        color: AppColors.error,
+                      style: TextStyle(
+                        color: colors.danger,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -482,27 +537,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
           // Campo: Usuario
           TextFormField(
             controller: _usernameController,
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: colors.textPrimary),
             decoration: InputDecoration(
               labelText: 'Usuario',
-              labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              labelStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
               hintText: 'ej. administrador o cajero',
-              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-              prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.textSecondary, size: 20),
+              hintStyle: TextStyle(color: colors.textMuted, fontSize: 13),
+              prefixIcon: Icon(Icons.person_outline_rounded, color: colors.textSecondary, size: 20),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: isDark ? colors.cardBackground : Colors.white,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
               ),
             ),
             validator: (value) =>
@@ -515,35 +570,35 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
           TextFormField(
             controller: _passwordController,
             obscureText: _obscurePassword,
-            style: const TextStyle(fontSize: 14),
+            style: TextStyle(fontSize: 14, color: colors.textPrimary),
             decoration: InputDecoration(
               labelText: 'Contraseña',
-              labelStyle: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+              labelStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
               hintText: '••••••••',
-              hintStyle: const TextStyle(color: AppColors.textMuted, fontSize: 13),
-              prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.textSecondary, size: 20),
+              hintStyle: TextStyle(color: colors.textMuted, fontSize: 13),
+              prefixIcon: Icon(Icons.lock_outline_rounded, color: colors.textSecondary, size: 20),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                   size: 20,
                 ),
                 onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: isDark ? colors.cardBackground : Colors.white,
               contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: AppColors.primary, width: 1.8),
+                borderSide: BorderSide(color: colors.primary, width: 1.8),
               ),
             ),
             validator: (value) =>
@@ -558,10 +613,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
             child: ElevatedButton(
               onPressed: authState.isLoading ? null : _handleLogin,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
+                backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 elevation: 1,
-                shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                shadowColor: colors.primary.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -590,13 +645,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
           ),
           const SizedBox(height: 24),
 
-          // Nota al pie
-          const Center(
+          // Nota al pie con nombre dinámico de farmacia
+          Center(
             child: Text(
-              'FarmSys • Sistema de Farmacia y POS',
+              '${settings.pharmacyName} • FarmSys POS',
               style: TextStyle(
                 fontSize: 11,
-                color: AppColors.textMuted,
+                color: colors.textMuted,
                 fontWeight: FontWeight.w500,
               ),
             ),

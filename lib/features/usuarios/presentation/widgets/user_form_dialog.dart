@@ -135,9 +135,10 @@ class _UserFormDialogState extends State<UserFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       child: Container(
         width: 800, // Widened to accommodate 2 columns better
         padding: const EdgeInsets.all(24),
@@ -153,14 +154,14 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 children: [
                   Text(
                     _isEditing ? 'Editar Usuario' : 'Nuevo Usuario',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close_rounded, color: AppColors.textMuted),
+                    icon: Icon(Icons.close_rounded, color: colors.textMuted),
                     onPressed: () => Navigator.of(context).pop(),
                     splashRadius: 20,
                   ),
@@ -354,7 +355,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             subtitle: const Text('Si se desactiva, no podrá iniciar sesión.'),
                             value: _isActive,
                             onChanged: (val) => setState(() => _isActive = val),
-                            activeTrackColor: AppColors.primary,
+                            activeTrackColor: colors.primary,
                             contentPadding: EdgeInsets.zero,
                           ),
                         ],
@@ -374,13 +375,13 @@ class _UserFormDialogState extends State<UserFormDialog> {
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary)),
+                    child: Text('Cancelar', style: TextStyle(color: colors.textSecondary)),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: colors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
