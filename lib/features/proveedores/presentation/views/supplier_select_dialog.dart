@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../data/repositories/drift_supplier_repository.dart';
 import '../../domain/entities/supplier.dart';
 import 'supplier_form_dialog.dart';
@@ -72,15 +73,20 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
         const SingleActivator(LogicalKeyboardKey.f2): _onNewSupplier,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 620,
           height: 540,
@@ -97,22 +103,22 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 24),
+                        child: Icon(Icons.local_shipping_outlined, color: colors.primary, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Seleccionar Proveedor / Distribuidora',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'Buscar por RUC, nombre de empresa o contacto comercial',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -165,13 +171,13 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                           )
                         : ListView.separated(
                             itemCount: _results.length,
-                            separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.borderLight),
+                            separatorBuilder: (_, __) => Divider(height: 1, color: colors.borderLight),
                             itemBuilder: (context, index) {
                               final supplier = _results[index];
                               return InkWell(
                                 onTap: () => Navigator.of(context).pop(supplier),
                                 borderRadius: BorderRadius.circular(8),
-                                hoverColor: AppColors.primary.withValues(alpha: 0.05),
+                                hoverColor: colors.primary.withValues(alpha: 0.08),
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   child: Row(
@@ -179,10 +185,10 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                                       Container(
                                         padding: const EdgeInsets.all(8),
                                         decoration: BoxDecoration(
-                                          color: AppColors.backgroundDark,
+                                          color: colors.background,
                                           borderRadius: BorderRadius.circular(6),
                                         ),
-                                        child: const Icon(Icons.business, size: 20, color: AppColors.textSecondary),
+                                        child: Icon(Icons.business, size: 20, color: colors.textSecondary),
                                       ),
                                       const SizedBox(width: 12),
                                       Expanded(
@@ -191,10 +197,10 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                                           children: [
                                             Text(
                                               supplier.nombreEmpresa,
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.textPrimary,
+                                                color: colors.textPrimary,
                                               ),
                                             ),
                                             const SizedBox(height: 2),
@@ -202,24 +208,24 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                                               children: [
                                                 Text(
                                                   'RUC: ${supplier.ruc}',
-                                                  style: const TextStyle(
+                                                  style: TextStyle(
                                                     fontSize: 11,
                                                     fontWeight: FontWeight.w600,
-                                                    color: AppColors.primaryDark,
+                                                    color: colors.primary,
                                                   ),
                                                 ),
                                                 if (supplier.nombreContacto != null) ...[
                                                   const SizedBox(width: 12),
                                                   Text(
                                                     'Contacto: ${supplier.nombreContacto}',
-                                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                                   ),
                                                 ],
                                                 if (supplier.telefonoEmpresa != null || supplier.telefonoContacto != null) ...[
                                                   const SizedBox(width: 12),
                                                   Text(
                                                     'Tel: ${supplier.telefonoEmpresa ?? supplier.telefonoContacto}',
-                                                    style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                                                    style: TextStyle(fontSize: 11, color: colors.textSecondary),
                                                   ),
                                                 ],
                                               ],
@@ -227,7 +233,7 @@ class _SupplierSelectDialogState extends ConsumerState<SupplierSelectDialog> {
                                           ],
                                         ),
                                       ),
-                                      const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 18),
+                                      Icon(Icons.chevron_right, color: colors.textSecondary, size: 18),
                                     ],
                                   ),
                                 ),

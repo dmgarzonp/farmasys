@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 
 /// Diálogo modal ergonómico de escritorio para apertura de turno de caja (SOLID: SRP)
 class OpenCashDialog extends StatefulWidget {
@@ -29,7 +30,7 @@ class _OpenCashDialogState extends State<OpenCashDialog> {
   @override
   void initState() {
     super.initState();
-    _amountCtrl = TextEditingController(text: '50.00');
+    _amountCtrl = TextEditingController(text: '0.00');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _amountFocusNode.requestFocus();
       _amountCtrl.selection = TextSelection(baseOffset: 0, extentOffset: _amountCtrl.text.length);
@@ -51,15 +52,20 @@ class _OpenCashDialogState extends State<OpenCashDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
         const SingleActivator(LogicalKeyboardKey.enter): _onConfirm,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 440,
           padding: const EdgeInsets.all(24),
@@ -75,23 +81,23 @@ class _OpenCashDialogState extends State<OpenCashDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.point_of_sale, color: AppColors.primary, size: 24),
+                      child: Icon(Icons.point_of_sale, color: colors.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Apertura de Turno de Caja',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'Ingrese el fondo de cambio inicial en efectivo',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),

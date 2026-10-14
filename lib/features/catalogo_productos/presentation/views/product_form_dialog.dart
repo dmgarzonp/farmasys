@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
 import '../../domain/entities/product.dart';
@@ -158,7 +159,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
     Navigator.of(context).pop(product);
   }
 
-  Widget _buildMarginChip(double margin, String label) {
+  Widget _buildMarginChip(double margin, String label, AppThemeColors colors) {
     final isSelected = _targetMargin == margin;
     return InkWell(
       onTap: () {
@@ -168,8 +169,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.background,
-          border: Border.all(color: isSelected ? AppColors.primary : AppColors.border),
+          color: isSelected ? colors.primary : colors.background,
+          border: Border.all(color: isSelected ? colors.primary : colors.border),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -177,7 +178,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
           style: TextStyle(
             fontSize: 11,
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : AppColors.textSecondary,
+            color: isSelected ? Colors.white : colors.textSecondary,
           ),
         ),
       ),
@@ -187,6 +188,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.initialProduct != null;
+    final colors = context.colors;
 
     return Shortcuts(
       shortcuts: {
@@ -199,9 +201,9 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
         child: Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.border),
+            side: BorderSide(color: colors.border),
           ),
-          backgroundColor: AppColors.cardBackground,
+          backgroundColor: colors.cardBackground,
           insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 720, maxHeight: 780),
@@ -213,8 +215,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   // Cabecera del modal
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: colors.border)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -224,24 +226,24 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
+                                color: colors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.medication, color: AppColors.primary, size: 20),
+                              child: Icon(Icons.medication, color: colors.primary, size: 20),
                             ),
                             const SizedBox(width: 12),
                             Text(
                               isEditing ? 'Editar Medicamento / Producto' : 'Nuevo Medicamento / Producto',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: colors.textPrimary,
                               ),
                             ),
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.textMuted),
+                          icon: Icon(Icons.close, color: colors.textMuted),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Cerrar [Esc]',
                         ),
@@ -256,12 +258,12 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '1. Identificación y Farmacología',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              color: colors.primary,
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -380,23 +382,23 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 '2. Presentación Comercial y Rentabilidad',
                                 style: TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
+                                  color: colors.primary,
                                 ),
                               ),
                               Row(
                                 children: [
-                                  const Text('Margen sugerido:', style: TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+                                  Text('Margen sugerido:', style: TextStyle(fontSize: 11, color: colors.textSecondary)),
                                   const SizedBox(width: 8),
-                                  _buildMarginChip(0.20, '20%'),
+                                  _buildMarginChip(0.20, '20%', colors),
                                   const SizedBox(width: 4),
-                                  _buildMarginChip(0.30, '30%'),
+                                  _buildMarginChip(0.30, '30%', colors),
                                   const SizedBox(width: 4),
-                                  _buildMarginChip(0.40, '40%'),
+                                  _buildMarginChip(0.40, '40%', colors),
                                 ],
                               ),
                             ],
@@ -505,10 +507,10 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: _tieneIva ? AppColors.info.withValues(alpha: 0.1) : AppColors.success.withValues(alpha: 0.1),
+                              color: _tieneIva ? colors.pillInfoBg : colors.primarySurface,
                               borderRadius: BorderRadius.circular(8),
                               border: Border.all(
-                                color: _tieneIva ? AppColors.info.withValues(alpha: 0.3) : AppColors.success.withValues(alpha: 0.3),
+                                color: _tieneIva ? colors.info.withValues(alpha: 0.3) : colors.primary.withValues(alpha: 0.3),
                               ),
                             ),
                             child: Row(
@@ -516,7 +518,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                 Icon(
                                   _tieneIva ? Icons.percent : Icons.health_and_safety,
                                   size: 20,
-                                  color: _tieneIva ? AppColors.info : AppColors.success,
+                                  color: _tieneIva ? colors.info : colors.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Expanded(
@@ -530,7 +532,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w600,
-                                          color: _tieneIva ? AppColors.info : AppColors.success,
+                                          color: _tieneIva ? colors.info : colors.primaryText,
                                         ),
                                       );
                                     }
@@ -538,7 +540,7 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                 ),
                                 Switch(
                                   value: _tieneIva,
-                                  activeThumbColor: AppColors.info,
+                                  activeThumbColor: colors.primary,
                                   onChanged: (v) {
                                     setState(() => _tieneIva = v);
                                     _recalculateProfit();
@@ -555,8 +557,8 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                   // Barra de botones inferior
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: colors.border)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,

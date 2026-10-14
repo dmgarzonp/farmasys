@@ -85,8 +85,11 @@ class _ProductMergeDialogState extends ConsumerState<ProductMergeDialog> {
              (p.codigoBarras?.toLowerCase().contains(q) ?? false);
     }).toList();
 
+    final colors = AppColors.of(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: colors.cardBackground,
       child: Container(
         width: 600,
         padding: const EdgeInsets.all(24),
@@ -99,16 +102,16 @@ class _ProductMergeDialogState extends ConsumerState<ProductMergeDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.1),
+                    color: colors.primary.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.call_merge, color: AppColors.primary, size: 24),
+                  child: Icon(Icons.call_merge, color: colors.primary, size: 24),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Absorber Productos Duplicados',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary),
                   ),
                 ),
                 IconButton(

@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
-
-import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../domain/entities/sale.dart';
 import '../../domain/services/ticket_printer_service.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
@@ -38,6 +37,7 @@ class TicketPreviewDialog extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final printerService = ref.watch(ticketPrinterServiceProvider);
     final settings = ref.watch(settingsProvider);
+    final colors = context.colors;
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -46,8 +46,9 @@ class TicketPreviewDialog extends ConsumerWidget {
         width: 600, // Un poco más ancho para mostrar bien el PDF y los controles
         height: 700,
         decoration: BoxDecoration(
-          color: AppColors.background,
+          color: colors.background,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.1),
@@ -61,10 +62,10 @@ class TicketPreviewDialog extends ConsumerWidget {
             // Cabecera del modal
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              decoration: const BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                border: Border(bottom: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: colors.cardBackground,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                border: Border(bottom: BorderSide(color: colors.border)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,13 +75,13 @@ class TicketPreviewDialog extends ConsumerWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primarySurface,
+                          color: colors.primarySurface,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.receipt_long, color: AppColors.primary, size: 20),
+                        child: Icon(Icons.receipt_long, color: colors.primary, size: 20),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -88,14 +89,14 @@ class TicketPreviewDialog extends ConsumerWidget {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
+                              color: colors.textPrimary,
                             ),
                           ),
                           Text(
                             'Comprobante interno de venta',
                             style: TextStyle(
                               fontSize: 12,
-                              color: AppColors.textSecondary,
+                              color: colors.textSecondary,
                             ),
                           ),
                         ],
@@ -104,7 +105,7 @@ class TicketPreviewDialog extends ConsumerWidget {
                   ),
                   IconButton(
                     onPressed: () => context.pop(),
-                    icon: const Icon(Icons.close, color: AppColors.textMuted),
+                    icon: Icon(Icons.close, color: colors.textMuted),
                     tooltip: 'Cerrar sin imprimir',
                   ),
                 ],
@@ -128,11 +129,11 @@ class TicketPreviewDialog extends ConsumerWidget {
                   canChangePageFormat: false,
                   canDebug: false,
                   pdfFileName: 'Ticket_${sale.id}.pdf',
-                  loadingWidget: const Center(
-                    child: CircularProgressIndicator(color: AppColors.primary),
+                  loadingWidget: Center(
+                    child: CircularProgressIndicator(color: colors.primary),
                   ),
                   // Deshabilitamos el scrollView interno para que se comporte mejor en el modal
-                  scrollViewDecoration: const BoxDecoration(color: AppColors.background),
+                  scrollViewDecoration: BoxDecoration(color: colors.background),
                   pdfPreviewPageDecoration: const BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -151,10 +152,10 @@ class TicketPreviewDialog extends ConsumerWidget {
             // pero ponemos uno para cerrar claramente y seguir trabajando).
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-                border: Border(top: BorderSide(color: AppColors.border)),
+              decoration: BoxDecoration(
+                color: colors.cardBackground,
+                borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                border: Border(top: BorderSide(color: colors.border)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,

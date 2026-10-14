@@ -7,6 +7,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_snackbars.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../catalogo_productos/presentation/controllers/product_catalog_notifier.dart';
 import '../../domain/entities/batch_stock.dart';
 
@@ -105,6 +106,7 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
   Widget build(BuildContext context) {
     final catalogState = ref.watch(productCatalogProvider);
     final products = catalogState.products.where((p) => p.isActive && p.presentaciones.isNotEmpty).toList();
+    final colors = context.colors;
 
     return Shortcuts(
       shortcuts: {
@@ -117,9 +119,9 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
         child: Dialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: const BorderSide(color: AppColors.border),
+            side: BorderSide(color: colors.border),
           ),
-          backgroundColor: AppColors.cardBackground,
+          backgroundColor: colors.cardBackground,
           insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 640, maxHeight: 680),
@@ -131,8 +133,8 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
                   // Cabecera
                   Container(
                     padding: const EdgeInsets.all(20),
-                    decoration: const BoxDecoration(
-                      border: Border(bottom: BorderSide(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                      border: Border(bottom: BorderSide(color: colors.border)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -142,24 +144,24 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
+                                color: colors.primary.withValues(alpha: 0.12),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Icon(Icons.add_box_outlined, color: AppColors.primary, size: 20),
+                              child: Icon(Icons.add_box_outlined, color: colors.primary, size: 20),
                             ),
                             const SizedBox(width: 12),
-                            const Text(
+                            Text(
                               'Ingreso de Mercadería y Lote Físico',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
+                                color: colors.textPrimary,
                               ),
                             ),
                           ],
                         ),
                         IconButton(
-                          icon: const Icon(Icons.close, color: AppColors.textMuted),
+                          icon: Icon(Icons.close, color: colors.textMuted),
                           onPressed: () => Navigator.of(context).pop(),
                           tooltip: 'Cerrar [Esc]',
                         ),
@@ -234,9 +236,9 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Fecha de Caducidad *',
-                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textSecondary),
                                     ),
                                     const SizedBox(height: 6),
                                     InkWell(
@@ -246,22 +248,22 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
                                         height: 44,
                                         padding: const EdgeInsets.symmetric(horizontal: 14),
                                         decoration: BoxDecoration(
-                                          color: AppColors.background,
+                                          color: colors.background,
                                           borderRadius: BorderRadius.circular(10),
-                                          border: Border.all(color: AppColors.border),
+                                          border: Border.all(color: colors.border),
                                         ),
                                         child: Row(
                                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                           children: [
                                             Text(
                                               AppFormatters.date(_expirationDate),
-                                              style: const TextStyle(
+                                              style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.bold,
-                                                color: AppColors.primary,
+                                                color: colors.primary,
                                               ),
                                             ),
-                                            const Icon(Icons.calendar_month, size: 18, color: AppColors.primary),
+                                            Icon(Icons.calendar_month, size: 18, color: colors.primary),
                                           ],
                                         ),
                                       ),
@@ -331,8 +333,8 @@ class _BatchEntryDialogState extends ConsumerState<BatchEntryDialog> {
                   // Botones inferiores
                   Container(
                     padding: const EdgeInsets.all(16),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: AppColors.border)),
+                    decoration: BoxDecoration(
+                      border: Border(top: BorderSide(color: colors.border)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,

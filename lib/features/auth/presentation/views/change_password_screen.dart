@@ -145,7 +145,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
                   ElevatedButton(
                     onPressed: authState.isLoading ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
+                      backgroundColor: colors.primary,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

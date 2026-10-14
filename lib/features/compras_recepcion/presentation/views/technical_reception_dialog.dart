@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_snackbars.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../domain/entities/purchase_invoice.dart';
 
 /// Modal para previsualizar e imprimir el Acta de Recepción Técnica Sanitaria (ARCSA Ecuador)
@@ -23,14 +24,19 @@ class TechnicalReceptionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(),
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 860,
           height: 640,
@@ -47,22 +53,22 @@ class TechnicalReceptionDialog extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.verified_outlined, color: AppColors.primary, size: 28),
+                        child: Icon(Icons.verified_outlined, color: colors.primary, size: 28),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'ACTA DE RECEPCIÓN TÉCNICA SANITARIA',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'Buenas Prácticas de Recepción y Almacenamiento • ARCSA Ecuador',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),

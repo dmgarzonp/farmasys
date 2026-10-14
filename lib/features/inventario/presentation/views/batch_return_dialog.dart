@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../proveedores/data/repositories/drift_supplier_repository.dart';
 import '../../../proveedores/domain/entities/supplier.dart';
 import '../../domain/entities/batch_stock.dart';
@@ -97,14 +96,19 @@ class _BatchReturnDialogState extends ConsumerState<BatchReturnDialog> {
   @override
   Widget build(BuildContext context) {
     final showSupplierFields = _selectedReason == 'devolucion_proveedor' || _selectedReason == 'cambio_proveedor';
+    final colors = context.colors;
 
     return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: colors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border),
+      ),
       title: Row(
         children: [
-          const Icon(Icons.outbox_rounded, color: AppColors.danger),
+          Icon(Icons.outbox_rounded, color: colors.danger),
           const SizedBox(width: 8),
-          const Text('Salida de Inventario', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          Text('Salida de Inventario', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: colors.textPrimary)),
         ],
       ),
       content: SizedBox(
@@ -117,24 +121,24 @@ class _BatchReturnDialogState extends ConsumerState<BatchReturnDialog> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.background,
+                  color: colors.background,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Producto: ${widget.batch.productName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    Text('Producto: ${widget.batch.productName}', style: TextStyle(fontWeight: FontWeight.bold, color: colors.textPrimary)),
                     const SizedBox(height: 4),
-                    Text('Lote: ${widget.batch.lote}  |  Vence: ${widget.batch.fechaVencimiento.toString().split(' ')[0]}'),
+                    Text('Lote: ${widget.batch.lote}  |  Vence: ${widget.batch.fechaVencimiento.toString().split(' ')[0]}', style: TextStyle(color: colors.textSecondary)),
                     const SizedBox(height: 4),
-                    Text('Stock Actual: ${widget.batch.stockActual}', style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                    Text('Stock Actual: ${widget.batch.stockActual}', style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ),
               const SizedBox(height: 16),
               
-              const Text('Motivo de Salida:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+              Text('Motivo de Salida:', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: colors.textPrimary)),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
                 value: _selectedReason,

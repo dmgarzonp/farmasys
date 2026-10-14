@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../catalogo_productos/domain/entities/product.dart';
 import '../../domain/entities/purchase_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -232,6 +233,7 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
   @override
   Widget build(BuildContext context) {
     final unidadesPorCaja = widget.presentation.unidadesPorCaja;
+    final colors = context.colors;
 
     return CallbackShortcuts(
       bindings: {
@@ -239,9 +241,12 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
         const SingleActivator(LogicalKeyboardKey.enter): _onSave,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 580,
           padding: const EdgeInsets.all(24),
@@ -258,10 +263,10 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.medication_outlined, color: AppColors.primary, size: 24),
+                      child: Icon(Icons.medication_outlined, color: colors.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -270,21 +275,21 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                         children: [
                           Text(
                             widget.product.nombreComercial,
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Consumer(
                             builder: (context, ref, child) {
                               final ivaVigente = ref.watch(settingsProvider).ivaVigente;
                               return Text(
                                 '${widget.presentation.nombreDescriptivo} ($unidadesPorCaja unidades/caja) • IVA: ${widget.presentation.tieneIva ? '${(ivaVigente * 100).toInt()}%' : '0%'}',
-                                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                style: TextStyle(fontSize: 12, color: colors.textSecondary),
                               );
                             }
                           ),
                           if (widget.product.principioActivo != null)
                             Text(
                               'Principio Activo: ${widget.product.principioActivo}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.primaryDark, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 11, color: colors.primary, fontWeight: FontWeight.w600),
                             ),
                         ],
                       ),
@@ -408,25 +413,25 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.05),
+                    color: colors.primarySurface,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.percent_outlined, color: AppColors.primary, size: 16),
+                          Icon(Icons.percent_outlined, color: colors.primary, size: 16),
                           const SizedBox(width: 6),
-                          const Text(
+                          Text(
                             'Precios de Venta (Rentabilidad Sugerida 30%)',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.primary),
                           ),
                           const Spacer(),
-                          const Text(
+                          Text(
                             'Se actualizará el catálogo',
-                            style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                            style: TextStyle(fontSize: 10, color: colors.textMuted),
                           ),
                         ],
                       ),
@@ -461,20 +466,20 @@ class _AddReceptionItemDialogState extends State<AddReceptionItemDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.backgroundDark,
+                    color: colors.background,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.borderLight),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Row(
+                      Row(
                         children: [
-                          Icon(Icons.verified_user_outlined, size: 16, color: AppColors.primary),
-                          SizedBox(width: 6),
+                          Icon(Icons.verified_user_outlined, size: 16, color: colors.primary),
+                          const SizedBox(width: 6),
                           Text(
                             'Control Técnico Sanitario (Normativa ARCSA)',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                         ],
                       ),

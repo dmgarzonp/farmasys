@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../domain/entities/cash_session.dart';
 
 /// Diálogo modal de arqueo y cierre de caja con cálculo de diferencias en vivo (SOLID: SRP)
@@ -78,6 +79,7 @@ class _CloseCashDialogState extends State<CloseCashDialog> {
   Widget build(BuildContext context) {
     final hasDiff = _cashDiff.abs() >= 0.01;
     final isShortage = _cashDiff < -0.009;
+    final colors = context.colors;
 
     return CallbackShortcuts(
       bindings: {
@@ -85,9 +87,12 @@ class _CloseCashDialogState extends State<CloseCashDialog> {
         const SingleActivator(LogicalKeyboardKey.enter): _onConfirm,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 520,
           padding: const EdgeInsets.all(24),
@@ -115,11 +120,11 @@ class _CloseCashDialogState extends State<CloseCashDialog> {
                         children: [
                           Text(
                             'Cierre de Turno y Arqueo (Caja #${widget.session.id})',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
-                          const Text(
+                          Text(
                             'Declare los valores recaudados durante el turno',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -132,16 +137,16 @@ class _CloseCashDialogState extends State<CloseCashDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: colors.background,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildSummaryItem('Fondo Inicial', widget.session.montoInicial),
-                      _buildSummaryItem('Ventas Efectivo', widget.session.montoEsperadoEfectivo),
-                      _buildSummaryItem('Total Esperado', _expectedCash, isBold: true),
+                      _buildSummaryItem('Fondo Inicial', widget.session.montoInicial, colors),
+                      _buildSummaryItem('Ventas Efectivo', widget.session.montoEsperadoEfectivo, colors),
+                      _buildSummaryItem('Total Esperado', _expectedCash, colors, isBold: true),
                     ],
                   ),
                 ),
@@ -262,18 +267,18 @@ class _CloseCashDialogState extends State<CloseCashDialog> {
     );
   }
 
-  Widget _buildSummaryItem(String label, double amount, {bool isBold = false}) {
+  Widget _buildSummaryItem(String label, double amount, AppThemeColors colors, {bool isBold = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
         const SizedBox(height: 2),
         Text(
           AppFormatters.currency(amount),
           style: TextStyle(
             fontSize: isBold ? 14 : 12,
             fontWeight: isBold ? FontWeight.bold : FontWeight.w600,
-            color: isBold ? AppColors.primary : AppColors.textPrimary,
+            color: isBold ? colors.primary : colors.textPrimary,
           ),
         ),
       ],

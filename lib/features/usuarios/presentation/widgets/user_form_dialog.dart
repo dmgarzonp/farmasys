@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/constants.dart' hide UserRole;
 import '../../../../core/database/tables/usuarios_table.dart';
 import '../../../auth/domain/entities/user_entity.dart';
-import '../../../../shared/components/components.dart';
 
 class UserFormDialog extends StatefulWidget {
   final User? user; // Si es null, estamos creando. Si tiene valor, editando.
@@ -178,7 +177,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('Datos Personales', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16)),
+                        Text('Datos Personales', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 16)),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _fullNameController,
@@ -272,7 +271,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text('Datos de Cuenta', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 16)),
+                        Text('Datos de Cuenta', style: TextStyle(fontWeight: FontWeight.bold, color: colors.primary, fontSize: 16)),
                         const SizedBox(height: 16),
                         TextFormField(
                           controller: _usernameController,
@@ -282,7 +281,7 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
                             prefixIcon: const Icon(Icons.person_outline_rounded),
                             filled: !_isEditing,
-                            fillColor: !_isEditing ? AppColors.backgroundDark : null,
+                            fillColor: !_isEditing ? colors.backgroundDark : null,
                           ),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) return 'Requerido';

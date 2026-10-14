@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_dialogs.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../controllers/settings_notifier.dart';
 
 class SriSetupWizardDialog extends ConsumerStatefulWidget {
@@ -141,8 +142,14 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      backgroundColor: colors.cardBackground,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border),
+      ),
       child: Container(
         width: 600,
         constraints: const BoxConstraints(maxHeight: 650),
@@ -151,9 +158,9 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
             // Header
             Container(
               padding: const EdgeInsets.all(24),
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
+              decoration: BoxDecoration(
+                color: colors.primary,
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
               ),
               child: Row(
                 children: [
@@ -181,7 +188,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
             Expanded(
               child: Theme(
                 data: Theme.of(context).copyWith(
-                  colorScheme: const ColorScheme.light(primary: AppColors.primary),
+                  colorScheme: Theme.of(context).colorScheme.copyWith(primary: colors.primary),
                 ),
                 child: Stepper(
                   type: StepperType.vertical,
@@ -197,7 +204,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
                           ElevatedButton(
                             onPressed: details.onStepContinue,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
+                              backgroundColor: colors.primary,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                             ),
@@ -207,7 +214,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
                           TextButton(
                             onPressed: details.onStepCancel,
                             style: TextButton.styleFrom(
-                              foregroundColor: AppColors.textSecondary,
+                              foregroundColor: colors.textSecondary,
                             ),
                             child: const Text('ATRÁS'),
                           ),
@@ -319,23 +326,23 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const SizedBox(height: 12),
-                          const Text('Selecciona el entorno del SRI donde se enviarán las facturas:', style: TextStyle(color: AppColors.textSecondary)),
+                          Text('Selecciona el entorno del SRI donde se enviarán las facturas:', style: TextStyle(color: colors.textSecondary)),
                           const SizedBox(height: 16),
                           RadioListTile<int>(
-                            title: const Text('Ambiente de PRUEBAS (1)'),
-                            subtitle: const Text('Las facturas no tienen validez tributaria real.'),
+                            title: Text('Ambiente de PRUEBAS (1)', style: TextStyle(color: colors.textPrimary)),
+                            subtitle: Text('Las facturas no tienen validez tributaria real.', style: TextStyle(color: colors.textSecondary)),
                             value: 1,
                             groupValue: _ambiente,
                             onChanged: (val) => setState(() => _ambiente = val!),
-                            activeColor: AppColors.primary,
+                            activeColor: colors.primary,
                           ),
                           RadioListTile<int>(
-                            title: const Text('Ambiente de PRODUCCIÓN (2)'),
-                            subtitle: const Text('Toda factura emitida será procesada legalmente.'),
+                            title: Text('Ambiente de PRODUCCIÓN (2)', style: TextStyle(color: colors.textPrimary)),
+                            subtitle: Text('Toda factura emitida será procesada legalmente.', style: TextStyle(color: colors.textSecondary)),
                             value: 2,
                             groupValue: _ambiente,
                             onChanged: (val) => setState(() => _ambiente = val!),
-                            activeColor: AppColors.primary,
+                            activeColor: colors.primary,
                           ),
                         ],
                       ),

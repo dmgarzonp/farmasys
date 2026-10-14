@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
@@ -67,15 +65,21 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
 
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.tune, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Text('Ajustar Stock: Lote ${batch.lote}', style: const TextStyle(fontSize: 16)),
-          ],
-        ),
+      builder: (ctx) {
+        final colors = ctx.colors;
+        return AlertDialog(
+          backgroundColor: colors.cardBackground,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: colors.border),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.tune, color: colors.primary),
+              const SizedBox(width: 8),
+              Text('Ajustar Stock: Lote ${batch.lote}', style: TextStyle(fontSize: 16, color: colors.textPrimary)),
+            ],
+          ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,8 +109,9 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
             onPressed: () => Navigator.of(ctx).pop(true),
           ),
         ],
-      ),
-    );
+      );
+    },
+  );
 
     if (confirmed == true && mounted) {
       final newStock = double.tryParse(newStockCtrl.text);

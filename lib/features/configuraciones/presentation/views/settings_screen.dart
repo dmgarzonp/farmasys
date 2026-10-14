@@ -785,80 +785,199 @@ class SettingsScreen extends ConsumerWidget {
           const SizedBox(height: 24),
 
           // 3. Paleta de Colores de Marca
-          const Text(
-            'Color Corporativo Institucional',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Elige la paleta cromática que mejor represente la identidad de tu farmacia.',
-            style: TextStyle(fontSize: 12, color: colors.textSecondary),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Color Corporativo Institucional',
+                      style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Elige una paleta predefinida o personaliza el color HEX exacto de tu farmacia.',
+                      style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+              OutlinedButton.icon(
+                icon: const Icon(Icons.colorize_rounded, size: 16),
+                label: const Text('Personalizar Color'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: colors.primary,
+                  side: BorderSide(color: colors.primary.withValues(alpha: 0.5)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onPressed: () => _showCustomColorPicker(context, state.primaryColor, notifier),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Wrap(
             spacing: 12,
             runSpacing: 12,
-            children: AppTheme.presets.map((preset) {
-              final isSelected = state.primaryColor.value == preset.primaryColor.value;
-              return InkWell(
-                onTap: () => notifier.updatePrimaryColor(preset.primaryColor),
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: 200,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: isSelected ? preset.primaryColor.withValues(alpha: 0.12) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? preset.primaryColor : colors.border,
-                      width: isSelected ? 2 : 1,
+            children: [
+              ...AppTheme.presets.map((preset) {
+                // ignore: deprecated_member_use
+                final isSelected = state.primaryColor.value == preset.primaryColor.value;
+                return InkWell(
+                  onTap: () => notifier.updatePrimaryColor(preset.primaryColor),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    width: 200,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isSelected ? preset.primaryColor.withValues(alpha: 0.12) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? preset.primaryColor : colors.border,
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: preset.primaryColor,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(preset.icon, color: Colors.white, size: 16),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                preset.name,
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                  color: isSelected ? preset.primaryColor : colors.textPrimary,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                preset.subtitle,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: colors.textMuted,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: preset.primaryColor,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(preset.icon, color: Colors.white, size: 16),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              preset.name,
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                                color: isSelected ? preset.primaryColor : colors.textPrimary,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              preset.subtitle,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: colors.textMuted,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                );
+              }),
+
+              // Tarjeta de Color Personalizado
+              Builder(
+                builder: (context) {
+                  // ignore: deprecated_member_use
+                  final isCustom = !AppTheme.presets.any((p) => p.primaryColor.value == state.primaryColor.value);
+                  final activeCustomColor = state.primaryColor;
+                  // ignore: deprecated_member_use
+                  final hexCode = '#${activeCustomColor.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+
+                  return InkWell(
+                    onTap: () => _showCustomColorPicker(context, activeCustomColor, notifier),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      width: 200,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isCustom ? activeCustomColor.withValues(alpha: 0.12) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isCustom ? activeCustomColor : colors.border,
+                          width: isCustom ? 2 : 1,
                         ),
                       ),
-                    ],
-                  ),
-                ),
-              );
-            }).toList(),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: activeCustomColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.palette_rounded, color: Colors.white, size: 16),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        'Personalizado',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: isCustom ? FontWeight.bold : FontWeight.w600,
+                                          color: isCustom ? activeCustomColor : colors.textPrimary,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    Icon(Icons.edit, size: 12, color: isCustom ? activeCustomColor : colors.textMuted),
+                                  ],
+                                ),
+                                Text(
+                                  isCustom ? hexCode : 'Elegir HEX / tono',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontFamily: 'monospace',
+                                    color: colors.textMuted,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+
+  void _showCustomColorPicker(BuildContext context, Color currentColor, SettingsNotifier notifier) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _CustomColorPickerDialog(
+        initialColor: currentColor,
+        onColorSelected: (newColor) {
+          notifier.updatePrimaryColor(newColor);
+          AppDialogs.showSuccess(
+            context,
+            title: 'Color Actualizado',
+            message: 'Se aplicó el nuevo color corporativo a toda la interfaz.',
+          );
+        },
       ),
     );
   }
@@ -989,6 +1108,322 @@ class _PharmacyNameFieldState extends State<_PharmacyNameField> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _CustomColorPickerDialog extends StatefulWidget {
+  final Color initialColor;
+  final ValueChanged<Color> onColorSelected;
+
+  const _CustomColorPickerDialog({
+    required this.initialColor,
+    required this.onColorSelected,
+  });
+
+  @override
+  State<_CustomColorPickerDialog> createState() => _CustomColorPickerDialogState();
+}
+
+class _CustomColorPickerDialogState extends State<_CustomColorPickerDialog> {
+  late Color _currentColor;
+  late TextEditingController _hexController;
+  String? _errorText;
+
+  static const List<Color> _curatedColors = [
+    Color(0xFF059669), // Esmeralda Salud
+    Color(0xFF10B981), // Menta Natural
+    Color(0xFF0D9488), // Turquesa
+    Color(0xFF0891B2), // Cian Marino
+    Color(0xFF0284C7), // Azul Clínico
+    Color(0xFF2563EB), // Azul Cobalto
+    Color(0xFF4F46E5), // Índigo Moderno
+    Color(0xFF7C3AED), // Violeta
+    Color(0xFF9333EA), // Púrpura
+    Color(0xFFC026D3), // Fucsia Cosmética
+    Color(0xFFDB2777), // Rosa Salud
+    Color(0xFFE11D48), // Carmín
+    Color(0xFFDC2626), // Rojo Cruz Médica
+    Color(0xFFEA580C), // Naranja Farmacia
+    Color(0xFFD97706), // Ámbar Cálido
+    Color(0xFF15803D), // Verde Bosque
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _currentColor = widget.initialColor;
+    _hexController = TextEditingController(text: _colorToHex(_currentColor));
+  }
+
+  @override
+  void dispose() {
+    _hexController.dispose();
+    super.dispose();
+  }
+
+  String _colorToHex(Color color) {
+    // ignore: deprecated_member_use
+    return '#${color.value.toRadixString(16).padLeft(8, '0').substring(2).toUpperCase()}';
+  }
+
+  void _onColorPicked(Color color) {
+    setState(() {
+      _currentColor = color;
+      _hexController.text = _colorToHex(color);
+      _errorText = null;
+    });
+  }
+
+  void _onHexChanged(String value) {
+    String clean = value.replaceAll('#', '').trim();
+    if (clean.length == 6) {
+      final intVal = int.tryParse('FF$clean', radix: 16);
+      if (intVal != null) {
+        setState(() {
+          _currentColor = Color(intVal);
+          _errorText = null;
+        });
+        return;
+      }
+    }
+    setState(() {
+      _errorText = 'Ingrese un código hexadecimal válido (ej: #0284C7)';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = AppColors.of(context);
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border),
+      ),
+      backgroundColor: colors.cardBackground,
+      child: Container(
+        width: 480,
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Encabezado
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _currentColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.colorize_rounded, color: _currentColor, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Personalizador de Color Institucional',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        'Define la identidad cromática exacta de tu farmacia',
+                        style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.close, color: colors.textMuted),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Paleta de colores curada
+            Text(
+              'Seleccionar Tono de Marca Sugerido',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textPrimary),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _curatedColors.map((col) {
+                // ignore: deprecated_member_use
+                final isSelected = col.value == _currentColor.value;
+                return InkWell(
+                  onTap: () => _onColorPicked(col),
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: col,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isSelected ? Colors.white : Colors.transparent,
+                        width: 2.5,
+                      ),
+                      boxShadow: [
+                        if (isSelected)
+                          BoxShadow(
+                            color: col.withValues(alpha: 0.45),
+                            blurRadius: 8,
+                            spreadRadius: 2,
+                          ),
+                      ],
+                    ),
+                    child: isSelected
+                        ? const Icon(Icons.check, color: Colors.white, size: 20)
+                        : null,
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+
+            // Input de código Hexadecimal
+            Text(
+              'O escribe un Código Hexadecimal Personalizado',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textPrimary),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _hexController,
+                    onChanged: _onHexChanged,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.bold,
+                      color: colors.textPrimary,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: '#0284C7',
+                      filled: true,
+                      fillColor: colors.inputFill,
+                      errorText: _errorText,
+                      prefixIcon: Icon(Icons.tag_rounded, color: colors.textSecondary),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: colors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide(color: _currentColor, width: 2),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: _currentColor,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: colors.border),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Vista previa en vivo de componentes UI
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: colors.background,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.border),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Vista Previa de Componentes FarmSys:',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.textSecondary),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _currentColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.check_circle, color: Colors.white, size: 16),
+                            SizedBox(width: 6),
+                            Text('Botón Principal', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: _currentColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: _currentColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Text(
+                          'Insignia Activa',
+                          style: TextStyle(color: _currentColor, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Botones de acción
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: Text('Cancelar', style: TextStyle(color: colors.textSecondary)),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    widget.onColorSelected(_currentColor);
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.check, size: 18),
+                  label: const Text('Aplicar Color Corporativo'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentColor,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -6,6 +6,7 @@ import '../../../../core/utils/formatters.dart';
 import '../../../../core/utils/tax_calculator.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../clientes/domain/entities/customer.dart';
 
 /// Modal ergonómico de cobro y liquidación final en POS (SOLID: SRP)
@@ -72,15 +73,20 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
         const SingleActivator(LogicalKeyboardKey.enter): _onConfirm,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 540,
           padding: const EdgeInsets.all(24),
@@ -97,22 +103,22 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
+                          color: colors.primary.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.point_of_sale, color: AppColors.primary, size: 24),
+                        child: Icon(Icons.point_of_sale, color: colors.primary, size: 24),
                       ),
                       const SizedBox(width: 12),
-                      const Column(
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Liquidación y Cobro',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
                           Text(
                             'Punto de Venta / Facturación',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -122,21 +128,21 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.background,
+                      color: colors.background,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: AppColors.border),
+                      border: Border.all(color: colors.border),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           widget.customer.isConsumidorFinal ? Icons.public : Icons.person,
                           size: 14,
-                          color: AppColors.primary,
+                          color: colors.primary,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           widget.customer.nombreCompleto,
-                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: colors.textPrimary),
                         ),
                       ],
                     ),
@@ -150,23 +156,23 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
+                  color: colors.primarySurface,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.25)),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
+                    Text(
                       'TOTAL A COBRAR:',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: colors.textPrimary),
                     ),
                     Text(
                       AppFormatters.currency(widget.totals.grandTotal),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.primary,
+                        color: colors.primary,
                         letterSpacing: -0.5,
                       ),
                     ),
@@ -176,18 +182,18 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
               const SizedBox(height: 16),
 
               // Selector de Método de Pago
-              const Text(
+              Text(
                 'Método de Pago:',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textSecondary),
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: colors.textSecondary),
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  _buildPaymentMethodButton('efectivo', 'Efectivo', Icons.payments_outlined),
+                  _buildPaymentMethodButton('efectivo', 'Efectivo', Icons.payments_outlined, colors),
                   const SizedBox(width: 8),
-                  _buildPaymentMethodButton('tarjeta', 'Tarjeta', Icons.credit_card),
+                  _buildPaymentMethodButton('tarjeta', 'Tarjeta', Icons.credit_card, colors),
                   const SizedBox(width: 8),
-                  _buildPaymentMethodButton('transferencia', 'Transferencia', Icons.qr_code_2),
+                  _buildPaymentMethodButton('transferencia', 'Transferencia', Icons.qr_code_2, colors),
                 ],
               ),
               const SizedBox(height: 16),
@@ -279,19 +285,21 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
+                    color: colors.background,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: colors.border),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline, color: AppColors.textSecondary, size: 20),
+                      Icon(Icons.info_outline, color: colors.textSecondary, size: 20),
                       const SizedBox(width: 10),
-                      Text(
-                        _metodoPago == 'tarjeta'
-                            ? 'Procese el cobro en el POS / Datafast / Medianet.'
-                            : 'Verifique el comprobante de transferencia antes de emitir.',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      Expanded(
+                        child: Text(
+                          _metodoPago == 'tarjeta'
+                              ? 'Procese el cobro en el POS / Datafast / Medianet.'
+                              : 'Verifique el comprobante de transferencia antes de emitir.',
+                          style: TextStyle(fontSize: 12, color: colors.textSecondary),
+                        ),
                       ),
                     ],
                   ),
@@ -324,7 +332,7 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
     );
   }
 
-  Widget _buildPaymentMethodButton(String method, String label, IconData icon) {
+  Widget _buildPaymentMethodButton(String method, String label, IconData icon, AppThemeColors colors) {
     final isSelected = _metodoPago == method;
     return Expanded(
       child: InkWell(
@@ -333,23 +341,23 @@ class _CheckoutDialogState extends State<CheckoutDialog> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : AppColors.cardBackground,
+            color: isSelected ? colors.primary : colors.cardBackground,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected ? AppColors.primary : AppColors.border,
+              color: isSelected ? colors.primary : colors.border,
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 18, color: isSelected ? Colors.white : AppColors.textPrimary),
+              Icon(icon, size: 18, color: isSelected ? Colors.white : colors.textPrimary),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected ? Colors.white : colors.textPrimary,
                 ),
               ),
             ],

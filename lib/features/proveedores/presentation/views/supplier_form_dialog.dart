@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
-import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_buttons.dart';
 import '../../../../shared/components/app_text_field.dart';
+import '../../../../shared/extensions/theme_extensions.dart';
 import '../../domain/entities/supplier.dart';
 
 /// Modal para creación o edición rápida de proveedor o distribuidora farmacéutica (SOLID: SRP)
@@ -94,15 +93,20 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.colors;
+
     return CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop(null),
         const SingleActivator(LogicalKeyboardKey.enter): _onSave,
       },
       child: Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: colors.border),
+        ),
         elevation: 16,
-        backgroundColor: AppColors.cardBackground,
+        backgroundColor: colors.cardBackground,
         child: Container(
           width: 580,
           padding: const EdgeInsets.all(24),
@@ -118,10 +122,10 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: colors.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.local_shipping_outlined, color: AppColors.primary, size: 24),
+                      child: Icon(Icons.local_shipping_outlined, color: colors.primary, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -132,12 +136,12 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
                             widget.supplier == null
                                 ? 'Registrar Proveedor / Distribuidor'
                                 : 'Editar Datos de Proveedor',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
                           ),
-                          const Text(
+                          Text(
                             'Información de distribuidora para abastecimiento y facturación ARCSA',
-                            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                            style: TextStyle(fontSize: 12, color: colors.textSecondary),
                           ),
                         ],
                       ),
@@ -175,11 +179,11 @@ class _SupplierFormDialogState extends State<SupplierFormDialog> {
                             Checkbox(
                               value: _isActive,
                               onChanged: (val) => setState(() => _isActive = val ?? true),
-                              activeColor: AppColors.primary,
+                              activeColor: colors.primary,
                             ),
-                            const Text(
+                            Text(
                               'Proveedor Activo',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: colors.textPrimary),
                             ),
                           ],
                         ),
