@@ -77,5 +77,26 @@ void main() {
       expect(lightTheme.colorScheme.primary, isNotNull);
       expect(darkTheme.colorScheme.primary, isNotNull);
     });
+
+    test('Protección y cifrado de contraseña de firma electrónica SRI', () async {
+      const rawPassword = 'ClaveFirmaSegura2026@#';
+      await repository.saveSriSettings(firmaPassword: rawPassword);
+
+      // 1. En SharedPreferences no debe guardarse en texto plano
+      final prefs = await SharedPreferences.getInstance();
+      final storedValue = prefs.getString('settings_sri_firma_password');
+      expect(storedValue, isNotNull);
+      expect(storedValue, isNot(equals(rawPassword)));
+      expect(storedValue!.startsWith('fs_sec_v1:'), isTrue);
+
+      // 2. Al recuperar a través del repositorio debe ser recuperada exactamente
+      final retrievedPassword = await repository.getSriFirmaPassword();
+      expect(retrievedPassword, equals(rawPassword));
+
+      // 3. Compatibilidad con valores legados sin cifrar
+      await prefs.setString('settings_sri_firma_password', 'ClaveLegada123');
+      final legacyRetrieved = await repository.getSriFirmaPassword();
+      expect(legacyRetrieved, equals('ClaveLegada123'));
+    });
   });
 }

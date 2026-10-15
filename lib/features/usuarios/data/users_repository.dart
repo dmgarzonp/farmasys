@@ -1,10 +1,9 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/tables/usuarios_table.dart';
+import '../../../../core/security/password_hasher.dart';
 import '../../auth/domain/entities/user_entity.dart';
 
 final usersRepositoryProvider = Provider<UsersRepository>((ref) {
@@ -64,7 +63,7 @@ class DriftUsersRepository implements UsersRepository {
     String? correoPersonal,
     DateTime? hireDate,
   }) async {
-    final passwordHash = sha256.convert(utf8.encode(password)).toString();
+    final passwordHash = PasswordHasher.hashPassword(password);
 
     final companion = UsuariosTableCompanion.insert(
       username: username,
@@ -111,7 +110,7 @@ class DriftUsersRepository implements UsersRepository {
   }) async {
     String? passwordHash;
     if (newPassword != null && newPassword.isNotEmpty) {
-      passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
+      passwordHash = PasswordHasher.hashPassword(newPassword);
     }
 
     final companion = UsuariosTableCompanion(
@@ -145,7 +144,7 @@ class DriftUsersRepository implements UsersRepository {
 
   @override
   Future<void> resetUserPassword(int id, String temporalPassword, {bool forceChange = true}) async {
-    final passwordHash = sha256.convert(utf8.encode(temporalPassword)).toString();
+    final passwordHash = PasswordHasher.hashPassword(temporalPassword);
 
     final companion = UsuariosTableCompanion(
       passwordHash: Value(passwordHash),

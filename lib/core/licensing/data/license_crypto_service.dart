@@ -7,8 +7,24 @@ import '../domain/license_info.dart';
 class LicenseCryptoService {
   /// Secreto maestro para firma de licencias comerciales FarmSys.
   /// (En el generador del proveedor se utiliza esta misma firma para expedir licencias).
-  static const String _signingSecret =
-      'FARMSYS_ECUADOR_COMMERCIAL_LICENSE_SECRET_KEY_2026_X98A';
+  /// Protegido con ofuscación XOR multicapa y soporte para inyección de entorno
+  /// para evitar que cadenas de texto plano queden expuestas en el binario AOT (libapp.so).
+  static String get _signingSecret {
+    const envSecret = String.fromEnvironment('FARMSYS_LICENSE_SECRET');
+    if (envSecret.isNotEmpty) {
+      return envSecret;
+    }
+    const masked = <int>[
+      25, 226, 69, 214, 30, 215, 97, 46, 26, 224, 66, 218, 9, 193, 96, 46,
+      28, 236, 90, 214, 8, 220, 113, 56, 30, 239, 72, 215, 4, 205, 119, 63,
+      12, 230, 72, 200, 8, 205, 96, 52, 11, 252, 92, 222, 20, 209, 0, 65,
+      109, 149, 72, 195, 116, 182, 115
+    ];
+    const mask = <int>[0x5F, 0xA3, 0x17, 0x9B, 0x4D, 0x8E, 0x32, 0x71];
+    return utf8.decode(
+      List<int>.generate(masked.length, (i) => masked[i] ^ mask[i % mask.length]),
+    );
+  }
 
   /// Periodo de tolerancia / gracia en días tras la fecha oficial de caducidad
   static const int gracePeriodDays = 15;

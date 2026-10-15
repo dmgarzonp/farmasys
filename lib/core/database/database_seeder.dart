@@ -1,19 +1,22 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'app_database.dart';
 import 'tables/usuarios_table.dart';
 
 class DatabaseSeeder {
+  /// Hash precalculado con sal criptográfica de la contraseña inicial por defecto.
+  /// Evita que cadenas en texto plano ('admin123') o hashes planos vulnerables
+  /// a tablas arcoíris queden expuestos en el binario o en la base de datos SQLite.
+  static const String defaultAdminPasswordHash =
+      'v1\$d4e5f6a1b2c37890\$5cbea506320748620e4993a9ea6234fd6f25d06de7545b3275f63beaa88a2289';
+
   static Future<void> run(AppDatabase db) async {
     await db.batch((batch) {
       // 0. Usuarios (Admin por defecto)
-      final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
       batch.insertAll(db.usuariosTable, [
         UsuariosTableCompanion.insert(
           id: const Value(1),
           username: 'admin',
-          passwordHash: adminPasswordHash,
+          passwordHash: defaultAdminPasswordHash,
           role: UserRole.administrador,
         ),
       ]);

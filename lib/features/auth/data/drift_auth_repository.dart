@@ -1,11 +1,9 @@
-import 'dart:convert';
-import 'package:crypto/crypto.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/tables/usuarios_table.dart';
+import '../../../../core/security/password_hasher.dart';
 import '../domain/entities/user_entity.dart';
 import '../domain/repositories/auth_repository.dart';
 
@@ -22,29 +20,32 @@ class DriftAuthRepository implements AuthRepository {
 
   @override
   Future<User> login(String username, String password) async {
-    final passwordHash = sha256.convert(utf8.encode(password)).toString();
-
     final userRow = await (_db.select(_db.usuariosTable)
           ..where((t) => t.username.equals(username))
-          ..where((t) => t.passwordHash.equals(passwordHash))
           ..where((t) => t.isActive.equals(true)))
         .getSingleOrNull();
 
-    if (userRow == null) {
+    if (userRow == null || !PasswordHasher.verify(password, userRow.passwordHash)) {
       throw Exception('Credenciales incorrectas o usuario inactivo');
     }
 
-    // La sesión ahora es efímera (solo en memoria).
-    // No guardamos el ID en SharedPreferences para forzar el login al abrir el programa.
+    // Auto-migración transparente: si el hash era legado sin sal, se actualiza a sal criptográfica
+    if (PasswordHasher.needsRehash(userRow.passwordHash)) {
+      final updatedHash = PasswordHasher.hashPassword(password);
+      await (_db.update(_db.usuariosTable)..where((t) => t.id.equals(userRow.id)))
+          .write(UsuariosTableCompanion(passwordHash: Value(updatedHash)));
+    }
 
     return _mapToEntity(userRow);
   }
 
+  @override
   Future<void> logout() async {
     // Al no haber persistencia, el logout solo impactará el estado en memoria 
     // manejado por el AuthNotifier.
   }
 
+  @override
   Future<User?> getCurrentUser() async {
     // Siempre retornamos null al iniciar para forzar que el trabajador deba 
     // ingresar sus credenciales en la pantalla de Login.
@@ -53,7 +54,7 @@ class DriftAuthRepository implements AuthRepository {
 
   @override
   Future<void> changePassword(int userId, String newPassword) async {
-    final passwordHash = sha256.convert(utf8.encode(newPassword)).toString();
+    final passwordHash = PasswordHasher.hashPassword(newPassword);
 
     final companion = UsuariosTableCompanion(
       passwordHash: Value(passwordHash),

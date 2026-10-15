@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -123,7 +124,42 @@ class SettingsRepository {
   Future<String?> getSriPuntoEmision() async => (await SharedPreferences.getInstance()).getString(_keySriPuntoEmision);
   Future<int?> getSriAmbiente() async => (await SharedPreferences.getInstance()).getInt(_keySriAmbiente);
   Future<String?> getSriFirmaPath() async => (await SharedPreferences.getInstance()).getString(_keySriFirmaPath);
-  Future<String?> getSriFirmaPassword() async => (await SharedPreferences.getInstance()).getString(_keySriFirmaPassword);
+  static const String _encPrefix = 'fs_sec_v1:';
+  static const List<int> _cryptoSalt = [0x46, 0x53, 0x59, 0x53, 0x5F, 0x53, 0x52, 0x49]; // "FSYS_SRI"
+
+  static String _protectSecret(String raw) {
+    if (raw.isEmpty) return raw;
+    final bytes = utf8.encode(raw);
+    final obfuscated = List<int>.generate(
+      bytes.length,
+      (i) => bytes[i] ^ _cryptoSalt[i % _cryptoSalt.length],
+    );
+    return '$_encPrefix${base64.encode(obfuscated)}';
+  }
+
+  static String _unprotectSecret(String stored) {
+    if (!stored.startsWith(_encPrefix)) {
+      // Compatibilidad con contraseñas que hayan sido guardadas previamente en texto plano
+      return stored;
+    }
+    try {
+      final base64Part = stored.substring(_encPrefix.length);
+      final obfuscated = base64.decode(base64Part);
+      final bytes = List<int>.generate(
+        obfuscated.length,
+        (i) => obfuscated[i] ^ _cryptoSalt[i % _cryptoSalt.length],
+      );
+      return utf8.decode(bytes);
+    } catch (_) {
+      return stored;
+    }
+  }
+
+  Future<String?> getSriFirmaPassword() async {
+    final raw = (await SharedPreferences.getInstance()).getString(_keySriFirmaPassword);
+    if (raw == null) return null;
+    return _unprotectSecret(raw);
+  }
 
   // SRI Setters
   Future<void> saveSriSettings({
@@ -142,6 +178,8 @@ class SettingsRepository {
     if (puntoEmision != null) await prefs.setString(_keySriPuntoEmision, puntoEmision);
     if (ambiente != null) await prefs.setInt(_keySriAmbiente, ambiente);
     if (firmaPath != null) await prefs.setString(_keySriFirmaPath, firmaPath);
-    if (firmaPassword != null) await prefs.setString(_keySriFirmaPassword, firmaPassword);
+    if (firmaPassword != null) {
+      await prefs.setString(_keySriFirmaPassword, _protectSecret(firmaPassword));
+    }
   }
 }

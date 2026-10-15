@@ -13,8 +13,6 @@ import 'tables/proveedores_table.dart';
 import 'tables/cajas_sesiones_table.dart';
 import 'tables/compras_table.dart';
 import 'tables/detalles_compra_table.dart';
-import 'package:crypto/crypto.dart';
-import 'dart:convert';
 import 'tables/usuarios_table.dart';
 import 'database_seeder.dart';
 
@@ -73,26 +71,24 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(usuariosTable);
             
             // Insertar admin por defecto al migrar
-            final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
             await into(usuariosTable).insert(
               UsuariosTableCompanion.insert(
                 id: const Value(1),
                 username: 'admin',
-                passwordHash: adminPasswordHash,
+                passwordHash: DatabaseSeeder.defaultAdminPasswordHash,
                 role: UserRole.administrador,
               ),
             );
           }
           if (from < 5) {
             // Asegurar que el admin exista si la migración 4 no lo creó
-            final adminPasswordHash = sha256.convert(utf8.encode('admin123')).toString();
             final existingAdmin = await customSelect('SELECT id FROM usuarios_table WHERE username = \'admin\'').get();
             if (existingAdmin.isEmpty) {
               await into(usuariosTable).insert(
                 UsuariosTableCompanion.insert(
                   id: const Value(1),
                   username: 'admin',
-                  passwordHash: adminPasswordHash,
+                  passwordHash: DatabaseSeeder.defaultAdminPasswordHash,
                   role: UserRole.administrador,
                 ),
               );
