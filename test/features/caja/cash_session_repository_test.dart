@@ -4,21 +4,10 @@ import 'package:farmsys/core/database/app_database.dart';
 import 'package:farmsys/features/caja/data/repositories/drift_cash_session_repository.dart';
 import 'package:farmsys/features/caja/domain/repositories/i_cash_session_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
 
 void main() {
   late AppDatabase database;
   late ICashSessionRepository cashRepo;
-
-  setUpAll(() {
-    open.overrideFor(OperatingSystem.linux, () {
-      try {
-        return DynamicLibrary.open('libsqlite3.so');
-      } catch (_) {
-        return DynamicLibrary.open('libsqlite3.so.0');
-      }
-    });
-  });
 
   setUp(() {
     database = AppDatabase.forTesting(NativeDatabase.memory());

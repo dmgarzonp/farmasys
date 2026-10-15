@@ -16,6 +16,7 @@ import '../../domain/entities/batch_stock.dart';
 import '../controllers/inventory_notifier.dart';
 import 'batch_entry_dialog.dart';
 import 'batch_return_dialog.dart';
+import '../../../catalogo_productos/presentation/views/catalog_import_dialog.dart';
 
 /// Pantalla de Gestión de Inventario, Lotes y Trazabilidad FEFO (Desktop High-Density)
 class InventoryScreen extends ConsumerStatefulWidget {
@@ -166,6 +167,13 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     }
   }
 
+  void _onImportInventory() async {
+    final result = await CatalogImportDialog.show(context);
+    if (result == true && mounted) {
+      await ref.read(inventoryProvider.notifier).loadBatches();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -209,6 +217,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       variant: XelaBadgeVariant.neutral,
                     ),
                     const Spacer(),
+                    AppSecondaryButton(
+                      text: 'Importar Excel / CSV',
+                      icon: Icons.file_upload_outlined,
+                      onPressed: _onImportInventory,
+                    ),
+                    const SizedBox(width: 10),
                     AppPrimaryButton(
                       text: 'Ingresar Mercadería / Lote',
                       shortcutLabel: 'F2',

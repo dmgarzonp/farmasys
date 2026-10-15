@@ -5,21 +5,10 @@ import 'package:farmsys/features/proveedores/data/repositories/drift_supplier_re
 import 'package:farmsys/features/proveedores/domain/entities/supplier.dart';
 import 'package:farmsys/features/proveedores/domain/repositories/i_supplier_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
 
 void main() {
   late AppDatabase database;
   late ISupplierRepository supplierRepo;
-
-  setUpAll(() {
-    open.overrideFor(OperatingSystem.linux, () {
-      try {
-        return DynamicLibrary.open('libsqlite3.so');
-      } catch (_) {
-        return DynamicLibrary.open('libsqlite3.so.0');
-      }
-    });
-  });
 
   setUp(() {
     database = AppDatabase.forTesting(NativeDatabase.memory());

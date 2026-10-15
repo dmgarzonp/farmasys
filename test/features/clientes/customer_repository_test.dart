@@ -5,21 +5,9 @@ import 'package:farmsys/features/clientes/data/repositories/drift_customer_repos
 import 'package:farmsys/features/clientes/domain/entities/customer.dart';
 import 'package:farmsys/features/clientes/domain/repositories/i_customer_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
-
 void main() {
   late AppDatabase database;
   late ICustomerRepository customerRepo;
-
-  setUpAll(() {
-    open.overrideFor(OperatingSystem.linux, () {
-      try {
-        return DynamicLibrary.open('libsqlite3.so');
-      } catch (_) {
-        return DynamicLibrary.open('libsqlite3.so.0');
-      }
-    });
-  });
 
   setUp(() {
     database = AppDatabase.forTesting(NativeDatabase.memory());

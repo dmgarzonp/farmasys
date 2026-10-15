@@ -13,7 +13,6 @@ import 'package:farmsys/features/pos_ventas/domain/entities/cart_item.dart';
 import 'package:farmsys/features/pos_ventas/domain/entities/sale.dart';
 import 'package:farmsys/features/pos_ventas/domain/repositories/i_sale_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
 
 void main() {
   late AppDatabase database;
@@ -22,16 +21,6 @@ void main() {
   late ISaleRepository saleRepo;
   late int presentationId;
   late int sessionId;
-
-  setUpAll(() {
-    open.overrideFor(OperatingSystem.linux, () {
-      try {
-        return DynamicLibrary.open('libsqlite3.so');
-      } catch (_) {
-        return DynamicLibrary.open('libsqlite3.so.0');
-      }
-    });
-  });
 
   setUp(() async {
     database = AppDatabase.forTesting(NativeDatabase.memory());

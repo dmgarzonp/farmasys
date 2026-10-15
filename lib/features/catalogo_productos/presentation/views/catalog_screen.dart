@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../../core/utils/formatters.dart';
 import '../../../../shared/components/app_buttons.dart';
@@ -19,6 +18,7 @@ import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import '../../domain/entities/product.dart';
 import 'product_form_dialog.dart';
 import 'product_merge_dialog.dart';
+import 'catalog_import_dialog.dart';
 
 /// Pantalla principal del Catálogo Maestro de Medicamentos y Productos (Desktop Ergonomic)
 class CatalogScreen extends ConsumerStatefulWidget {
@@ -100,6 +100,13 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
     }
   }
 
+  void _onImportCatalog() async {
+    final result = await CatalogImportDialog.show(context);
+    if (result == true && mounted) {
+      await ref.read(productCatalogProvider.notifier).loadProducts();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
@@ -146,6 +153,12 @@ class _CatalogScreenState extends ConsumerState<CatalogScreen> {
                       variant: XelaBadgeVariant.neutral,
                     ),
                     const Spacer(),
+                    AppSecondaryButton(
+                      text: 'Importar Excel / CSV',
+                      icon: Icons.file_upload_outlined,
+                      onPressed: _onImportCatalog,
+                    ),
+                    const SizedBox(width: 10),
                     AppPrimaryButton(
                       text: 'Nuevo Medicamento',
                       shortcutLabel: 'F2',

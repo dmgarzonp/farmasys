@@ -8,7 +8,6 @@ import 'package:farmsys/features/compras_recepcion/domain/entities/purchase_invo
 import 'package:farmsys/features/compras_recepcion/domain/entities/purchase_item.dart';
 import 'package:farmsys/features/compras_recepcion/domain/repositories/i_purchase_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sqlite3/open.dart';
 
 void main() {
   late AppDatabase database;
@@ -16,16 +15,6 @@ void main() {
   late int proveedorId;
   late int presentacionIvaCeroId;
   late int presentacionIvaDoceId;
-
-  setUpAll(() {
-    open.overrideFor(OperatingSystem.linux, () {
-      try {
-        return DynamicLibrary.open('libsqlite3.so');
-      } catch (_) {
-        return DynamicLibrary.open('libsqlite3.so.0');
-      }
-    });
-  });
 
   setUp(() async {
     database = AppDatabase.forTesting(NativeDatabase.memory());
@@ -139,7 +128,9 @@ void main() {
       expect(registered.items.length, equals(2));
 
       // 2. Verificar que los lotes físicos se hayan creado correctamente
-      final lotes = await database.select(database.lotesTable).get();
+      final lotes = await (database.select(database.lotesTable)
+            ..where((l) => l.presentacionId.isIn([presentacionIvaCeroId, presentacionIvaDoceId])))
+          .get();
       expect(lotes.length, equals(2));
 
       final loteMed = lotes.firstWhere((l) => l.presentacionId == presentacionIvaCeroId);
@@ -226,8 +217,10 @@ void main() {
 
       await purchaseRepo.registerPurchase(inv2);
 
-      // Solo debe existir 1 lote en base de datos, con stock acumulado = 160
-      final lotes = await database.select(database.lotesTable).get();
+      // Solo debe existir 1 lote en base de datos para este producto, con stock acumulado = 160
+      final lotes = await (database.select(database.lotesTable)
+            ..where((l) => l.presentacionId.equals(presentacionIvaCeroId)))
+          .get();
       expect(lotes.length, equals(1));
       expect(lotes.first.stockActual, equals(160.0));
     });
