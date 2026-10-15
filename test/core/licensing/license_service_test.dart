@@ -182,6 +182,29 @@ void main() {
       expect(result.licenseInfo!.canSell, isTrue); // Permite vender
       expect(result.licenseInfo!.daysRemaining, inInclusiveRange(29, 30));
     });
+
+    test('Licencia Trial de 15 días expira inmediatamente al vencer y bloquea ventas (sin periodo de gracia)', () {
+      // Venció hace 1 día
+      final validUntil = DateTime.now().subtract(const Duration(days: 1));
+      final token = LicenseCryptoService.generateSignedToken(
+        ruc: testRuc,
+        businessName: testName,
+        machineId: testMachineId,
+        validUntil: validUntil,
+        tier: LicenseTier.trial,
+      );
+
+      final result = LicenseCryptoService.validateToken(
+        rawToken: token,
+        currentMachineId: testMachineId,
+      );
+
+      expect(result.isSuccess, isTrue);
+      expect(result.licenseInfo!.tier, LicenseTier.trial);
+      expect(result.licenseInfo!.status, LicenseStatus.expired);
+      expect(result.licenseInfo!.isValid, isFalse);
+      expect(result.licenseInfo!.canSell, isFalse); // Ventas bloqueadas
+    });
   });
 }
 

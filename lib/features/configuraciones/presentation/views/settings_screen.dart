@@ -16,6 +16,7 @@ import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../domain/services/backup_service.dart';
 import '../../domain/services/google_drive_service.dart';
+import '../../data/settings_repository.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -128,6 +129,8 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             _buildBackupSettings(context, ref),
+            const SizedBox(height: 24),
+            _buildDatabaseLocationSettings(context, ref, colors),
             const SizedBox(height: 24),
 
             Consumer(
@@ -802,6 +805,119 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDatabaseLocationSettings(
+    BuildContext context,
+    WidgetRef ref,
+    AppThemeColors colors,
+  ) {
+    final settingsRepo = ref.read(settingsRepositoryProvider);
+
+    return FutureBuilder<String>(
+      future: settingsRepo.getEffectiveDbPath(),
+      builder: (context, snapshot) {
+        final currentPath = snapshot.data ?? 'Cargando ruta de base de datos...';
+
+        return XelaCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.storage_outlined, color: colors.primary, size: 22),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Ubicación de Base de Datos Local (farmsys.db)',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                  ),
+                ],
+              ),
+              Divider(height: 28, color: colors.borderLight),
+              Text(
+                'Ruta física del archivo SQLite donde se almacenan tus productos, ventas y configuraciones:',
+                style: TextStyle(fontSize: 13, color: colors.textSecondary),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: colors.background,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colors.borderLight),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.folder_outlined, size: 18, color: colors.textSecondary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: SelectableText(
+                        currentPath,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                          fontWeight: FontWeight.w600,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.copy, size: 18),
+                      tooltip: 'Copiar ruta',
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: currentPath));
+                        AppSnackBars.showSuccess(context, message: 'Ruta copiada al portapapeles');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  AppSecondaryButton(
+                    text: 'Cambiar Carpeta de Base de Datos...',
+                    icon: Icons.edit_location_alt_outlined,
+                    onPressed: () async {
+                      final selectedDir = await FilePicker.platform.getDirectoryPath(
+                        dialogTitle: 'Selecciona la carpeta donde deseas almacenar farmsys.db',
+                      );
+                      if (selectedDir != null && context.mounted) {
+                        await settingsRepo.saveCustomDbPath(selectedDir);
+                        await AppDialogs.showSuccess(
+                          context,
+                          title: 'Ubicación Configurada',
+                          message: 'La base de datos se conectará a:\n$selectedDir/farmsys.db\n\nPor favor, reinicia FarmSys para aplicar la nueva ruta.',
+                        );
+                      }
+                    },
+                  ),
+                  AppButton(
+                    label: 'Restablecer Ruta por Defecto',
+                    icon: Icons.restore,
+                    variant: AppButtonVariant.ghost,
+                    onPressed: () async {
+                      await settingsRepo.saveCustomDbPath(null);
+                      if (context.mounted) {
+                        final defaultPath = await settingsRepo.getDefaultDbPath();
+                        await AppDialogs.showSuccess(
+                          context,
+                          title: 'Ruta Predeterminada Restaurada',
+                          message: 'La base de datos se conectará a la ruta oficial del sistema:\n$defaultPath\n\nPor favor, reinicia FarmSys para aplicar el cambio.',
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

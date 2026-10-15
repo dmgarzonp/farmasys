@@ -736,11 +736,53 @@ class _PosScreenState extends ConsumerState<PosScreen> {
                   ],
                 ),
                 const SizedBox(height: 14),
+                if (ref.watch(licenseServiceProvider).asData?.value != null &&
+                    !ref.watch(licenseServiceProvider).asData!.value.canSell) ...[
+                  Builder(builder: (context) {
+                    final lic = ref.watch(licenseServiceProvider).asData!.value;
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: colors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: colors.error.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.lock_clock_outlined, size: 18, color: colors.error),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              lic.isTrial
+                                  ? 'Licencia Demo Expirada. Modo solo consulta (Ventas bloqueadas).'
+                                  : 'Licencia Requerida / Expirada. Modo solo consulta.',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: colors.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
                 AppPrimaryButton(
-                  text: 'Cobrar y Facturar',
-                  shortcutLabel: 'F1',
-                  icon: Icons.payments_outlined,
-                  onPressed: cartState.canCheckout ? _onCheckout : null,
+                  text: (ref.watch(licenseServiceProvider).asData?.value != null &&
+                          !ref.watch(licenseServiceProvider).asData!.value.canSell)
+                      ? 'Ventas Bloqueadas (Modo Consulta)'
+                      : 'Cobrar y Facturar',
+                  shortcutLabel: (ref.watch(licenseServiceProvider).asData?.value != null &&
+                          !ref.watch(licenseServiceProvider).asData!.value.canSell)
+                      ? null
+                      : 'F1',
+                  icon: (ref.watch(licenseServiceProvider).asData?.value != null &&
+                          !ref.watch(licenseServiceProvider).asData!.value.canSell)
+                      ? Icons.lock_outline
+                      : Icons.payments_outlined,
+                  onPressed: (cartState.canCheckout &&
+                          (ref.watch(licenseServiceProvider).asData?.value == null ||
+                              ref.watch(licenseServiceProvider).asData!.value.canSell))
+                      ? _onCheckout
+                      : null,
                 ),
               ],
             ),

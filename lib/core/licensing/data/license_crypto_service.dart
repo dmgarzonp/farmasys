@@ -183,19 +183,23 @@ class LicenseCryptoService {
       expirationDate = DateTime.tryParse(validUntilStr);
     }
 
+    final parsedTier = _parseTier(tierStr);
     LicenseStatus status = LicenseStatus.active;
     bool isValid = true;
 
     if (expirationDate != null) {
       if (now.isAfter(expirationDate)) {
-        final graceLimit =
-            expirationDate.add(const Duration(days: gracePeriodDays));
-        if (now.isBefore(graceLimit)) {
-          // Dentro de los 15 días de gracia: permite vender pero alerta
+        final isTrial = parsedTier == LicenseTier.trial;
+        final graceLimit = isTrial
+            ? expirationDate
+            : expirationDate.add(const Duration(days: gracePeriodDays));
+
+        if (!isTrial && now.isBefore(graceLimit)) {
+          // Dentro de los 15 días de gracia para licencias comerciales de pago
           status = LicenseStatus.gracePeriod;
           isValid = true;
         } else {
-          // Expirado completamente: solo lectura
+          // Expirado completamente: bloqueo de ventas y modo solo lectura
           status = LicenseStatus.expired;
           isValid = false;
         }

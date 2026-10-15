@@ -1,3 +1,7 @@
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -126,7 +130,35 @@ class AppDatabase extends _$AppDatabase {
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
-      name: 'farmsys_demo_db',
+      name: 'farmsys',
+      native: DriftNativeOptions(
+        databasePath: () async {
+          final prefs = await SharedPreferences.getInstance();
+          final customPath = prefs.getString('settings_custom_db_path');
+          if (customPath != null && customPath.trim().isNotEmpty) {
+            final trimmed = customPath.trim();
+            // Si la ruta personalizada es un directorio, le adjuntamos farmsys.db
+            if (await FileSystemEntity.isDirectory(trimmed)) {
+              return p.join(trimmed, 'farmsys.db');
+            }
+            return trimmed;
+          }
+
+          // Ruta predeterminada oficial de FarmSys
+          final defaultDir = await getApplicationDocumentsDirectory();
+          final targetDbFile = File(p.join(defaultDir.path, 'farmsys.db'));
+          final legacyDbFile = File(p.join(defaultDir.path, 'farmsys_demo_db.sqlite'));
+
+          // Migración automática de datos si existía la base de datos de desarrollo/demo
+          if (!await targetDbFile.exists() && await legacyDbFile.exists()) {
+            try {
+              await legacyDbFile.copy(targetDbFile.path);
+            } catch (_) {}
+          }
+
+          return targetDbFile.path;
+        },
+      ),
     );
   }
 }

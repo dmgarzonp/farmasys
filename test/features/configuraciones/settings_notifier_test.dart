@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,6 +14,13 @@ void main() {
   late SettingsRepository repository;
 
   setUp(() async {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      const MethodChannel('plugins.flutter.io/path_provider'),
+      (MethodCall methodCall) async {
+        return '/mock/app/documents';
+      },
+    );
     SharedPreferences.setMockInitialValues({});
     repository = SettingsRepository();
     container = ProviderContainer();
@@ -97,6 +105,24 @@ void main() {
       await prefs.setString('settings_sri_firma_password', 'ClaveLegada123');
       final legacyRetrieved = await repository.getSriFirmaPassword();
       expect(legacyRetrieved, equals('ClaveLegada123'));
+    });
+
+    test('Gestión de ruta personalizada y predeterminada de la base de datos', () async {
+      // 1. Por defecto no hay ruta personalizada
+      expect(await repository.getCustomDbPath(), isNull);
+      final effectiveDefault = await repository.getEffectiveDbPath();
+      expect(effectiveDefault.endsWith('farmsys.db'), isTrue);
+
+      // 2. Guardar ruta personalizada
+      const customPath = '/opt/farmsys_data/farmsys.db';
+      await repository.saveCustomDbPath(customPath);
+      expect(await repository.getCustomDbPath(), equals(customPath));
+      expect(await repository.getEffectiveDbPath(), equals(customPath));
+
+      // 3. Restablecer ruta predeterminada (pasando null o vacío)
+      await repository.saveCustomDbPath(null);
+      expect(await repository.getCustomDbPath(), isNull);
+      expect(await repository.getEffectiveDbPath(), equals(effectiveDefault));
     });
   });
 }

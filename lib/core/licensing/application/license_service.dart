@@ -46,6 +46,33 @@ class LicenseService extends _$LicenseService {
       }
     }
 
+    // Aprovisionamiento automático de Licencia Trial de 15 días en primera instalación
+    final autoTrialProvisioned = prefs.getBool('farmsys_auto_trial_provisioned') ?? false;
+    if (!autoTrialProvisioned && (savedToken == null || savedToken.trim().isEmpty)) {
+      final now = DateTime.now();
+      final validUntil = now.add(const Duration(days: 15));
+      final trialToken = LicenseCryptoService.generateSignedToken(
+        ruc: '9999999999999',
+        businessName: 'Farmacia Demostración',
+        machineId: machineId,
+        validUntil: validUntil,
+        tier: LicenseTier.trial,
+        issuedAt: now,
+      );
+
+      await prefs.setString(_prefTokenKey, trialToken);
+      await prefs.setString(_prefClockKey, now.toIso8601String());
+      await prefs.setBool('farmsys_auto_trial_provisioned', true);
+
+      final result = LicenseCryptoService.validateToken(
+        rawToken: trialToken,
+        currentMachineId: machineId,
+      );
+      if (result.isSuccess && result.licenseInfo != null) {
+        return result.licenseInfo!;
+      }
+    }
+
     // Retrocompatibilidad con desarrollo / pruebas tempranas
     final isLegacyPremium = prefs.getBool(_prefLegacyPremium) ?? false;
     if (isLegacyPremium) {

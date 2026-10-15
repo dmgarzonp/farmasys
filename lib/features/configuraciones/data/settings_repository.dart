@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -181,5 +183,35 @@ class SettingsRepository {
     if (firmaPassword != null) {
       await prefs.setString(_keySriFirmaPassword, _protectSecret(firmaPassword));
     }
+  }
+
+  // Database Path Management
+  static const _keyCustomDbPath = 'settings_custom_db_path';
+
+  Future<String?> getCustomDbPath() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyCustomDbPath);
+  }
+
+  Future<void> saveCustomDbPath(String? path) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (path == null || path.trim().isEmpty) {
+      await prefs.remove(_keyCustomDbPath);
+    } else {
+      await prefs.setString(_keyCustomDbPath, path.trim());
+    }
+  }
+
+  Future<String> getDefaultDbPath() async {
+    final defaultDir = await getApplicationDocumentsDirectory();
+    return p.join(defaultDir.path, 'farmsys.db');
+  }
+
+  Future<String> getEffectiveDbPath() async {
+    final custom = await getCustomDbPath();
+    if (custom != null && custom.trim().isNotEmpty) {
+      return custom.trim();
+    }
+    return getDefaultDbPath();
   }
 }
