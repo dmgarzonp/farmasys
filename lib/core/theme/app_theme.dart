@@ -191,11 +191,37 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Colors.white;
-          return null;
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFFCBD5E1);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return Colors.white;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFFF1F5F9);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return const Color(0xFFE2E8F0);
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.transparent;
+          }
+          return const Color(0xFFCBD5E1);
+        }),
+        trackOutlineWidth: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return 0.0;
+          return 1.0;
+        }),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary.withValues(alpha: 0.12);
+          }
           return null;
         }),
       ),
@@ -346,11 +372,37 @@ class AppTheme {
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return Colors.white;
-          return null;
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFF475569);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return Colors.white;
+          }
+          return const Color(0xFF94A3B8);
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) return primary;
+          if (states.contains(WidgetState.disabled)) {
+            return const Color(0xFF0F172A);
+          }
+          if (states.contains(WidgetState.selected)) {
+            return primary;
+          }
+          return const Color(0xFF334155);
+        }),
+        trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return Colors.transparent;
+          }
+          return const Color(0xFF475569);
+        }),
+        trackOutlineWidth: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) return 0.0;
+          return 1.0;
+        }),
+        overlayColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primary.withValues(alpha: 0.15);
+          }
           return null;
         }),
       ),

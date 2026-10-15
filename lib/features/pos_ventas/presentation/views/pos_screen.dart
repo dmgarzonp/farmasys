@@ -28,6 +28,8 @@ import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import 'checkout_dialog.dart';
 import 'ticket_preview_dialog.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
+import '../../../../core/licensing/application/license_service.dart';
+import '../../../../core/licensing/domain/license_info.dart';
 
 /// Pantalla principal del Punto de Venta (POS Desktop) integrada con Caja, Clientes y Despacho FEFO
 class PosScreen extends ConsumerStatefulWidget {
@@ -231,6 +233,22 @@ class _PosScreenState extends ConsumerState<PosScreen> {
       );
       if (shouldOpen && mounted) {
         _onOpenCash();
+      }
+      return;
+    }
+
+    // Verificar estado de Licencia Comercial (Modo Solo Consulta si expiró)
+    final license = ref.read(licenseServiceProvider).asData?.value;
+    if (license != null && !license.canSell) {
+      if (mounted) {
+        final isTampered = license.status == LicenseStatus.tamperedClock;
+        await AppDialogs.showWarning(
+          context,
+          title: isTampered ? 'Reloj Desincronizado' : 'Licencia Requerida',
+          message: isTampered
+              ? 'Se detectó una alteración en la fecha u hora del sistema operativo. Por favor sincroniza el reloj oficial de tu equipo para continuar facturando.'
+              : 'La suscripción de FarmSys ha expirado o este equipo no tiene una licencia activa. El sistema opera en Modo Solo Consulta. Por favor activa tu licencia en Configuración para registrar ventas.',
+        );
       }
       return;
     }

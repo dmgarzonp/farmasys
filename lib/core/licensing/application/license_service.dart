@@ -1,58 +1,134 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../data/hardware_fingerprint_service.dart';
+import '../data/license_crypto_service.dart';
 import '../domain/license_info.dart';
 
 part 'license_service.g.dart';
 
 @Riverpod(keepAlive: true)
 class LicenseService extends _$LicenseService {
+  static const String _prefTokenKey = 'farmsys_license_token';
+  static const String _prefClockKey = 'farmsys_license_clock_watermark';
+  static const String _prefLegacyPremium = 'is_premium_license';
+
   @override
   FutureOr<LicenseInfo> build() async {
-    // Leemos el estado local de la licencia
     return _checkLocalLicense();
   }
 
+  /// Lee y valida la licencia instalada en la máquina local
   Future<LicenseInfo> _checkLocalLicense() async {
     final prefs = await SharedPreferences.getInstance();
-    final isPremium = prefs.getBool('is_premium_license') ?? false;
+    final machineId = await HardwareFingerprintService.getMachineId();
 
-    if (isPremium) {
-      return const LicenseInfo(
+    final savedToken = prefs.getString(_prefTokenKey);
+    final savedClockStr = prefs.getString(_prefClockKey);
+    final lastSeenClock =
+        savedClockStr != null ? DateTime.tryParse(savedClockStr) : null;
+
+    if (savedToken != null && savedToken.trim().isNotEmpty) {
+      final result = LicenseCryptoService.validateToken(
+        rawToken: savedToken,
+        currentMachineId: machineId,
+        lastSeenClock: lastSeenClock,
+      );
+
+      if (result.isSuccess && result.licenseInfo != null) {
+        // Actualizamos la marca de agua del reloj para evitar atrasos intencionales
+        await prefs.setString(
+          _prefClockKey,
+          DateTime.now().toIso8601String(),
+        );
+        return result.licenseInfo!;
+      } else if (result.isTampered && result.licenseInfo != null) {
+        return result.licenseInfo!;
+      }
+    }
+
+    // Retrocompatibilidad con desarrollo / pruebas tempranas
+    final isLegacyPremium = prefs.getBool(_prefLegacyPremium) ?? false;
+    if (isLegacyPremium) {
+      return LicenseInfo(
         tier: LicenseTier.premium,
+        status: LicenseStatus.active,
+        licenseKey: 'PREMIUM-FARMSYS',
+        ruc: '1799999999001',
+        businessName: 'Farmacia Demostración',
+        machineId: machineId,
+        issuedAt: DateTime.now(),
+        expirationDate: DateTime.now().add(const Duration(days: 365)),
+        lastVerifiedAt: DateTime.now(),
+        features: const ['*'],
         isValid: true,
       );
     }
-    
-    return LicenseInfo.free();
+
+    // Si no hay licencia activa registrada
+    return LicenseInfo.unlicensed(machineId: machineId);
   }
 
-  Future<void> activatePremiumLicense(String licenseKey) async {
+  /// Activa una licencia en este equipo mediante el código o token firmado
+  Future<LicenseInfo> activateLicense(String rawToken) async {
     state = const AsyncLoading();
-    
+
     try {
-      await Future.delayed(const Duration(seconds: 1)); // Simular latencia de red
-      
-      // Validación básica (en producción iría contra un servidor con criptografía asimétrica)
-      if (licenseKey.trim().toUpperCase() == 'PREMIUM-FARMSYS') {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('is_premium_license', true);
-        
-        state = const AsyncData(LicenseInfo(
-          tier: LicenseTier.premium,
-          isValid: true,
-        ));
-      } else {
-        throw Exception('La clave de licencia proporcionada no es válida.');
+      final machineId = await HardwareFingerprintService.getMachineId();
+      final prefs = await SharedPreferences.getInstance();
+
+      final savedClockStr = prefs.getString(_prefClockKey);
+      final lastSeenClock =
+          savedClockStr != null ? DateTime.tryParse(savedClockStr) : null;
+
+      final result = LicenseCryptoService.validateToken(
+        rawToken: rawToken,
+        currentMachineId: machineId,
+        lastSeenClock: lastSeenClock,
+      );
+
+      if (!result.isSuccess || result.licenseInfo == null) {
+        throw Exception(
+          result.errorMessage ?? 'La clave de licencia proporcionada no es válida.',
+        );
       }
-    } catch (e, st) {
+
+      final info = result.licenseInfo!;
+
+      // Guardamos el token en SharedPreferences
+      await prefs.setString(_prefTokenKey, rawToken.trim());
+      await prefs.setString(_prefClockKey, DateTime.now().toIso8601String());
+      await prefs.setBool(_prefLegacyPremium, info.isPremium);
+
+      state = AsyncData(info);
+      return info;
+    } catch (e) {
       state = AsyncData(await _checkLocalLicense());
-      throw Exception(e.toString());
+      rethrow;
     }
   }
 
+  /// Retrocompatibilidad para diálogo existente
+  Future<void> activatePremiumLicense(String licenseKey) async {
+    await activateLicense(licenseKey);
+  }
+
+  /// Desvincula la licencia local de este equipo
   Future<void> deactivateLicense() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('is_premium_license');
-    state = AsyncData(LicenseInfo.free());
+    await prefs.remove(_prefTokenKey);
+    await prefs.remove(_prefLegacyPremium);
+
+    final machineId = await HardwareFingerprintService.getMachineId();
+    state = AsyncData(LicenseInfo.unlicensed(machineId: machineId));
+  }
+
+  /// Retorna la huella digital del equipo
+  Future<String> getMachineId() async {
+    return HardwareFingerprintService.getMachineId();
+  }
+
+  /// Re-valida el estado actual (ej. al abrir la app o regresar de hibernación)
+  Future<void> refresh() async {
+    state = AsyncData(await _checkLocalLicense());
   }
 }

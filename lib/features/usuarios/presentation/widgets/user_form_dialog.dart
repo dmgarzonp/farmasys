@@ -354,7 +354,6 @@ class _UserFormDialogState extends State<UserFormDialog> {
                             subtitle: const Text('Si se desactiva, no podrá iniciar sesión.'),
                             value: _isActive,
                             onChanged: (val) => setState(() => _isActive = val),
-                            activeTrackColor: colors.primary,
                             contentPadding: EdgeInsets.zero,
                           ),
                         ],

@@ -321,7 +321,6 @@ class _UsersListScreenState extends ConsumerState<UsersListScreen> {
                     subtitle: Text('Si está activo, se bloqueará la cuenta hasta que el trabajador asigne su propia clave.', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
                     value: forceChange,
                     onChanged: (val) => setStateDialog(() => forceChange = val),
-                    activeThumbColor: colors.primary,
                     contentPadding: EdgeInsets.zero,
                   ),
                 ],

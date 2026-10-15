@@ -13,6 +13,9 @@ import '../../features/compras_recepcion/presentation/controllers/purchase_recep
 import '../../features/configuraciones/presentation/controllers/settings_notifier.dart';
 import '../../features/pos_ventas/presentation/controllers/pos_cart_notifier.dart';
 import '../../features/auth/presentation/controllers/auth_controller.dart';
+import '../../core/licensing/application/license_service.dart';
+import '../../core/licensing/domain/license_info.dart';
+import '../../features/configuraciones/presentation/views/license_activation_dialog.dart';
 
 import 'components.dart';
 import '../extensions/theme_extensions.dart';
@@ -267,6 +270,8 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
           // Indicadores de Estado de Sistema
           Row(
             children: [
+              _buildLicenseBadge(context),
+              const SizedBox(width: 10),
               XelaBadge(
                 text: 'SRI ${(ref.watch(settingsProvider).ivaVigente * 100).toInt()}% Activo',
                 variant: XelaBadgeVariant.success,
@@ -283,6 +288,93 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLicenseBadge(BuildContext context) {
+    final licenseAsync = ref.watch(licenseServiceProvider);
+
+    return licenseAsync.when(
+      data: (license) {
+        String text;
+        IconData icon;
+        XelaBadgeVariant variant;
+        String tooltip;
+
+        if (license.status == LicenseStatus.active) {
+          if (license.isTrial) {
+            final days = license.daysRemaining;
+            text = days > 0 ? 'Demo: $days d' : 'Demo: Último día';
+            icon = Icons.timer_outlined;
+            variant = days <= 5 ? XelaBadgeVariant.warning : XelaBadgeVariant.info;
+            tooltip = 'Licencia de Demostración ($days días restantes).\nHaz clic para activar la versión comercial.';
+          } else {
+            final tierName = switch (license.tier) {
+              LicenseTier.enterprise => 'Empresarial',
+              LicenseTier.pro => 'Licencia Pro',
+              LicenseTier.premium => 'Licencia Pro',
+              LicenseTier.standard => 'Estándar',
+              _ => 'Activa',
+            };
+            text = tierName;
+            icon = Icons.verified_rounded;
+            variant = XelaBadgeVariant.success;
+            tooltip = 'FarmSys Licenciado ($tierName).\n${license.businessName ?? ''}\nHaz clic para ver detalles de activación.';
+          }
+        } else if (license.status == LicenseStatus.gracePeriod) {
+          final days = license.daysRemaining.abs();
+          text = 'Gracia: $days d';
+          icon = Icons.warning_amber_rounded;
+          variant = XelaBadgeVariant.warning;
+          tooltip = 'Periodo de Gracia activo ($days días de tolerancia).\nHaz clic para renovar la suscripción.';
+        } else if (license.status == LicenseStatus.tamperedClock) {
+          text = 'Reloj Alterado';
+          icon = Icons.history_toggle_off_rounded;
+          variant = XelaBadgeVariant.danger;
+          tooltip = 'Se detectó una inconsistencia en la fecha del sistema.\nHaz clic para reactivar la licencia.';
+        } else if (license.status == LicenseStatus.expired) {
+          text = 'Licencia Vencida';
+          icon = Icons.lock_outline_rounded;
+          variant = XelaBadgeVariant.danger;
+          tooltip = 'La licencia ha expirado (Modo solo lectura).\nHaz clic para activar una nueva licencia.';
+        } else {
+          text = 'Sin Licencia';
+          icon = Icons.key_off_rounded;
+          variant = XelaBadgeVariant.neutral;
+          tooltip = 'Equipo sin licencia comercial registrada.\nHaz clic para ingresar tu código de activación.';
+        }
+
+        return Tooltip(
+          message: tooltip,
+          waitDuration: const Duration(milliseconds: 300),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => LicenseActivationDialog.show(context),
+              child: XelaBadge(
+                text: text,
+                icon: icon,
+                variant: variant,
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => Tooltip(
+        message: 'Error al verificar licencia. Haz clic para activar.',
+        child: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => LicenseActivationDialog.show(context),
+            child: const XelaBadge(
+              text: 'Licencia ?',
+              icon: Icons.help_outline_rounded,
+              variant: XelaBadgeVariant.neutral,
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -332,11 +424,11 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
           ],
         ),
       ),
-      itemBuilder: (context) => [
+      itemBuilder: (context) => const [
         PopupMenuItem(
           value: 'logout',
           child: Row(
-            children: const [
+            children: [
               Icon(Icons.logout_rounded, color: AppColors.error, size: 20),
               SizedBox(width: 12),
               Text('Cerrar Sesión', style: TextStyle(color: AppColors.error)),

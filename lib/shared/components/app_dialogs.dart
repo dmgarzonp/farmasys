@@ -132,12 +132,45 @@ class AppDialogs {
     BuildContext context, {
     required String title,
     required String message,
+    String confirmText = 'Aceptar',
   }) async {
     await AppConfirmDialog.show(
       context,
       title: title,
       message: message,
-      confirmText: 'Aceptar',
+      confirmText: confirmText,
+    );
+  }
+
+  static Future<void> showWarning(
+    BuildContext context, {
+    required String title,
+    required String message,
+  }) async {
+    await AppConfirmDialog.show(
+      context,
+      title: title,
+      message: message,
+      confirmText: 'Entendido',
+      isDestructive: false,
+    );
+  }
+
+  static Future<bool> showConfirm(
+    BuildContext context, {
+    required String title,
+    required String message,
+    String confirmText = 'Confirmar',
+    String cancelText = 'Cancelar',
+    bool isDestructive = false,
+  }) async {
+    return AppConfirmDialog.show(
+      context,
+      title: title,
+      message: message,
+      confirmText: confirmText,
+      cancelText: cancelText,
+      isDestructive: isDestructive,
     );
   }
 }

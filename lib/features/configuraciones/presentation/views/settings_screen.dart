@@ -9,6 +9,10 @@ import '../../domain/settings_state.dart';
 import '../controllers/settings_notifier.dart';
 import '../widgets/sri_setup_wizard_dialog.dart';
 import '../../../../core/licensing/application/license_service.dart';
+import '../../../../core/licensing/domain/license_info.dart';
+import '../../../../core/utils/formatters.dart';
+import 'license_activation_dialog.dart';
+import 'package:flutter/services.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../domain/services/backup_service.dart';
 import '../../domain/services/google_drive_service.dart';
@@ -139,18 +143,16 @@ class SettingsScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('Facturación Electrónica SRI & Licencia', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          if (licenseAsync.isLoading)
-                            const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
                         ],
                       ),
                       const Divider(height: 32, color: AppColors.borderLight),
                       
                       licenseAsync.when(
                         data: (license) {
-                          if (license.isPremium) {
-                            return _buildPremiumActiveState(context, ref);
+                          if (license.isValid && license.isPremium) {
+                            return _buildPremiumActiveState(context, ref, license);
                           } else {
-                            return _buildFreeState(context, ref);
+                            return _buildFreeState(context, ref, license);
                           }
                         },
                         loading: () => const Text('Cargando estado de licencia...', style: TextStyle(color: AppColors.textSecondary)),
@@ -167,35 +169,153 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildPremiumActiveState(BuildContext context, WidgetRef ref) {
+  Widget _buildPremiumActiveState(BuildContext context, WidgetRef ref, LicenseInfo license) {
     final settings = ref.watch(settingsProvider);
-    final colors = AppColors.of(context);
-    
+    final colors = context.colors;
+    final isGrace = license.inGracePeriod;
+    final isExpired = license.isExpired;
+
+    final statusColor = isExpired
+        ? colors.danger
+        : (isGrace ? colors.warning : colors.success);
+
+    final statusText = isExpired
+        ? 'Licencia Caducada (Modo Consulta)'
+        : (isGrace
+            ? 'Periodo de Gracia (${license.daysRemaining.abs()} días vencida)'
+            : 'Licencia ${license.tier.name.toUpperCase()} Activa');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(Icons.verified, color: colors.success, size: 28),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Licencia Premium Activa', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: colors.success)),
-                Text('Módulo de Facturación Electrónica SRI desbloqueado.', style: TextStyle(color: colors.textSecondary, fontSize: 13)),
-              ],
-            ),
-            const Spacer(),
-            TextButton(
-              onPressed: () {
-                 ref.read(licenseServiceProvider.notifier).deactivateLicense();
-              },
-              style: TextButton.styleFrom(foregroundColor: AppColors.error),
-              child: const Text('Desactivar Licencia'),
-            )
-          ],
+        // Banner de estado principal
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: statusColor.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    isExpired
+                        ? Icons.error_rounded
+                        : (isGrace ? Icons.warning_amber_rounded : Icons.verified_rounded),
+                    color: statusColor,
+                    size: 26,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          statusText,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: statusColor,
+                          ),
+                        ),
+                        Text(
+                          license.expirationDate != null
+                              ? 'Vigencia oficial: ${AppFormatters.date(license.expirationDate!)} (${license.daysRemaining} días restantes)'
+                              : 'Vigencia ilimitada para esta terminal',
+                          style: TextStyle(color: colors.textSecondary, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () => LicenseActivationDialog.show(context),
+                    icon: const Icon(Icons.key_rounded, size: 16),
+                    label: const Text('Renovar / Cambiar'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: colors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () async {
+                      final confirm = await AppDialogs.showConfirm(
+                        context,
+                        title: 'Desactivar Licencia',
+                        message:
+                            '¿Estás seguro de que deseas desactivar la licencia en este equipo? El sistema pasará a modo demostración.',
+                        confirmText: 'Desactivar',
+                      );
+                      if (confirm == true) {
+                        ref.read(licenseServiceProvider.notifier).deactivateLicense();
+                      }
+                    },
+                    style: TextButton.styleFrom(foregroundColor: colors.danger),
+                    child: const Text('Desactivar', style: TextStyle(fontSize: 12)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              const SizedBox(height: 12),
+
+              // Fila con datos de la licencia comercial
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildLicenseDetailItem(
+                      colors,
+                      Icons.storefront_rounded,
+                      'Farmacia / Titular',
+                      license.businessName ?? (settings.sriRazonSocial.isNotEmpty ? settings.sriRazonSocial : settings.pharmacyName),
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildLicenseDetailItem(
+                      colors,
+                      Icons.badge_rounded,
+                      'RUC Autorizado',
+                      license.ruc ?? (settings.sriRuc.isEmpty ? 'Consignado en SRI' : settings.sriRuc),
+                    ),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _buildLicenseDetailItem(
+                            colors,
+                            Icons.laptop_chromebook_rounded,
+                            'ID de este Equipo',
+                            license.machineId ?? 'No detectado',
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Copiar ID de este Equipo',
+                          icon: Icon(Icons.copy_rounded, size: 18, color: colors.primary),
+                          onPressed: () {
+                            if (license.machineId != null) {
+                              Clipboard.setData(ClipboardData(text: license.machineId!));
+                              AppSnackBars.showSuccess(context, message: 'ID de equipo copiado.');
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
+
         const SizedBox(height: 24),
+
+        // Parámetros SRI existentes
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -249,6 +369,28 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildLicenseDetailItem(AppThemeColors colors, IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: colors.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: TextStyle(fontSize: 11, color: colors.textSecondary)),
+              Text(
+                value,
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colors.textPrimary),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSummaryItem(BuildContext context, AppThemeColors colors, IconData icon, String label, String value, {Color? color}) {
     return Row(
       children: [
@@ -273,88 +415,80 @@ class SettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildFreeState(BuildContext context, WidgetRef ref) {
-    final colors = AppColors.of(context);
+  Widget _buildFreeState(BuildContext context, WidgetRef ref, LicenseInfo license) {
+    final colors = context.colors;
+    final machineId = license.machineId ?? 'Cargando ID...';
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: colors.warning.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: colors.warning.withValues(alpha: 0.5)),
+        color: colors.warning.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.lock, color: colors.warning),
+              Icon(Icons.lock_outline_rounded, color: colors.warning, size: 24),
               const SizedBox(width: 12),
-              Text('Función Premium Bloqueada', style: TextStyle(fontWeight: FontWeight.bold, color: colors.warning)),
+              Expanded(
+                child: Text(
+                  'Instalación sin Licencia Comercial Activa',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: colors.warning),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
-            'La facturación electrónica con el SRI está disponible únicamente con una Licencia Premium. Activa tu licencia para emitir comprobantes electrónicos ilimitados.',
-            style: TextStyle(color: colors.textSecondary),
+            'Para desbloquear la facturación electrónica SRI oficial, respaldos en la nube y soporte continuo, activa una licencia comercial en este equipo.',
+            style: TextStyle(color: colors.textSecondary, fontSize: 13),
           ),
           const SizedBox(height: 16),
+
+          // ID del equipo cliente
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: colors.cardBackground,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.computer_rounded, size: 18, color: colors.primary),
+                const SizedBox(width: 8),
+                Text('ID de este Equipo: ', style: TextStyle(fontSize: 12, color: colors.textSecondary)),
+                Text(
+                  machineId,
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, fontFamily: 'monospace', color: colors.textPrimary),
+                ),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Copiar ID',
+                  icon: Icon(Icons.copy_rounded, size: 18, color: colors.primary),
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: machineId));
+                    AppSnackBars.showSuccess(context, message: 'ID de equipo copiado al portapapeles.');
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
           ElevatedButton.icon(
-            icon: const Icon(Icons.key, size: 18),
-            label: const Text('Activar Licencia Premium'),
+            icon: const Icon(Icons.vpn_key_rounded, size: 18),
+            label: const Text('Activar Licencia Comercial'),
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            onPressed: () => _showActivationDialog(context, ref),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showActivationDialog(BuildContext context, WidgetRef ref) {
-    final controller = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Activar Licencia'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('Ingresa tu clave de licencia Premium:'),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                hintText: 'Ej. PREMIUM-FARMSYS',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                await ref.read(licenseServiceProvider.notifier).activatePremiumLicense(controller.text);
-                if (context.mounted) {
-                  Navigator.pop(context); // Cierra diálogo de activación
-                  SriSetupWizardDialog.show(context); // Abre el Wizard
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  Navigator.pop(context);
-                  AppDialogs.showError(context, title: 'Error de Activación', message: e.toString());
-                }
-              }
-            },
-            child: const Text('Activar'),
+            onPressed: () => LicenseActivationDialog.show(context),
           ),
         ],
       ),
@@ -389,7 +523,6 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(width: 16),
               Switch(
                 value: state.autoLocalBackupEnabled,
-                activeColor: colors.primary,
                 onChanged: (val) {
                   notifier.toggleAutoLocalBackup(val);
                 },
@@ -413,7 +546,6 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(width: 16),
               Switch(
                 value: state.autoCloudBackupEnabled,
-                activeColor: colors.primary,
                 onChanged: (val) async {
                   if (val) {
                     if (!googleDriveService.isAuthenticated) {

@@ -540,7 +540,6 @@ class _ProductFormDialogState extends ConsumerState<ProductFormDialog> {
                                 ),
                                 Switch(
                                   value: _tieneIva,
-                                  activeThumbColor: colors.primary,
                                   onChanged: (v) {
                                     setState(() => _tieneIva = v);
                                     _recalculateProfit();
