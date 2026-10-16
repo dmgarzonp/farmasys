@@ -24,6 +24,16 @@ if %ERRORLEVEL% neq 0 (
 )
 
 echo.
+echo [2.5/3] Incluyendo librerias de tiempo de ejecucion Microsoft Visual C++...
+set "RELEASE_DIR=build\windows\x64\runner\Release"
+for %%D in (vcruntime140.dll vcruntime140_1.dll msvcp140.dll msvcp140_1.dll msvcp140_2.dll msvcp140_codecvt_ids.dll) do (
+    if exist "%WINDIR%\System32\%%D" (
+        copy /y "%WINDIR%\System32\%%D" "%RELEASE_DIR%\" >nul
+        echo [OK] Incluida %%D
+    )
+)
+
+echo.
 echo [3/3] Generando instalador profesional con Inno Setup...
 set "ISCC="
 if exist "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" (

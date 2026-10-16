@@ -37,6 +37,31 @@ jobs:
       - name: Compilar Binario Release para Windows (con Ofuscación de Símbolos)
         run: flutter build windows --release --obfuscate --split-debug-info=build/windows/debug-info
 
+      - name: Incluir Librerias Microsoft Visual C++ Runtime (VCRUNTIME / MSVCP)
+        run: |
+          $releaseDir = "build\windows\x64\runner\Release"
+          Write-Host "Buscando librerias de tiempo de ejecucion C++ para $releaseDir..."
+          
+          # 1. Buscar en la carpeta oficial de redistribucion de Visual Studio Enterprise
+          $vsRedist = (Get-ChildItem -Path "C:\Program Files*\Microsoft Visual Studio\*\*\VC\Redist\MSVC\*\x64\Microsoft.VC*.CRT" -ErrorAction SilentlyContinue | Select-Object -Last 1)
+          
+          if ($vsRedist -and (Test-Path $vsRedist.FullName)) {
+            Write-Host "Copiando DLLs oficiales desde Visual Studio: $($vsRedist.FullName)"
+            Copy-Item "$($vsRedist.FullName)\*.dll" -Destination $releaseDir -Force
+          } else {
+            Write-Host "Copiando DLLs desde C:\Windows\System32..."
+            $dlls = @("vcruntime140.dll", "vcruntime140_1.dll", "msvcp140.dll", "msvcp140_1.dll", "msvcp140_2.dll", "msvcp140_codecvt_ids.dll")
+            foreach ($dll in $dlls) {
+              $src = "C:\Windows\System32\$dll"
+              if (Test-Path $src) {
+                Copy-Item $src -Destination $releaseDir -Force
+                Write-Host "Copiada: $dll"
+              }
+            }
+          }
+          Write-Host "Verificando DLLs empaquetadas:"
+          Get-ChildItem "$releaseDir\*.dll" | Select-Object Name
+
       - name: Compilar Instalador Oficial (.exe) con Inno Setup
         run: |
           if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
