@@ -49,7 +49,6 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilen
 Name: "{userappdata}\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"; Tasks: taskbaricon
 
 [Run]
-Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -Command ""try { $w = New-Object -ComObject Shell.Application; $f = $w.NameSpace('{autodesktop}'); $i = $f.ParseName('{#MyAppName}.lnk'); if ($i) { $v = $i.Verbs() | Where-Object { $_.Name -match 'taskbar|barra de tareas' }; if ($v) { $v.DoIt() } } } catch {}"""; Tasks: taskbaricon; Flags: runhidden
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
