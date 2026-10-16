@@ -23,6 +23,11 @@ jobs:
       - name: Instalar Inno Setup
         run: choco install innosetup -y
 
+      - name: Crear Carpetas de Assets Requeridas
+        run: |
+          New-Item -ItemType Directory -Force -Path assets\icons
+          New-Item -ItemType Directory -Force -Path assets\images
+
       - name: Instalar Dependencias de Flutter
         run: flutter pub get
 
@@ -34,7 +39,13 @@ jobs:
 
       - name: Compilar Instalador Oficial (.exe) con Inno Setup
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/farmsys_windows_setup.iss
+          if (Test-Path "C:\Program Files (x86)\Inno Setup 6\ISCC.exe") {
+            & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/farmsys_windows_setup.iss
+          } elseif (Test-Path "C:\Program Files\Inno Setup 6\ISCC.exe") {
+            & "C:\Program Files\Inno Setup 6\ISCC.exe" installer/farmsys_windows_setup.iss
+          } else {
+            iscc installer/farmsys_windows_setup.iss
+          }
 
       - name: Publicar Instalador como Artefacto Descargable
         uses: actions/upload-artifact@v4
