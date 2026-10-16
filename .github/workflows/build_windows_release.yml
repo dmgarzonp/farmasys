@@ -1,0 +1,44 @@
+name: Build Windows Production Installer
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar Código Fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Instalar Inno Setup
+        run: choco install innosetup -y
+
+      - name: Instalar Dependencias de Flutter
+        run: flutter pub get
+
+      - name: Ejecutar Suite de Pruebas Automatizadas
+        run: flutter test
+
+      - name: Compilar Binario Release para Windows (con Ofuscación de Símbolos)
+        run: flutter build windows --release --obfuscate --split-debug-info=build/windows/debug-info
+
+      - name: Compilar Instalador Oficial (.exe) con Inno Setup
+        run: |
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/farmsys_windows_setup.iss
+
+      - name: Publicar Instalador como Artefacto Descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: FarmSys-Windows-Installer
+          path: installer/output/FarmSys_Setup_v1.0.0.exe
+          if-no-files-found: error
