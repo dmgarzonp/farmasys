@@ -645,10 +645,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
           ),
           const SizedBox(height: 24),
 
-          // Nota al pie con nombre dinámico de farmacia
+          // Nota al pie con nombre dinámico de farmacia y versión de release
           Center(
             child: Text(
-              '${settings.pharmacyName} • FarmSys POS',
+              '${settings.pharmacyName} • FarmSys POS v${AppConstants.appVersion}',
               style: TextStyle(
                 fontSize: 11,
                 color: colors.textMuted,

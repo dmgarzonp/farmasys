@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/theme/app_theme_colors.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
@@ -39,9 +40,30 @@ class SettingsScreen extends ConsumerWidget {
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: colors.textPrimary),
             ),
             const SizedBox(height: 8),
-            Text(
-              'Configuraciones tributarias y de negocio',
-              style: TextStyle(color: colors.textSecondary),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Configuraciones tributarias y de negocio',
+                  style: TextStyle(color: colors.textSecondary),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.primarySurface,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    'Versión: v${AppConstants.appVersion}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: colors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 32),
 

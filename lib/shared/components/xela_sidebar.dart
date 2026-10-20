@@ -194,7 +194,7 @@ class _XelaSidebarState extends ConsumerState<XelaSidebar> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   Text(
-                    'FarmSys POS',
+                    'FarmSys POS • v${AppConstants.appVersion}',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,

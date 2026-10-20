@@ -71,3 +71,4 @@ Future<void> openFolderInExplorer(String path) async {
     // Si falla el comando de shell nativo, no bloqueamos la app
   }
 }
+
