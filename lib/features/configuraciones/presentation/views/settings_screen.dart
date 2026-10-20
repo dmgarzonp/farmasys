@@ -17,6 +17,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../domain/services/backup_service.dart';
 import '../../domain/services/google_drive_service.dart';
 import '../../data/settings_repository.dart';
+import '../../../../core/database/database_path_resolver.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -879,6 +880,13 @@ class SettingsScreen extends ConsumerWidget {
                 spacing: 12,
                 runSpacing: 8,
                 children: [
+                  AppSecondaryButton(
+                    text: 'Abrir Carpeta en el Explorador',
+                    icon: Icons.folder_open_outlined,
+                    onPressed: () async {
+                      await openFolderInExplorer(currentPath);
+                    },
+                  ),
                   AppSecondaryButton(
                     text: 'Cambiar Carpeta de Base de Datos...',
                     icon: Icons.edit_location_alt_outlined,

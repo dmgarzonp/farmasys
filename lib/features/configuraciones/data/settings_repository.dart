@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:farmsys/core/database/database_path_resolver.dart';
 
 final settingsRepositoryProvider = Provider<SettingsRepository>((ref) {
   return SettingsRepository();
@@ -203,8 +204,7 @@ class SettingsRepository {
   }
 
   Future<String> getDefaultDbPath() async {
-    final defaultDir = await getApplicationDocumentsDirectory();
-    return p.join(defaultDir.path, 'farmsys.db');
+    return resolveDefaultDatabaseFilePath();
   }
 
   Future<String> getEffectiveDbPath() async {

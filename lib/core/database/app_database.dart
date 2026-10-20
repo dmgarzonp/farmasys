@@ -19,6 +19,7 @@ import 'tables/compras_table.dart';
 import 'tables/detalles_compra_table.dart';
 import 'tables/usuarios_table.dart';
 import 'database_seeder.dart';
+import 'database_path_resolver.dart';
 
 part 'app_database.g.dart';
 
@@ -144,19 +145,10 @@ class AppDatabase extends _$AppDatabase {
             return trimmed;
           }
 
-          // Ruta predeterminada oficial de FarmSys
-          final defaultDir = await getApplicationDocumentsDirectory();
-          final targetDbFile = File(p.join(defaultDir.path, 'farmsys.db'));
-          final legacyDbFile = File(p.join(defaultDir.path, 'farmsys_demo_db.sqlite'));
-
-          // Migración automática de datos si existía la base de datos de desarrollo/demo
-          if (!await targetDbFile.exists() && await legacyDbFile.exists()) {
-            try {
-              await legacyDbFile.copy(targetDbFile.path);
-            } catch (_) {}
-          }
-
-          return targetDbFile.path;
+          // Ruta predeterminada oficial encapsulada y protegida de FarmSys
+          // Windows: %APPDATA%\FarmSys\data\farmsys.db
+          // Linux: ~/.local/share/farmsys/data/farmsys.db
+          return resolveDefaultDatabaseFilePath();
         },
       ),
     );
