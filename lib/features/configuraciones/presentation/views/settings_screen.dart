@@ -19,6 +19,8 @@ import '../../domain/services/backup_service.dart';
 import '../../domain/services/google_drive_service.dart';
 import '../../data/settings_repository.dart';
 import '../../../../core/database/database_path_resolver.dart';
+import '../../../actualizaciones/presentation/controllers/update_controller.dart';
+import '../../../actualizaciones/presentation/widgets/update_dialog.dart';
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
 
@@ -47,21 +49,47 @@ class SettingsScreen extends ConsumerWidget {
                   'Configuraciones tributarias y de negocio',
                   style: TextStyle(color: colors.textSecondary),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: colors.primarySurface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
-                  ),
-                  child: Text(
-                    'Versión: v${AppConstants.appVersion}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: colors.primary,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: colors.primarySurface,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                      ),
+                      child: Text(
+                        'Versión: v${AppConstants.appVersion}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: colors.primary,
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    AppButton(
+                      label: 'Buscar Actualizaciones',
+                      icon: Icons.sync_rounded,
+                      variant: AppButtonVariant.ghost,
+                      onPressed: () async {
+                        AppSnackBars.showInfo(context, message: 'Consultando versiones en GitHub...');
+                        final service = ref.read(updateCheckerServiceProvider);
+                        final info = await ref.read(updateCheckControllerProvider.notifier).checkForUpdates(force: true);
+                        if (!context.mounted) return;
+                        if (info != null && info.hasUpdate) {
+                          UpdateDialog.show(context, updateInfo: info, service: service);
+                        } else {
+                          AppDialogs.showSuccess(
+                            context,
+                            title: 'FarmSys está al día',
+                            message: 'Estás utilizando la versión más reciente (v${AppConstants.appVersion}). No hay actualizaciones pendientes.',
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ],
             ),

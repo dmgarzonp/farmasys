@@ -8,6 +8,7 @@ import '../../../inventario/data/repositories/drift_inventory_repository.dart';
 import '../../../inventario/presentation/controllers/inventory_notifier.dart';
 import '../../../inventario/presentation/views/batch_return_dialog.dart';
 import '../dashboard_notifier.dart';
+import '../../../actualizaciones/presentation/widgets/update_banner_card.dart';
 
 /// Pantalla del Dashboard Principal de FarmSys con métricas en tiempo real,
 /// alertas de caducidad FEFO, stock bajo y top de ventas.
@@ -67,6 +68,8 @@ class DashboardScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const UpdateBannerCard(),
+
                 // Fila 1: KPIs Principales
                 Row(
                   children: [
