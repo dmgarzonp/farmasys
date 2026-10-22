@@ -76,7 +76,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: FarmSys-Windows-Installer
-          path: installer/output/FarmSys_Setup_v1.0.0.exe
+          path: installer/output/FarmSys_Setup_*.exe
           if-no-files-found: error
 
   build-linux:
@@ -118,8 +118,8 @@ jobs:
         with:
           name: FarmSys-Linux-Installers
           path: |
-            installer/output/farmsys_1.0.0_amd64.deb
-            installer/output/FarmSys_Linux_x64_v1.0.0.tar.gz
+            installer/output/farmsys_*_amd64.deb
+            installer/output/FarmSys_Linux_x64_*.tar.gz
           if-no-files-found: error
 
   publish-release:
@@ -144,11 +144,8 @@ jobs:
       - name: Crear GitHub Release Oficial
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release-assets/FarmSys_Setup_v1.0.0.exe
-            release-assets/farmsys_1.0.0_amd64.deb
-            release-assets/FarmSys_Linux_x64_v1.0.0.tar.gz
-          name: "FarmSys v${{ github.ref_name }}"
+          files: release-assets/*
+          name: "FarmSys ${{ github.ref_name }}"
           generate_release_notes: true
           draft: false
           prerelease: false

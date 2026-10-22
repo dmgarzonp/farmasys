@@ -62,7 +62,7 @@ if %ERRORLEVEL% neq 0 (
 
 echo.
 echo =================================================================
-echo   EXITO: Instalador creado en installer\output\FarmSys_Setup_v1.0.0.exe
+echo   EXITO: Instalador creado en installer\output\FarmSys_Setup_v1.0.1.exe
 echo =================================================================
 echo.
 pause

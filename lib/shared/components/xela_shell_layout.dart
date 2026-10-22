@@ -16,6 +16,9 @@ import '../../features/auth/presentation/controllers/auth_controller.dart';
 import '../../core/licensing/application/license_service.dart';
 import '../../core/licensing/domain/license_info.dart';
 import '../../features/configuraciones/presentation/views/license_activation_dialog.dart';
+import '../../features/configuraciones/data/settings_repository.dart';
+import '../../features/configuraciones/domain/services/backup_service.dart';
+import '../../features/configuraciones/domain/services/google_drive_service.dart';
 
 import 'components.dart';
 import '../extensions/theme_extensions.dart';
@@ -68,7 +71,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
         cancelText: 'Cancelar',
         isDestructive: true,
       );
-      if (shouldExit) await windowManager.destroy();
+      if (shouldExit) await _performGracefulShutdown();
       return;
     }
 
@@ -84,7 +87,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
         cancelText: 'Continuar Trabajando',
         isDestructive: true,
       );
-      if (shouldExit) await windowManager.destroy();
+      if (shouldExit) await _performGracefulShutdown();
       return;
     }
 
@@ -99,7 +102,7 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
         cancelText: 'Cancelar y hacer Arqueo',
         isDestructive: true,
       );
-      if (shouldExit) await windowManager.destroy();
+      if (shouldExit) await _performGracefulShutdown();
       return;
     }
 
@@ -113,8 +116,28 @@ class _XelaShellLayoutState extends ConsumerState<XelaShellLayout> with WindowLi
       isDestructive: false,
     );
     if (shouldExit) {
-      await windowManager.destroy();
+      await _performGracefulShutdown();
     }
+  }
+
+  Future<void> _performGracefulShutdown() async {
+    try {
+      final repo = ref.read(settingsRepositoryProvider);
+      final autoLocal = await repo.getAutoLocalBackup() ?? false;
+      final autoCloud = await repo.getAutoCloudBackup() ?? false;
+
+      if (autoLocal) {
+        await backupService.autoLocalBackup();
+      }
+      if (autoCloud && googleDriveService.isAuthenticated) {
+        final dbFile = await backupService.getDatabaseFile();
+        await googleDriveService.uploadDatabaseBackup(dbFile);
+      }
+    } catch (e) {
+      debugPrint('Error en respaldo durante el cierre: $e');
+    }
+
+    await windowManager.destroy();
   }
 
   Future<void> _handleOpenCash() async {

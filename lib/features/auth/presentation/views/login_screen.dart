@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:window_manager/window_manager.dart';
 
 import '../../../../core/constants/constants.dart';
+import '../../../../shared/components/components.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
 import '../../../configuraciones/domain/settings_state.dart';
 import '../../../configuraciones/presentation/controllers/settings_notifier.dart';
@@ -35,7 +36,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> with WindowListener {
 
   @override
   void onWindowClose() async {
-    await windowManager.destroy();
+    final shouldExit = await AppConfirmDialog.show(
+      context,
+      title: 'Salir de FarmSys',
+      message: '¿Estás seguro de que deseas salir de la aplicación?',
+      confirmText: 'Salir',
+      cancelText: 'Cancelar',
+    );
+    if (shouldExit) {
+      await windowManager.destroy();
+    }
   }
 
   @override
