@@ -205,7 +205,7 @@ class UpdateCheckerService {
   /// Ejecuta el instalador descargado en segundo plano y prepara el cierre de FarmSys
   Future<void> launchInstallerAndExit(File installerFile) async {
     if (Platform.isWindows) {
-      // Inicia el instalador en modo interactivo asistido
+      // En Windows inicia el instalador .exe asistido y cierra la aplicación
       await Process.start(
         installerFile.path,
         [],
@@ -213,12 +213,37 @@ class UpdateCheckerService {
       );
       exit(0);
     } else if (Platform.isLinux) {
-      // En Linux abre el instalador .deb con el instalador de software del sistema
-      await Process.start(
-        'xdg-open',
-        [installerFile.path],
-        mode: ProcessStartMode.detached,
-      );
+      // En Linux, ejecutar la instalación directa mediante pkexec (Polkit GUI)
+      // para evitar las limitaciones y bloqueos del Centro de Software de Ubuntu.
+      final scriptFile = File(p.join(Directory.systemTemp.path, 'farmsys_upgrade.sh'));
+      await scriptFile.writeAsString('''#!/usr/bin/env bash
+DEB_PATH="${installerFile.path}"
+
+if command -v pkexec >/dev/null 2>&1; then
+    pkexec dpkg -i "\$DEB_PATH"
+    EXIT_CODE=\$?
+else
+    EXIT_CODE=1
+fi
+
+if [ \$EXIT_CODE -eq 0 ]; then
+    nohup /usr/bin/farmsys >/dev/null 2>&1 &
+    exit 0
+else
+    exit \$EXIT_CODE
+fi
+''');
+      await Process.run('chmod', ['+x', scriptFile.path]);
+
+      final result = await Process.run(scriptFile.path, []);
+      if (result.exitCode == 0) {
+        exit(0);
+      } else {
+        throw Exception(
+          'La actualización requiere permisos de superusuario. '
+          'Si cancelaste la solicitud, puedes reintentar o instalar manualmente.',
+        );
+      }
     }
   }
 }

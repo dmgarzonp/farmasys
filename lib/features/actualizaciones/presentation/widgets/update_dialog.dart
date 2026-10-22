@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../shared/components/components.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
 import '../../domain/entities/app_update_info.dart';
@@ -37,6 +38,7 @@ class UpdateDialog extends StatefulWidget {
 
 class _UpdateDialogState extends State<UpdateDialog> {
   bool _isDownloading = false;
+  bool _isInstalling = false;
   double _progress = 0.0;
   int _receivedBytes = 0;
   int _totalBytes = 0;
@@ -93,7 +95,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
   Future<void> _applyUpdate() async {
     if (_downloadedFile == null) return;
-    await widget.service.launchInstallerAndExit(_downloadedFile!);
+    setState(() {
+      _isInstalling = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await widget.service.launchInstallerAndExit(_downloadedFile!);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isInstalling = false;
+          _errorMessage = '$e'.replaceAll('Exception: ', '');
+        });
+      }
+    }
   }
 
   @override
@@ -212,7 +228,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 '${(_receivedBytes / (1024 * 1024)).toStringAsFixed(1)} MB de ${(_totalBytes / (1024 * 1024)).toStringAsFixed(1)} MB',
                 style: TextStyle(fontSize: 11, color: colors.textMuted),
               ),
-            ] else if (_downloadedFile != null) ...[
+            ] else if (_downloadedFile != null && !_isInstalling) ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
@@ -225,8 +241,33 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        '¡Descarga completada! Al presionar el botón, FarmSys se cerrará para aplicar la actualización. Todos tus datos y ventas permanecerán 100% intactos.',
+                        '¡Descarga completada! Al presionar el botón, se aplicará la actualización. Todos tus datos y ventas permanecerán 100% intactos.',
                         style: TextStyle(fontSize: 12, color: colors.pillSuccessText, height: 1.3),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (_isInstalling) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colors.primarySurface,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colors.primary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2.5),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Instalando actualización... Por favor ingresa tu contraseña en la ventana de autenticación del sistema para completar.',
+                        style: TextStyle(fontSize: 12, color: colors.primary, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ],
@@ -235,32 +276,92 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ],
 
             if (_errorMessage != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                _errorMessage!,
-                style: TextStyle(fontSize: 12, color: colors.danger),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: colors.danger.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: colors.danger.withValues(alpha: 0.3)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _errorMessage!,
+                      style: TextStyle(fontSize: 12, color: colors.danger),
+                    ),
+                    if (_downloadedFile != null && Platform.isLinux) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        'También puedes instalarlo manualmente ejecutando en la terminal:',
+                        style: TextStyle(fontSize: 11, color: colors.textSecondary),
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: colors.background,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: SelectableText(
+                                'sudo dpkg -i "${_downloadedFile!.path}"',
+                                style: const TextStyle(fontFamily: 'monospace', fontSize: 11),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          IconButton(
+                            icon: const Icon(Icons.copy_rounded, size: 16),
+                            tooltip: 'Copiar comando',
+                            onPressed: () {
+                              Clipboard.setData(ClipboardData(text: 'sudo dpkg -i "${_downloadedFile!.path}"'));
+                              AppSnackBars.showSuccess(context, message: 'Comando copiado al portapapeles');
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ],
         ),
       ),
       actions: [
-        if (!_isDownloading && _downloadedFile == null)
+        if (!_isDownloading && !_isInstalling && _downloadedFile == null)
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             child: Text('Recordar Más Tarde', style: TextStyle(color: colors.textSecondary)),
           ),
-        if (!_isDownloading && _downloadedFile == null)
+        if (!_isDownloading && !_isInstalling && _downloadedFile == null)
           AppButton(
             label: 'Descargar e Instalar',
             icon: Icons.download_rounded,
             onPressed: _startDownload,
           ),
-        if (_downloadedFile != null)
+        if (_downloadedFile != null && !_isInstalling) ...[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Cerrar', style: TextStyle(color: colors.textSecondary)),
+          ),
           AppButton(
             label: 'Reiniciar e Instalar Ahora',
             icon: Icons.restart_alt_rounded,
             onPressed: _applyUpdate,
+          ),
+        ],
+        if (_isInstalling)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'Instalando...',
+              style: TextStyle(color: colors.primary, fontWeight: FontWeight.bold, fontSize: 13),
+            ),
           ),
       ],
     );
