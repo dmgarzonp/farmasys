@@ -22,7 +22,7 @@ class SriAccessKeyGenerator {
   }) {
     final dateStr = DateFormat('ddMMyyyy').format(date);
     final envStr = environment.toString();
-    final emissionType = '1'; // 1 = Emisión Normal
+    const emissionType = '1'; // 1 = Emisión Normal
 
     // Validar longitudes
     final safeRuc = ruc.padLeft(13, '0').substring(0, 13);

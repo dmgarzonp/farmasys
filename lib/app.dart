@@ -6,6 +6,7 @@ import 'core/theme/app_theme.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'features/configuraciones/application/backup_scheduler.dart';
 import 'features/configuraciones/presentation/controllers/settings_notifier.dart';
+import 'features/facturacion_sri/domain/services/sri_background_worker.dart';
 
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
@@ -17,6 +18,9 @@ class FarmSysApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Inicializa el programador de respaldos en segundo plano
     ref.watch(backupSchedulerProvider);
+
+    // Inicializa el demonio de facturación electrónica SRI en segundo plano
+    ref.watch(sriBackgroundWorkerProvider).start();
 
     final settings = ref.watch(settingsProvider);
     final router = ref.watch(appRouterProvider);

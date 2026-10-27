@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../shared/components/app_dialogs.dart';
 import '../../../../shared/extensions/theme_extensions.dart';
 import '../controllers/settings_notifier.dart';
+import '../../../facturacion_sri/domain/services/sri_signature_service.dart';
+import '../../../facturacion_sri/domain/services/sri_background_worker.dart';
 
 class SriSetupWizardDialog extends ConsumerStatefulWidget {
   const SriSetupWizardDialog({super.key});
@@ -71,7 +74,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
     super.dispose();
   }
 
-  void _onStepContinue() {
+  Future<void> _onStepContinue() async {
     bool isValid = true;
     switch (_currentStep) {
       case 0:
@@ -82,9 +85,37 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
         break;
       case 2:
         isValid = _formKeyPaso3.currentState?.validate() ?? false;
+        if (isValid) {
+          try {
+            final cert = await SriSignatureService.validateP12File(
+              p12FilePath: _firmaPathController.text.trim(),
+              p12Password: _firmaPasswordController.text,
+            );
+            if (cert.isExpired) {
+              if (mounted) {
+                AppDialogs.showError(
+                  context,
+                  title: 'Firma Caducada',
+                  message:
+                      'El certificado expiró el ${DateFormat("dd/MM/yyyy").format(cert.notAfter)}. Debe renovar su firma ante la entidad emisora.',
+                );
+              }
+              return;
+            }
+          } catch (e) {
+            if (mounted) {
+              AppDialogs.showError(
+                context,
+                title: 'Error de Firma Digital',
+                message: e.toString().replaceFirst('Exception: ', ''),
+              );
+            }
+            return;
+          }
+        }
         break;
       case 3:
-        _finishSetup();
+        await _finishSetup();
         return;
     }
 
@@ -130,12 +161,15 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
       ambiente: _ambiente,
     );
 
+    // Activar demonio de facturación en segundo plano
+    ref.read(sriBackgroundWorkerProvider).start();
+
     if (mounted) {
       Navigator.pop(context);
       AppDialogs.showSuccess(
         context, 
         title: 'Configuración Exitosa', 
-        message: 'Los parámetros del SRI han sido guardados. El sistema está listo para facturar.'
+        message: 'Los parámetros del SRI han sido guardados. El sistema está listo para emitir facturas electrónicas con firma digital XAdES-BES.'
       );
     }
   }

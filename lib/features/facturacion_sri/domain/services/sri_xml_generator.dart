@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 import 'package:xml/xml.dart';
-import '../../../../core/database/app_database.dart'; // Para VentasTable, etc.
 
 class SriXmlGenerator {
   /// Genera el XML de la factura según el estándar V2.1.0 del SRI
@@ -22,6 +21,10 @@ class SriXmlGenerator {
     required double ivaPercentage,
     required double ivaValue,
     required List<InvoiceDetail> details,
+    String dirMatriz = 'Dirección Matriz',
+    String dirEstablecimiento = 'Dirección Establecimiento',
+    String obligadoContabilidad = 'NO',
+    String? customerEmail,
   }) {
     final builder = XmlBuilder();
     builder.processing('xml', 'version="1.0" encoding="UTF-8"');
@@ -40,14 +43,14 @@ class SriXmlGenerator {
         builder.element('estab', nest: establishment);
         builder.element('ptoEmi', nest: emissionPoint);
         builder.element('secuencial', nest: sequential);
-        builder.element('dirMatriz', nest: 'Direccion Matriz'); // TODO: Tomar de Settings
+        builder.element('dirMatriz', nest: dirMatriz);
       });
 
       // Información de la Factura
       builder.element('infoFactura', nest: () {
         builder.element('fechaEmision', nest: DateFormat('dd/MM/yyyy').format(date));
-        builder.element('dirEstablecimiento', nest: 'Direccion Establecimiento');
-        builder.element('obligadoContabilidad', nest: 'NO'); // TODO: Tomar de Settings
+        builder.element('dirEstablecimiento', nest: dirEstablecimiento);
+        builder.element('obligadoContabilidad', nest: obligadoContabilidad);
         builder.element('tipoIdentificacionComprador', nest: customerIdType);
         builder.element('razonSocialComprador', nest: customerName);
         builder.element('identificacionComprador', nest: customerId);
@@ -61,8 +64,11 @@ class SriXmlGenerator {
             
             // Código de porcentaje: 2=12%, 3=14%, 4=15%, 0=0% (Simplificado, revisar tabla SRI oficial)
             String percentageCode = '0';
-            if (ivaPercentage == 0.12) percentageCode = '2';
-            else if (ivaPercentage == 0.15) percentageCode = '4';
+            if (ivaPercentage == 0.12) {
+              percentageCode = '2';
+            } else if (ivaPercentage == 0.15) {
+              percentageCode = '4';
+            }
             
             builder.element('codigoPorcentaje', nest: percentageCode);
             builder.element('baseImponible', nest: totalWithoutTax.toStringAsFixed(2));
@@ -101,8 +107,11 @@ class SriXmlGenerator {
                 builder.element('codigo', nest: '2'); // 2 = IVA
                 
                 String percentageCode = '0';
-                if (ivaPercentage == 0.12) percentageCode = '2';
-                else if (ivaPercentage == 0.15) percentageCode = '4';
+                if (ivaPercentage == 0.12) {
+                  percentageCode = '2';
+                } else if (ivaPercentage == 0.15) {
+                  percentageCode = '4';
+                }
                 
                 builder.element('codigoPorcentaje', nest: percentageCode);
                 builder.element('tarifa', nest: (ivaPercentage * 100).toStringAsFixed(0));
@@ -115,9 +124,11 @@ class SriXmlGenerator {
       });
       
       // Adicionales (Opcional)
-      builder.element('infoAdicional', nest: () {
-        builder.element('campoAdicional', attributes: {'nombre': 'Email'}, nest: 'cliente@ejemplo.com');
-      });
+      if (customerEmail != null && customerEmail.isNotEmpty) {
+        builder.element('infoAdicional', nest: () {
+          builder.element('campoAdicional', attributes: {'nombre': 'Email'}, nest: customerEmail);
+        });
+      }
 
     });
 

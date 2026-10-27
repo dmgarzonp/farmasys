@@ -51,4 +51,5 @@ app.*.map.json
 secrets.json
 .env
 *.p12
+!test/fixtures/*.p12
 installer/output/
