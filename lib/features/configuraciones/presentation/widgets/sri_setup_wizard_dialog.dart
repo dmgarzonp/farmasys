@@ -93,7 +93,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
             );
             if (cert.isExpired) {
               if (mounted) {
-                AppDialogs.showError(
+                await AppDialogs.showError(
                   context,
                   title: 'Firma Caducada',
                   message:
@@ -104,7 +104,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
             }
           } catch (e) {
             if (mounted) {
-              AppDialogs.showError(
+              await AppDialogs.showError(
                 context,
                 title: 'Error de Firma Digital',
                 message: e.toString().replaceFirst('Exception: ', ''),
@@ -137,9 +137,9 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
   }
 
   Future<void> _pickFirmaFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['p12'],
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.any,
+      dialogTitle: 'Selecciona tu archivo de firma electrónica (.p12 / .pfx)',
     );
     if (result != null && result.files.single.path != null) {
       setState(() {
@@ -166,7 +166,7 @@ class _SriSetupWizardDialogState extends ConsumerState<SriSetupWizardDialog> {
 
     if (mounted) {
       Navigator.pop(context);
-      AppDialogs.showSuccess(
+      await AppDialogs.showSuccess(
         context, 
         title: 'Configuración Exitosa', 
         message: 'Los parámetros del SRI han sido guardados. El sistema está listo para emitir facturas electrónicas con firma digital XAdES-BES.'
