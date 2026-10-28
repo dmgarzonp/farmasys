@@ -163,3 +163,4 @@ class XmlC14n {
         .replaceAll('\r', '&#xD;');
   }
 }
+

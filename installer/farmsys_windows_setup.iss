@@ -1,9 +1,9 @@
 ; Script oficial de empaquetado para FarmSys Ecuador
 ; Compatible con Inno Setup 6.0+
-; Genera el instalador profesional ejecutable FarmSys_Setup_v1.0.1.exe
+; Genera el instalador profesional ejecutable FarmSys_Setup_v1.0.2.exe
 
 #define MyAppName "FarmSys"
-#define MyAppVersion "1.0.1"
+#define MyAppVersion "1.0.2"
 #define MyAppPublisher "FarmSys Ecuador"
 #define MyAppURL "https://farmsys.ec"
 #define MyAppExeName "farmsys.exe"
@@ -25,7 +25,7 @@ PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile=..\windows\runner\resources\app_icon.ico
 UninstallDisplayIcon={app}\{#MyAppExeName}
 OutputDir=output
-OutputBaseFilename=FarmSys_Setup_v1.0.1
+OutputBaseFilename=FarmSys_Setup_v1.0.2
 Compression=lzma2/ultra64
 SolidCompression=yes
 WizardStyle=modern

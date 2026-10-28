@@ -4,7 +4,7 @@ class AppConstants {
 
   static const String appName = 'FarmSys';
   static const String appSubtitle = 'Sistema Integral de Farmacia y POS';
-  static const String appVersion = '1.0.1';
+  static const String appVersion = '1.0.2';
 
   // Configuración de Impresión Térmica
   static const int thermalPrinterWidth80mm = 48; // caracteres por línea estándar

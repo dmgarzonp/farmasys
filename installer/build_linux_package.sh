@@ -17,11 +17,11 @@ flutter build linux --release --obfuscate --split-debug-info=build/linux/debug-i
 
 echo ""
 echo "[3/3] Empaquetando distribución portable (.tar.gz)..."
-tar -czvf "installer/output/FarmSys_Linux_x64_v1.0.1.tar.gz" -C build/linux/x64/release/bundle .
+tar -czvf "installer/output/FarmSys_Linux_x64_v1.0.2.tar.gz" -C build/linux/x64/release/bundle .
 
 echo ""
 echo "================================================================="
 echo "  ÉXITO: Paquete generado en:"
-echo "  installer/output/FarmSys_Linux_x64_v1.0.1.tar.gz"
+echo "  installer/output/FarmSys_Linux_x64_v1.0.2.tar.gz"
 echo "================================================================="
 
